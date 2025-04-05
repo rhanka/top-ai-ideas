@@ -6,13 +6,25 @@ import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Leg
 import { Chessboard } from "@/components/Dashboard/Chessboard";
 
 const Dashboard: React.FC = () => {
-  const { useCases } = useAppContext();
+  const { useCases, matrixConfig } = useAppContext();
+  
+  // Get the maximum possible values for both axes
+  const valueThresholds = matrixConfig.valueThresholds || [];
+  const complexityThresholds = matrixConfig.complexityThresholds || [];
+  
+  // Find max possible values from thresholds
+  const maxPossibleValueScore = valueThresholds.length > 0 
+    ? Math.max(...valueThresholds.map(t => t.max || 0))
+    : 40; // Default fallback
+    
+  const maxPossibleComplexityScore = complexityThresholds.length > 0 
+    ? Math.max(...complexityThresholds.map(t => t.max || 0))
+    : 30; // Default fallback
   
   // Prepare data for scatter plot
   const scatterData = useCases.map(useCase => {
     // Invert complexity to get "ease of implementation"
-    const maxComplexityScore = 30; // Approximate max possible score
-    const easeOfImplementation = Math.max(maxComplexityScore - (useCase.totalComplexityScore || 0), 0);
+    const easeOfImplementation = Math.max(maxPossibleComplexityScore - (useCase.totalComplexityScore || 0), 0);
     
     return {
       name: useCase.name,
@@ -99,14 +111,14 @@ const Dashboard: React.FC = () => {
                     type="number" 
                     dataKey="ease" 
                     name="Facilité d'implémentation" 
-                    domain={[0, 30]}
+                    domain={[0, maxPossibleComplexityScore]}
                     label={{ value: "Facilité d'implémentation", position: "insideBottom", offset: -10 }}
                   />
                   <YAxis 
                     type="number" 
                     dataKey="value" 
                     name="Valeur" 
-                    domain={[0, 40]}
+                    domain={[0, maxPossibleValueScore]}
                     label={{ value: "Valeur", angle: -90, position: "insideLeft" }}
                   />
                   <ZAxis type="category" dataKey="name" />

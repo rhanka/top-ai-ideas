@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UseCase, LevelThreshold } from "@/types";
@@ -55,9 +54,10 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
       
       if (valueLevel === 0 || complexityLevel === 0) return;
       
-      // Add to appropriate grid cell (5★ at top, 5X at right)
+      // Add to appropriate grid cell (5★ at top, 5X at LEFT now - inverted from previous)
       const valueIndex = 5 - valueLevel;
-      const complexityIndex = complexityLevel - 1;
+      // Reverse the complexity index to show highest complexity first
+      const complexityIndex = 5 - complexityLevel;
       
       const cellArray = grid[valueIndex][complexityIndex] as unknown as UseCase[];
       cellArray.push(useCase);
@@ -71,19 +71,20 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
   // Color schemes based on position (strategic value)
   const getBackgroundColor = (valueIndex: number, complexityIndex: number) => {
     // High value (5★), low complexity (X) - best scenario
-    if (valueIndex === 0 && complexityIndex === 0) return "bg-green-200";
+    // Note: Now low complexity is at RIGHT (high index)
+    if (valueIndex === 0 && complexityIndex === 4) return "bg-green-200";
     
     // High value zones (4-5★)
-    if ((valueIndex === 0 || valueIndex === 1) && complexityIndex <= 2) return "bg-green-100";
+    if ((valueIndex === 0 || valueIndex === 1) && complexityIndex >= 2) return "bg-green-100";
     
     // Medium value, low complexity - good options
-    if ((valueIndex === 2) && complexityIndex <= 1) return "bg-green-50";
+    if ((valueIndex === 2) && complexityIndex >= 3) return "bg-green-50";
     
     // Low value (1-2★), high complexity (4-5X) - worst scenario
-    if ((valueIndex >= 3) && complexityIndex >= 3) return "bg-red-100";
+    if ((valueIndex >= 3) && complexityIndex <= 1) return "bg-red-100";
     
     // Medium cases with higher complexity - caution
-    if (complexityIndex >= 3) return "bg-orange-50";
+    if (complexityIndex <= 1) return "bg-orange-50";
     
     // Other cases - neutral
     return "bg-gray-50";
@@ -103,9 +104,10 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
     );
   };
   
-  // Render X's for complexity level
+  // Render X's for complexity level - now in inverse order
   const renderComplexityX = (complexityIndex: number) => {
-    const crosses = complexityIndex + 1;
+    // Invert the X rendering to match the new order (highest complexity first)
+    const crosses = 5 - complexityIndex;
     return (
       <div className="flex">
         {[1, 2, 3, 4, 5].map((level) => (
@@ -121,50 +123,51 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
   const getAdvice = (valueIndex: number, complexityIndex: number) => {
     // Value 5★ (highest)
     if (valueIndex === 0) {
-      if (complexityIndex === 0) return "Priorité maximale";
-      if (complexityIndex === 1) return "Haute priorité";
+      if (complexityIndex === 4) return "Priorité maximale";
+      if (complexityIndex === 3) return "Haute priorité";
       if (complexityIndex === 2) return "Planifier rapidement";
-      if (complexityIndex === 3) return "Étudier simplification";
+      if (complexityIndex === 1) return "Étudier simplification";
       return "Rechercher alternatives";
     }
     
     // Value 4★
     if (valueIndex === 1) {
-      if (complexityIndex === 0) return "Haute priorité";
-      if (complexityIndex === 1) return "Priorité élevée";
+      if (complexityIndex === 4) return "Haute priorité";
+      if (complexityIndex === 3) return "Priorité élevée";
       if (complexityIndex === 2) return "Planifier à moyen terme";
-      if (complexityIndex === 3) return "Évaluer options";
+      if (complexityIndex === 1) return "Évaluer options";
       return "Simplifier ou reporter";
     }
     
     // Value 3★
     if (valueIndex === 2) {
-      if (complexityIndex === 0) return "Implémenter rapidement";
-      if (complexityIndex === 1) return "Bonne initiative";
+      if (complexityIndex === 4) return "Implémenter rapidement";
+      if (complexityIndex === 3) return "Bonne initiative";
       if (complexityIndex === 2) return "Évaluer l'effort/valeur";
-      if (complexityIndex === 3) return "Simplification nécessaire";
+      if (complexityIndex === 1) return "Simplification nécessaire";
       return "Probablement à éviter";
     }
     
     // Value 2★
     if (valueIndex === 3) {
-      if (complexityIndex === 0) return "Quick-win secondaire";
-      if (complexityIndex === 1) return "Considérer si ressources";
+      if (complexityIndex === 4) return "Quick-win secondaire";
+      if (complexityIndex === 3) return "Considérer si ressources";
       if (complexityIndex === 2) return "Faible priorité";
-      if (complexityIndex === 3) return "Très faible priorité";
+      if (complexityIndex === 1) return "Très faible priorité";
       return "Ne pas poursuivre";
     }
     
     // Value 1★ (lowest)
-    if (complexityIndex === 0) return "Effort minime si ressources";
-    if (complexityIndex === 1) return "Très faible priorité";
+    if (complexityIndex === 4) return "Effort minime si ressources";
+    if (complexityIndex === 3) return "Très faible priorité";
     return "Ne pas poursuivre";
   };
   
   // Get the threshold information for cell
   const getThresholdInfo = (valueIndex: number, complexityIndex: number) => {
     const valueLevel = 5 - valueIndex;
-    const complexityLevel = complexityIndex + 1;
+    // Adjust the complexity level calculation for the inverted display
+    const complexityLevel = 5 - complexityIndex;
     
     const valueData = valueThresholds.find(t => t.level === valueLevel);
     const complexityData = complexityThresholds.find(t => t.level === complexityLevel);
@@ -190,7 +193,7 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Matrix header - Complexity levels */}
+        {/* Matrix header - Complexity levels - now in reverse order */}
         <div className="flex mb-2">
           <div className="w-32"></div>
           <div className="grid grid-cols-5 flex-1 gap-2">
