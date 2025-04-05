@@ -31,19 +31,20 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
   onRatingChange
 }) => {
   const renderRatingSymbols = (axisId: string, rating: number) => {
+    if (isEditing) return null;
+    
     return (
       <div className="flex">
         {[1, 2, 3, 4, 5].map((level) => (
           <button
             key={level}
             type="button"
-            onClick={() => isEditing && onRatingChange(isValue, axisId, level)}
-            disabled={!isEditing}
+            disabled={true}
             className={`text-xl ${isValue ? "text-2xl" : "font-bold mx-1"} ${
               level <= rating 
                 ? isValue ? "text-yellow-500" : "text-gray-800" 
                 : "text-gray-300"
-            } ${isEditing ? "cursor-pointer hover:" + (isValue ? "text-yellow-400" : "text-gray-600") : "cursor-default"}`}
+            } cursor-default`}
           >
             {isValue ? "★" : "X"}
           </button>
@@ -103,9 +104,9 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
                 <TableCell className="font-medium w-1/3">{score.axisId}</TableCell>
                 <TableCell className="w-1/4">
                   {renderRatingSymbols(score.axisId, score.rating)}
+                  {isEditing && renderRatingDropdown(score.axisId, score.rating)}
                 </TableCell>
                 <TableCell>
-                  {isEditing && renderRatingDropdown(score.axisId, score.rating)}
                   <p className="text-sm">{score.description}</p>
                 </TableCell>
               </TableRow>
