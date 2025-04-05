@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -545,7 +546,8 @@ const UseCaseDetail: React.FC = () => {
         </div>
       </div>
       
-      <div className="mt-8 space-y-8">
+      {/* Modification ici: Affichage des axes valeur et complexité sur 2 colonnes */}
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
         <RatingsTable 
           title="Axes de Valeur"
           scores={useCase.valueScores}
