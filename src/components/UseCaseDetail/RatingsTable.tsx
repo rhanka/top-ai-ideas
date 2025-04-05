@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Table, TableBody, TableCell, TableRow, TableFooter } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +71,7 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
           <SelectTrigger className="w-full">
             <SelectValue placeholder={isValue ? "Sélectionner une note" : "Sélectionner un niveau"} />
           </SelectTrigger>
-          <SelectContent align="start" className="max-w-[90vw] md:max-w-[400px]">
+          <SelectContent>
             {[1, 2, 3, 4, 5].map((rating) => {
               // Find description for this rating
               let ratingDescription = "";
@@ -82,11 +83,8 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
               }
               
               return (
-                <SelectItem key={rating} value={rating.toString()} className="text-left whitespace-normal">
-                  <div className="flex">
-                    <span className="font-medium mr-1">{rating} -</span>
-                    <span className="line-clamp-2">{ratingDescription}</span>
-                  </div>
+                <SelectItem key={rating} value={rating.toString()}>
+                  {rating} - {ratingDescription}
                 </SelectItem>
               );
             })}
