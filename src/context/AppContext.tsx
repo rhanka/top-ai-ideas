@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
 
@@ -266,11 +267,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [matrixConfig, setMatrixConfig] = useState<MatrixConfig>(defaultMatrixConfig);
   const [activeUseCase, setActiveUseCase] = useState<UseCase | null>(null);
   const [currentInput, setCurrentInput] = useState<string>("");
-
-  // Effect to update cases count in thresholds whenever useCases or matrixConfig changes
+  
+  // Effect to update cases count in thresholds whenever useCases changes
   useEffect(() => {
     updateCasesCounts();
-  }, [useCases, matrixConfig.valueThresholds, matrixConfig.complexityThresholds]);
+    // Only depend on useCases, not on threshold states which get updated in updateCasesCounts
+  }, [useCases]);
   
   // Add new use case
   const addUseCase = (useCase: UseCase) => {
@@ -372,22 +374,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     });
     
-    // Update matrix configuration with new counts
-    setMatrixConfig({
-      ...matrixConfig,
-      valueThresholds: updatedValueThresholds,
-      complexityThresholds: updatedComplexityThresholds
-    });
+    // Update matrix configuration with new counts but avoid a re-render if values are the same
+    if (JSON.stringify(updatedValueThresholds) !== JSON.stringify(matrixConfig.valueThresholds) || 
+        JSON.stringify(updatedComplexityThresholds) !== JSON.stringify(matrixConfig.complexityThresholds)) {
+      setMatrixConfig(prevConfig => ({
+        ...prevConfig,
+        valueThresholds: updatedValueThresholds,
+        complexityThresholds: updatedComplexityThresholds
+      }));
+    }
   };
 
   // Update thresholds
   const updateThresholds = (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => {
-    const updatedConfig = { 
-      ...matrixConfig,
-      valueThresholds: valueThresholds || matrixConfig.valueThresholds,
-      complexityThresholds: complexityThresholds || matrixConfig.complexityThresholds
-    };
-    setMatrixConfig(updatedConfig);
+    setMatrixConfig(prevConfig => ({ 
+      ...prevConfig,
+      valueThresholds: valueThresholds || prevConfig.valueThresholds,
+      complexityThresholds: complexityThresholds || prevConfig.complexityThresholds
+    }));
   };
   
   // Count use cases in a specific level
