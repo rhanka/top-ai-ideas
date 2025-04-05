@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
 import { toast } from "sonner";
@@ -7,6 +8,86 @@ import { OpenAIService } from "../services/OpenAIService";
 const OPENAI_API_KEY = "openai_api_key";
 const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
 const USE_CASE_DETAIL_PROMPT = "use_case_detail_prompt";
+
+// Default prompts with placeholders
+const DEFAULT_USE_CASE_LIST_PROMPT = 
+`Génère une liste de 5 cas d'usage d'IA innovants pour le domaine suivant: {{user_input}}.
+Pour chaque cas d'usage, propose un titre court et explicite.
+Format: liste numérotée sans description.`;
+
+const DEFAULT_USE_CASE_DETAIL_PROMPT = 
+`Génère un cas d'usage détaillé pour "{{use_case}}" dans le contexte suivant: {{user_input}}. Utilise la matrice valeur/complexité fournie: {{matrix}} pour évaluer chaque axe de valeur et complexité.
+
+La réponse doit impérativement contenir tous les éléments suivants au format JSON:
+
+{
+  "name": "{{use_case}}",
+  "description": "Description détaillée du cas d'usage sur 5-10 lignes",
+  "domain": "Le domaine d'application principal",
+  "technology": "Technologies d'IA à utiliser (NLP, Computer Vision, etc.)",
+  "deadline": "Estimation du délai de mise en œuvre (ex: Q3 2025)",
+  "contact": "Nom du responsable suggéré",
+  "benefits": [
+    "Bénéfice 1",
+    "Bénéfice 2",
+    "Bénéfice 3",
+    "Bénéfice 4",
+    "Bénéfice 5"
+  ],
+  "metrics": [
+    "KPI ou mesure de succès 1",
+    "KPI ou mesure de succès 2",
+    "KPI ou mesure de succès 3"
+  ],
+  "risks": [
+    "Risque 1",
+    "Risque 2",
+    "Risque 3"
+  ],
+  "nextSteps": [
+    "Étape 1",
+    "Étape 2",
+    "Étape 3",
+    "Étape 4"
+  ],
+  "sources": [
+    "Source de données 1",
+    "Source de données 2"
+  ],
+  "relatedData": [
+    "Donnée associée 1",
+    "Donnée associée 2",
+    "Donnée associée 3"
+  ],
+  "valueScores": [
+    {
+      "axisId": "Nom du 1er axe de valeur",
+      "rating": 4,
+      "description": "Justification du score"
+    },
+    {
+      "axisId": "Nom du 2ème axe de valeur",
+      "rating": 3,
+      "description": "Justification du score"
+    }
+    // Complète pour les autres axes de valeur présents dans la matrice
+  ],
+  "complexityScores": [
+    {
+      "axisId": "Nom du 1er axe de complexité",
+      "rating": 2,
+      "description": "Justification du score"
+    },
+    {
+      "axisId": "Nom du 2ème axe de complexité",
+      "rating": 4,
+      "description": "Justification du score"
+    }
+    // Complète pour les autres axes de complexité présents dans la matrice
+  ]
+}
+
+IMPORTANT: Réponds UNIQUEMENT avec le JSON, sans texte avant ou après. Veille à ce que chaque axe de la matrice fournie ait bien son score correspondant dans les sections valueScores et complexityScores.`;
 
 // Define the ValueRating and ComplexityRating types that were previously referenced but not imported
 type ValueRating = 1 | 2 | 3 | 4 | 5;
