@@ -273,12 +273,11 @@ type AppContextType = {
   clearOpenAIApiKey: () => void;
 };
 
-// Create context
+// Create context with default undefined value
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Move useState hooks to the top level of the function component
   const [useCases, setUseCases] = useState<UseCase[]>(initialUseCases);
   const [matrixConfig, setMatrixConfig] = useState<MatrixConfig>(defaultMatrixConfig);
   const [activeUseCase, setActiveUseCase] = useState<UseCase | null>(null);
