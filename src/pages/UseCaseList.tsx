@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -33,7 +32,6 @@ const UseCaseList: React.FC = () => {
   const isMobile = useIsMobile();
   const [useCaseToDelete, setUseCaseToDelete] = useState<UseCase | null>(null);
   
-  // Filtrer les cas d'usage pour n'afficher que ceux du dossier actif
   const currentFolder = getCurrentFolder();
   const filteredUseCases = currentFolderId 
     ? useCases.filter(useCase => useCase.folderId === currentFolderId) 
@@ -66,35 +64,30 @@ const UseCaseList: React.FC = () => {
     setUseCaseToDelete(null);
   };
   
-  // Function to determine value level based on thresholds
   const getValueLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.valueThresholds) return 0;
     
-    // Find the level corresponding to the score
     for (let i = matrixConfig.valueThresholds.length - 1; i >= 0; i--) {
       const threshold = matrixConfig.valueThresholds[i];
       if (score >= threshold.threshold) {
         return threshold.level;
       }
     }
-    return 1; // Default minimum level
+    return 1;
   };
   
-  // Function to determine complexity level based on thresholds
   const getComplexityLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.complexityThresholds) return 0;
     
-    // Find the level corresponding to the score
     for (let i = matrixConfig.complexityThresholds.length - 1; i >= 0; i--) {
       const threshold = matrixConfig.complexityThresholds[i];
       if (score >= threshold.threshold) {
         return threshold.level;
       }
     }
-    return 1; // Default minimum level
+    return 1;
   };
   
-  // Function to render value rating as stars
   const renderValueRating = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -111,7 +104,6 @@ const UseCaseList: React.FC = () => {
     );
   };
   
-  // Function to render complexity rating as X's
   const renderComplexityRating = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -130,33 +122,62 @@ const UseCaseList: React.FC = () => {
   
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
-      <div className="flex flex-col mb-8">
-        <div className="mb-4">
-          <h1 className="text-3xl font-bold text-navy">Cas d'usage IA</h1>
-          {currentFolder && (
-            <p className="text-gray-600 mt-1">
-              Dossier: {currentFolder.name}
-            </p>
-          )}
-        </div>
-        
-        <div className={`flex ${isMobile ? "flex-col gap-2" : "gap-2 justify-end"}`}>
-          <Button 
-            onClick={() => navigate('/dossiers')}
-            variant="outline" 
-            className={isMobile ? "w-full" : ""}
-          >
-            <FolderOpen className="mr-2 h-5 w-5" /> Voir les dossiers
-          </Button>
+      {isMobile ? (
+        <div className="flex flex-col mb-8">
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold text-navy">Cas d'usage IA</h1>
+            {currentFolder && (
+              <p className="text-gray-600 mt-1">
+                Dossier: {currentFolder.name}
+              </p>
+            )}
+          </div>
           
-          <Button 
-            onClick={handleCreateNew}
-            className={`bg-navy hover:bg-navy/90 ${isMobile ? "w-full" : ""}`}
-          >
-            <PlusCircle className="mr-2 h-5 w-5" /> Nouveau cas d'usage
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button 
+              onClick={() => navigate('/dossiers')}
+              variant="outline" 
+              className="w-full"
+            >
+              <FolderOpen className="mr-2 h-5 w-5" /> Voir les dossiers
+            </Button>
+            
+            <Button 
+              onClick={handleCreateNew}
+              className="bg-navy hover:bg-navy/90 w-full"
+            >
+              <PlusCircle className="mr-2 h-5 w-5" /> Nouveau cas d'usage
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-navy">Cas d'usage IA</h1>
+            {currentFolder && (
+              <p className="text-gray-600 mt-1">
+                Dossier: {currentFolder.name}
+              </p>
+            )}
+          </div>
+          
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => navigate('/dossiers')}
+              variant="outline" 
+            >
+              <FolderOpen className="mr-2 h-5 w-5" /> Voir les dossiers
+            </Button>
+            
+            <Button 
+              onClick={handleCreateNew}
+              className="bg-navy hover:bg-navy/90"
+            >
+              <PlusCircle className="mr-2 h-5 w-5" /> Nouveau cas d'usage
+            </Button>
+          </div>
+        </div>
+      )}
       
       {!currentFolder ? (
         <div className="text-center py-16 bg-gray-50 rounded-lg">
