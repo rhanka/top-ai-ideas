@@ -1,0 +1,98 @@
+
+import { useState } from 'react';
+import { UseCase, MatrixConfig } from '../types';
+import { toast } from 'sonner';
+import { OpenAIService } from '../services/OpenAIService';
+import { 
+  OPENAI_API_KEY, 
+  USE_CASE_LIST_PROMPT, 
+  USE_CASE_DETAIL_PROMPT, 
+  DEFAULT_USE_CASE_LIST_PROMPT, 
+  DEFAULT_USE_CASE_DETAIL_PROMPT 
+} from './constants';
+import { calcInitialScore } from './useCaseUtils';
+
+export const useOpenAI = (matrixConfig: MatrixConfig, addUseCase: (useCase: UseCase) => void) => {
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+
+  // Generate new use cases based on user input using OpenAI
+  const generateUseCases = async (currentInput: string): Promise<boolean> => {
+    if (currentInput.trim().length === 0) {
+      toast.error("Veuillez saisir une description de votre activité");
+      return false;
+    }
+
+    // Get OpenAI API key from localStorage
+    const apiKey = localStorage.getItem(OPENAI_API_KEY);
+    if (!apiKey) {
+      toast.error("Clé API OpenAI non configurée", {
+        description: "Veuillez configurer votre clé API dans les paramètres",
+        action: {
+          label: "Paramètres",
+          onClick: () => window.location.href = "/parametres",
+        },
+      });
+      return false;
+    }
+
+    // Get prompts from localStorage or use defaults
+    const listPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT) || DEFAULT_USE_CASE_LIST_PROMPT;
+    const detailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT) || DEFAULT_USE_CASE_DETAIL_PROMPT;
+
+    const openai = new OpenAIService(apiKey);
+    setIsGenerating(true);
+    
+    try {
+      // Step 1: Generate list of use case titles
+      toast.info("Génération des cas d'usage en cours...");
+      const useCaseTitles = await openai.generateUseCaseList(currentInput, listPrompt);
+      
+      if (useCaseTitles.length === 0) {
+        toast.error("Aucun cas d'usage généré. Veuillez reformuler votre demande.");
+        setIsGenerating(false);
+        return false;
+      }
+
+      // Step 2: For each use case title, generate detailed use case
+      let successCount = 0;
+      
+      for (const title of useCaseTitles) {
+        try {
+          const useCaseDetail = await openai.generateUseCaseDetail(
+            title,
+            currentInput,
+            matrixConfig,
+            detailPrompt
+          );
+          
+          // Calculate scores for the use case
+          const scoredUseCase = calcInitialScore(useCaseDetail, matrixConfig);
+          addUseCase(scoredUseCase);
+          successCount++;
+          
+        } catch (error) {
+          console.error(`Error generating details for "${title}":`, error);
+        }
+      }
+
+      // Finalize the generation process
+      if (successCount > 0) {
+        openai.finalizeGeneration(true, successCount);
+        return true;
+      } else {
+        openai.finalizeGeneration(false, 0);
+        return false;
+      }
+    } catch (error) {
+      console.error("Error in use case generation:", error);
+      toast.error("Erreur lors de la génération des cas d'usage", {
+        description: (error as Error).message,
+      });
+      return false;
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return { isGenerating, generateUseCases };
+};
