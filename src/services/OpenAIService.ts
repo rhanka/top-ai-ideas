@@ -4,6 +4,7 @@ import { UseCase, MatrixConfig } from "../types";
 
 export class OpenAIService {
   private apiKey: string;
+  private toastId: string | number | undefined;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
@@ -12,6 +13,13 @@ export class OpenAIService {
   async generateUseCaseList(userInput: string, prompt: string): Promise<string[]> {
     try {
       const formattedPrompt = prompt.replace("{{user_input}}", userInput);
+
+      // Update the existing toast instead of creating a new one
+      this.toastId = toast.loading("Génération en cours...", {
+        description: "Création de la liste des cas d'usage",
+        duration: Infinity, // Keep toast open
+        id: this.toastId
+      });
 
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -30,6 +38,10 @@ export class OpenAIService {
       if (!response.ok) {
         const error = await response.json();
         console.error("OpenAI API error:", error);
+        toast.error("Erreur API OpenAI", { 
+          description: error.error?.message || "Échec de la génération des cas d'usage",
+          id: this.toastId 
+        });
         throw new Error(error.error?.message || "Failed to generate use cases");
       }
 
@@ -42,9 +54,19 @@ export class OpenAIService {
         .filter((line: string) => /^\d+\./.test(line.trim()))
         .map((line: string) => line.replace(/^\d+\.\s*/, "").trim());
 
+      // Update toast with success message
+      toast.loading("Liste des cas d'usage créée", { 
+        description: `${useCases.length} cas d'usage identifiés`,
+        id: this.toastId 
+      });
+
       return useCases;
     } catch (error) {
       console.error("Error generating use case list:", error);
+      toast.error("Erreur de génération", { 
+        description: `${(error as Error).message}`,
+        id: this.toastId 
+      });
       throw error;
     }
   }
@@ -67,6 +89,12 @@ export class OpenAIService {
           description: axis.description,
         })),
       };
+
+      // Update the loading toast for this specific use case
+      toast.loading("Génération en cours...", { 
+        description: `Création des détails pour "${useCase}"`,
+        id: this.toastId 
+      });
 
       const formattedPrompt = prompt
         .replace("{{use_case}}", useCase)
@@ -91,6 +119,10 @@ export class OpenAIService {
       if (!response.ok) {
         const error = await response.json();
         console.error("OpenAI API error:", error);
+        toast.error("Erreur API OpenAI", { 
+          description: `Échec pour "${useCase}": ${error.error?.message}`,
+          id: this.toastId 
+        });
         throw new Error(error.error?.message || "Failed to generate use case detail");
       }
 
@@ -101,7 +133,7 @@ export class OpenAIService {
       const id = `ID${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`;
 
       // Ensure all required fields are present
-      return {
+      const completeUseCase = {
         id,
         name: jsonContent.name || useCase,
         domain: jsonContent.domain || "",
@@ -118,9 +150,40 @@ export class OpenAIService {
         valueScores: jsonContent.valueScores || [],
         complexityScores: jsonContent.complexityScores || [],
       };
+
+      // Update toast with success for this specific use case
+      toast.loading("Génération en cours...", { 
+        description: `Cas d'usage "${useCase}" complété avec succès`,
+        id: this.toastId 
+      });
+
+      return completeUseCase;
     } catch (error) {
       console.error("Error generating use case detail:", error);
+      toast.error("Erreur de génération", { 
+        description: `${(error as Error).message}`,
+        id: this.toastId 
+      });
       throw error;
     }
+  }
+
+  // Method to finalize the generation process
+  finalizeGeneration(success: boolean, count: number) {
+    if (success) {
+      toast.success(`Génération terminée`, { 
+        description: `${count} cas d'usage générés avec succès !`,
+        id: this.toastId,
+        duration: 5000 // Close after 5 seconds
+      });
+    } else {
+      toast.error("Échec de la génération", { 
+        description: "Une erreur est survenue lors de la génération",
+        id: this.toastId,
+        duration: 5000 // Close after 5 seconds
+      });
+    }
+    
+    this.toastId = undefined;
   }
 }

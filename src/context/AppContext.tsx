@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
 import { toast } from "sonner";
@@ -550,7 +549,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const newUseCases: UseCase[] = [];
       
       for (const title of useCaseTitles) {
-        toast.info(`Génération des détails pour "${title}"...`);
         try {
           const useCaseDetail = await openai.generateUseCaseDetail(
             title,
@@ -562,19 +560,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           // Calculate scores for the use case
           const scoredUseCase = calcInitialScore(useCaseDetail, matrixConfig);
           newUseCases.push(scoredUseCase);
+          
+          // Add the use case immediately to show progressive updates
+          setUseCases(prev => [...prev, scoredUseCase]);
+          
         } catch (error) {
           console.error(`Error generating details for "${title}":`, error);
-          toast.error(`Erreur lors de la génération des détails pour "${title}"`);
         }
       }
 
-      // Add all successfully generated use cases
+      // Finalize the generation process
       if (newUseCases.length > 0) {
-        setUseCases([...useCases, ...newUseCases]);
-        toast.success(`${newUseCases.length} cas d'usage générés avec succès!`);
+        openai.finalizeGeneration(true, newUseCases.length);
         setCurrentInput("");
       } else {
-        toast.error("Échec de la génération des cas d'usage");
+        openai.finalizeGeneration(false, 0);
       }
     } catch (error) {
       console.error("Error in use case generation:", error);
