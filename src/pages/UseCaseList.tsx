@@ -22,21 +22,24 @@ const UseCaseList: React.FC = () => {
     navigate(`/cas-usage/${useCase.id}`);
   };
   
-  // Function to render value rating as stars based on score
+  // Function to render value rating as stars based on score - corrected threshold logic
   const renderValueRating = (score: number | undefined) => {
     if (!score) return "N/A";
     
     // Determine level based on value thresholds
-    let level = 1;
     const thresholds = [0, 40, 100, 400, 1500];
+    let level = 1;
     
-    for (let i = 0; i < thresholds.length; i++) {
-      if (score > thresholds[i]) {
+    for (let i = 0; i < thresholds.length - 1; i++) {
+      if (score > thresholds[i] && score <= thresholds[i + 1]) {
         level = i + 1;
-      } else {
         break;
+      } else if (score > thresholds[i + 1]) {
+        level = i + 2;
       }
     }
+    
+    level = Math.min(level, 5); // Ensure level doesn't exceed 5
     
     return (
       <div className="flex">
@@ -49,21 +52,24 @@ const UseCaseList: React.FC = () => {
     );
   };
   
-  // Function to render complexity rating as X's based on score
+  // Function to render complexity rating as X's based on score - corrected threshold logic
   const renderComplexityRating = (score: number | undefined) => {
     if (!score) return "N/A";
     
     // Determine level based on complexity thresholds
-    let level = 1;
     const thresholds = [0, 50, 100, 250, 500];
+    let level = 1;
     
-    for (let i = 0; i < thresholds.length; i++) {
-      if (score > thresholds[i]) {
+    for (let i = 0; i < thresholds.length - 1; i++) {
+      if (score > thresholds[i] && score <= thresholds[i + 1]) {
         level = i + 1;
-      } else {
         break;
+      } else if (score > thresholds[i + 1]) {
+        level = i + 2;
       }
     }
+    
+    level = Math.min(level, 5); // Ensure level doesn't exceed 5
     
     return (
       <div className="flex">
