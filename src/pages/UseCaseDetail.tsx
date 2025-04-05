@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -109,62 +110,6 @@ const UseCaseDetail: React.FC = () => {
     updateUseCase(useCase);
     setIsEditing(false);
     toast.success("Cas d'usage mis à jour");
-  };
-  
-  const renderValueRating = (score: number | undefined) => {
-    if (!score) return "N/A";
-    
-    const thresholds = [0, 40, 100, 400, 1500];
-    let level = 1;
-    
-    for (let i = 0; i < thresholds.length - 1; i++) {
-      if (score > thresholds[i] && score <= thresholds[i + 1]) {
-        level = i + 1;
-        break;
-      } else if (score > thresholds[i + 1]) {
-        level = i + 2;
-      }
-    }
-    
-    level = Math.min(level, 5);
-    
-    return (
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <span key={star} className={`text-lg ${star <= level ? "text-yellow-500" : "text-gray-300"}`}>
-            ★
-          </span>
-        ))}
-      </div>
-    );
-  };
-  
-  const renderComplexityRating = (score: number | undefined) => {
-    if (!score) return "N/A";
-    
-    const thresholds = [0, 50, 100, 250, 500];
-    let level = 1;
-    
-    for (let i = 0; i < thresholds.length - 1; i++) {
-      if (score > thresholds[i] && score <= thresholds[i + 1]) {
-        level = i + 1;
-        break;
-      } else if (score > thresholds[i + 1]) {
-        level = i + 2;
-      }
-    }
-    
-    level = Math.min(level, 5);
-    
-    return (
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((x) => (
-          <span key={x} className={`font-bold ${x <= level ? "text-gray-800" : "text-gray-300"}`}>
-            X
-          </span>
-        ))}
-      </div>
-    );
   };
   
   if (!useCase) {
@@ -439,26 +384,6 @@ const UseCaseDetail: React.FC = () => {
                 ) : (
                   <p className="font-medium">{useCase.technology}</p>
                 )}
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Valeur:</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">
-                    {useCase.totalValueScore?.toLocaleString() || "N/A"}
-                  </span>
-                  {renderValueRating(useCase.totalValueScore)}
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Complexité:</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">
-                    {useCase.totalComplexityScore?.toLocaleString() || "N/A"}
-                  </span>
-                  {renderComplexityRating(useCase.totalComplexityScore)}
-                </div>
               </div>
               
               <div className="flex items-center">
