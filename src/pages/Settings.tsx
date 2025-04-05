@@ -3,22 +3,56 @@ import React, { useState, useEffect } from "react";
 import { Save, Trash2, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
 const OPENAI_API_KEY = "openai_api_key";
+const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
+const USE_CASE_DETAIL_PROMPT = "use_case_detail_prompt";
+
+// Default prompts with placeholders
+const DEFAULT_USE_CASE_LIST_PROMPT = 
+`Génère une liste de 5 cas d'usage d'IA innovants pour le domaine suivant: {{user_input}}.
+Pour chaque cas d'usage, propose un titre court et explicite.
+Format: liste numérotée sans description.`;
+
+const DEFAULT_USE_CASE_DETAIL_PROMPT = 
+`Génère un cas d'usage détaillé pour "{{use_case}}" basé sur cette matrice valeur/complexité: {{matrix}}.
+Inclus:
+- Titre: un titre clair et concis
+- Description: explication détaillée du cas d'usage
+- Objectifs: 3-5 objectifs principaux
+- Bénéfices: avantages concrets pour l'organisation
+- Challenges: principaux défis techniques et organisationnels
+- Ressources: compétences et outils nécessaires
+- Timeline: estimation du temps de mise en œuvre
+- Indicateurs de succès: 3-4 KPIs mesurables`;
 
 const Settings: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>("");
+  const [useCaseListPrompt, setUseCaseListPrompt] = useState<string>(DEFAULT_USE_CASE_LIST_PROMPT);
+  const [useCaseDetailPrompt, setUseCaseDetailPrompt] = useState<string>(DEFAULT_USE_CASE_DETAIL_PROMPT);
   const [saved, setSaved] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load API key from localStorage on component mount
+    // Load saved values from localStorage on component mount
     const savedKey = localStorage.getItem(OPENAI_API_KEY);
+    const savedListPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT);
+    const savedDetailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT);
+    
     if (savedKey) {
       setApiKey(savedKey);
       setSaved(true);
+    }
+    
+    if (savedListPrompt) {
+      setUseCaseListPrompt(savedListPrompt);
+    }
+    
+    if (savedDetailPrompt) {
+      setUseCaseDetailPrompt(savedDetailPrompt);
     }
   }, []);
 
@@ -37,17 +71,20 @@ const Settings: React.FC = () => {
       toast({
         title: "Attention",
         description: "Le format de clé API semble incorrect",
-        variant: "warning",
+        variant: "default",
       });
     }
 
-    // Save key to localStorage
+    // Save values to localStorage
     localStorage.setItem(OPENAI_API_KEY, apiKey);
+    localStorage.setItem(USE_CASE_LIST_PROMPT, useCaseListPrompt);
+    localStorage.setItem(USE_CASE_DETAIL_PROMPT, useCaseDetailPrompt);
+    
     setSaved(true);
     
     toast({
       title: "Succès",
-      description: "La clé API OpenAI a été enregistrée",
+      description: "Les paramètres ont été enregistrés",
       variant: "default",
     });
   };
@@ -64,11 +101,22 @@ const Settings: React.FC = () => {
     });
   };
 
+  const resetPrompts = () => {
+    setUseCaseListPrompt(DEFAULT_USE_CASE_LIST_PROMPT);
+    setUseCaseDetailPrompt(DEFAULT_USE_CASE_DETAIL_PROMPT);
+    
+    toast({
+      title: "Prompts réinitialisés",
+      description: "Les prompts ont été réinitialisés aux valeurs par défaut",
+      variant: "default",
+    });
+  };
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Paramètres</h1>
       
-      <Card className="max-w-2xl mx-auto">
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>Configuration de l'API OpenAI</CardTitle>
           <CardDescription>
@@ -116,6 +164,57 @@ const Settings: React.FC = () => {
                 <span>Enregistrer</span>
               </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Prompt pour la liste de cas d'usage</CardTitle>
+          <CardDescription>
+            Ce prompt sera utilisé pour générer une liste de cas d'usage à partir de l'entrée utilisateur. 
+            Utilisez {{user_input}} comme placeholder pour l'entrée de l'utilisateur.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Textarea 
+            value={useCaseListPrompt}
+            onChange={(e) => setUseCaseListPrompt(e.target.value)}
+            placeholder="Entrez votre prompt personnalisé..."
+            className="min-h-[150px]"
+          />
+        </CardContent>
+      </Card>
+      
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Prompt pour le détail d'un cas d'usage</CardTitle>
+          <CardDescription>
+            Ce prompt sera utilisé pour générer le contenu détaillé d'un cas d'usage. 
+            Utilisez {{use_case}} pour le cas d'usage sélectionné et {{matrix}} pour la matrice de valeur/complexité.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Textarea 
+            value={useCaseDetailPrompt}
+            onChange={(e) => setUseCaseDetailPrompt(e.target.value)}
+            placeholder="Entrez votre prompt personnalisé..."
+            className="min-h-[200px]"
+          />
+          
+          <div className="mt-4 flex gap-2 justify-end">
+            <Button 
+              variant="outline" 
+              onClick={resetPrompts}
+              className="flex gap-1"
+            >
+              <Trash2 size={16} />
+              <span>Réinitialiser les prompts</span>
+            </Button>
+            <Button onClick={handleSave} className="flex gap-1">
+              <Save size={16} />
+              <span>Enregistrer tous les paramètres</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
