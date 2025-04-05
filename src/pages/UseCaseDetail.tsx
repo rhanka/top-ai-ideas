@@ -14,7 +14,7 @@ import { UseCase, ValueRating, ComplexityRating } from "@/types";
 const UseCaseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { useCases, updateUseCase } = useAppContext();
+  const { useCases, updateUseCase, matrixConfig } = useAppContext();
   
   const [useCase, setUseCase] = useState<UseCase | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -52,12 +52,19 @@ const UseCaseDetail: React.FC = () => {
   const handleRatingChange = (
     isValue: boolean,
     axisId: string,
-    rating: number,
-    description: string
+    rating: number
   ) => {
     if (!useCase) return;
     
+    // Find the appropriate description from the matrix configuration
+    let description = "";
     if (isValue) {
+      const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
+      if (axis && axis.levelDescriptions) {
+        const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
+        description = levelDescription?.description || "";
+      }
+      
       const newValueScores = useCase.valueScores.map(score => 
         score.axisId === axisId 
           ? { ...score, rating: rating as ValueRating, description } 
@@ -65,6 +72,12 @@ const UseCaseDetail: React.FC = () => {
       );
       setUseCase({ ...useCase, valueScores: newValueScores });
     } else {
+      const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
+      if (axis && axis.levelDescriptions) {
+        const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
+        description = levelDescription?.description || "";
+      }
+      
       const newComplexityScores = useCase.complexityScores.map(score => 
         score.axisId === axisId 
           ? { ...score, rating: rating as ComplexityRating, description } 
@@ -88,6 +101,9 @@ const UseCaseDetail: React.FC = () => {
     const score = useCase.valueScores.find(s => s.axisId === axisId);
     if (!score) return null;
     
+    // Find the axis in the matrix config
+    const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
+    
     return (
       <>
         <div className="flex mb-2">
@@ -95,7 +111,7 @@ const UseCaseDetail: React.FC = () => {
             <button
               key={star}
               type="button"
-              onClick={() => isEditing && handleRatingChange(true, axisId, star, score.description)}
+              onClick={() => isEditing && handleRatingChange(true, axisId, star)}
               disabled={!isEditing}
               className={`text-2xl ${star <= score.rating ? "text-yellow-500" : "text-gray-300"} ${isEditing ? "cursor-pointer hover:text-yellow-400" : "cursor-default"}`}
             >
@@ -104,16 +120,10 @@ const UseCaseDetail: React.FC = () => {
           ))}
         </div>
         
-        {isEditing ? (
-          <Textarea
-            value={score.description}
-            onChange={(e) => handleRatingChange(true, axisId, score.rating, e.target.value)}
-            className="mt-2 text-sm"
-            placeholder="Description du score..."
-          />
-        ) : (
-          <p className="text-sm text-gray-600">{score.description}</p>
-        )}
+        {/* Show the description based on the rating from matrix config */}
+        <p className="text-sm text-gray-600">
+          {score.description}
+        </p>
       </>
     );
   };
@@ -124,6 +134,9 @@ const UseCaseDetail: React.FC = () => {
     const score = useCase.complexityScores.find(s => s.axisId === axisId);
     if (!score) return null;
     
+    // Find the axis in the matrix config
+    const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
+    
     return (
       <>
         <div className="flex mb-2">
@@ -131,7 +144,7 @@ const UseCaseDetail: React.FC = () => {
             <button
               key={level}
               type="button"
-              onClick={() => isEditing && handleRatingChange(false, axisId, level, score.description)}
+              onClick={() => isEditing && handleRatingChange(false, axisId, level)}
               disabled={!isEditing}
               className={`text-xl font-bold mx-1 ${level <= score.rating ? "text-gray-800" : "text-gray-300"} ${isEditing ? "cursor-pointer hover:text-gray-600" : "cursor-default"}`}
             >
@@ -140,16 +153,10 @@ const UseCaseDetail: React.FC = () => {
           ))}
         </div>
         
-        {isEditing ? (
-          <Textarea
-            value={score.description}
-            onChange={(e) => handleRatingChange(false, axisId, score.rating, e.target.value)}
-            className="mt-2 text-sm"
-            placeholder="Description du score..."
-          />
-        ) : (
-          <p className="text-sm text-gray-600">{score.description}</p>
-        )}
+        {/* Show the description based on the rating from matrix config */}
+        <p className="text-sm text-gray-600">
+          {score.description}
+        </p>
       </>
     );
   };
