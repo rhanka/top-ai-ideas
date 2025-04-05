@@ -3,7 +3,7 @@
 
 ## Présentation du projet
 
-**Top AI Ideas** est une application web permettant de générer, évaluer et gérer des cas d'usage d'intelligence artificielle adaptés à votre entreprise. L'application vous aide à identifier les opportunités d'IA les plus pertinentes et à évaluer leur valeur et complexité potentielles.
+**[Top AI Ideas](https://top-ai-ideas.genai-cgi.com)** est une application web permettant de générer, évaluer et gérer des cas d'usage d'intelligence artificielle adaptés à votre entreprise. L'application vous aide à identifier les opportunités d'IA les plus pertinentes et à évaluer leur valeur et complexité potentielles.
 
 ## Fonctionnalités principales
 
