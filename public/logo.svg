@@ -1,0 +1,6 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <rect x="25" y="25" width="150" height="150" rx="15" fill="#0f2557" />
+  <text x="100" y="110" font-family="Arial, sans-serif" font-size="70" font-weight="bold" text-anchor="middle" fill="white">AI</text>
+  <circle cx="150" cy="50" r="15" fill="#ffffff" />
+</svg>

@@ -1,73 +1,59 @@
-# Welcome to your Lovable project
 
-## Project info
+# Top AI Ideas
 
-**URL**: https://lovable.dev/projects/5e00e2ee-65e2-4258-b127-fa7bb632a568
+## Présentation du projet
 
-## How can I edit this code?
+**Top AI Ideas** est une application web permettant de générer, évaluer et gérer des cas d'usage d'intelligence artificielle adaptés à votre entreprise. L'application vous aide à identifier les opportunités d'IA les plus pertinentes et à évaluer leur valeur et complexité potentielles.
 
-There are several ways of editing your application.
+## Fonctionnalités principales
 
-**Use Lovable**
+- Génération automatique de cas d'usage IA adaptés à votre contexte professionnel
+- Évaluation multicritère de la valeur et de la complexité des cas d'usage
+- Visualisation matricielle pour prioriser les initiatives
+- Dashboard pour suivre la progression des projets
+- Interface entièrement en français et adaptée aux besoins des entreprises
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5e00e2ee-65e2-4258-b127-fa7bb632a568) and start prompting.
+## Technologie
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
+Cette application est construite avec:
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+> Ce projet a été développé avec l'aide de Lovable, une plateforme de développement d'applications web assistée par intelligence artificielle.
 
-Simply open [Lovable](https://lovable.dev/projects/5e00e2ee-65e2-4258-b127-fa7bb632a568) and click on Share -> Publish.
+## Comment contribuer au projet
 
-## Can I connect a custom domain to my Lovable project?
+### Développement local
 
-Yes it is!
+Pour contribuer à ce projet, suivez ces étapes:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```sh
+# Étape 1: Clonez le dépôt à l'aide de l'URL Git du projet
+git clone <URL_DU_DÉPÔT>
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+# Étape 2: Accédez au répertoire du projet
+cd top-ai-ideas
+
+# Étape 3: Installez les dépendances nécessaires
+npm i
+
+# Étape 4: Démarrez le serveur de développement avec rechargement automatique et prévisualisation instantanée
+npm run dev
+```
+
+### Autres méthodes de contribution
+
+**Éditer un fichier directement sur GitHub**
+- Accédez au(x) fichier(s) souhaité(s).
+- Cliquez sur le bouton "Modifier" (icône en forme de crayon) en haut à droite de la vue du fichier.
+- Effectuez vos modifications et validez-les.
+
+**Utiliser GitHub Codespaces**
+- Accédez à la page principale de votre dépôt.
+- Cliquez sur le bouton "Code" (bouton vert) près du coin supérieur droit.
+- Sélectionnez l'onglet "Codespaces".
+- Cliquez sur "Nouveau codespace" pour lancer un nouvel environnement Codespace.
+- Modifiez les fichiers directement dans l'environnement Codespace et validez et poussez vos modifications une fois terminé.
