@@ -4,36 +4,6 @@ import { Folder, MatrixConfig, UseCase } from '../types';
 import { defaultMatrixConfig } from './defaultMatrixConfig';
 import { FOLDERS_STORAGE_KEY, CURRENT_FOLDER_ID } from './constants';
 
-// Generate an 8-character hash from a string
-export const generateHashId = (str: string): string => {
-  let hash = 0;
-  if (str.length === 0) return hash.toString(16).padStart(8, '0');
-  
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  
-  // Convert to hex string and ensure it's 8 characters
-  return Math.abs(hash).toString(16).slice(0, 8).padStart(8, '0');
-};
-
-// Ensure ID uniqueness by checking against existing folders
-export const generateUniqueId = (name: string, existingFolders: Folder[]): string => {
-  let baseId = generateHashId(name);
-  let uniqueId = baseId;
-  let counter = 1;
-  
-  // Check if ID already exists, if so, append a counter
-  while (existingFolders.some(folder => folder.id === uniqueId)) {
-    uniqueId = `${baseId}-${counter}`;
-    counter++;
-  }
-  
-  return uniqueId;
-};
-
 // Récupérer tous les dossiers depuis le localStorage
 export const getFolders = (): Folder[] => {
   const foldersJson = localStorage.getItem(FOLDERS_STORAGE_KEY);
@@ -68,17 +38,15 @@ export const setCurrentFolderId = (folderId: string): void => {
 
 // Créer un nouveau dossier
 export const createFolder = (name: string, description: string, config: MatrixConfig = defaultMatrixConfig): Folder => {
-  const folders = getFolders();
-  const newId = generateUniqueId(name, folders);
-  
   const newFolder: Folder = {
-    id: newId,
+    id: uuidv4(),
     name,
     description,
     createdAt: new Date(),
     matrixConfig: { ...config }
   };
   
+  const folders = getFolders();
   saveFolders([...folders, newFolder]);
   
   return newFolder;
