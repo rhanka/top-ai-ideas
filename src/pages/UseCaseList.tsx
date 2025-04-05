@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, FileText, Trash2, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { UseCase } from "@/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +30,7 @@ const UseCaseList: React.FC = () => {
   } = useAppContext();
   
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [useCaseToDelete, setUseCaseToDelete] = useState<UseCase | null>(null);
   
   // Filtrer les cas d'usage pour n'afficher que ceux du dossier actif
@@ -128,8 +130,8 @@ const UseCaseList: React.FC = () => {
   
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
-      <div className="flex justify-between items-center mb-8">
-        <div>
+      <div className="flex flex-col mb-8">
+        <div className="mb-4">
           <h1 className="text-3xl font-bold text-navy">Cas d'usage IA</h1>
           {currentFolder && (
             <p className="text-gray-600 mt-1">
@@ -138,18 +140,18 @@ const UseCaseList: React.FC = () => {
           )}
         </div>
         
-        <div className="flex gap-2">
+        <div className={`flex ${isMobile ? "flex-col gap-2" : "gap-2 justify-end"}`}>
           <Button 
             onClick={() => navigate('/dossiers')}
             variant="outline" 
-            className="mr-2"
+            className={isMobile ? "w-full" : ""}
           >
             <FolderOpen className="mr-2 h-5 w-5" /> Voir les dossiers
           </Button>
           
           <Button 
-            onClick={handleCreateNew} 
-            className="bg-navy hover:bg-navy/90"
+            onClick={handleCreateNew}
+            className={`bg-navy hover:bg-navy/90 ${isMobile ? "w-full" : ""}`}
           >
             <PlusCircle className="mr-2 h-5 w-5" /> Nouveau cas d'usage
           </Button>
