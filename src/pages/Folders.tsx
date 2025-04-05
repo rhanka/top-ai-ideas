@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -29,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getUseCasesFromStorage } from "@/context/folderUtils";
 
 const Folders: React.FC = () => {
   const { folders, addFolder, updateFolder, deleteFolder, setCurrentFolder, currentFolderId, useCases } = useAppContext();
@@ -49,11 +49,9 @@ const Folders: React.FC = () => {
     const newFolder = addFolder(newFolderName, newFolderDescription);
     toast.success(`Dossier "${newFolderName}" créé`);
     
-    // Réinitialiser les champs
     setNewFolderName("");
     setNewFolderDescription("");
     
-    // Définir le nouveau dossier comme dossier actif et naviguer vers la page d'accueil
     setCurrentFolder(newFolder.id);
     navigate('/');
   };
@@ -85,12 +83,11 @@ const Folders: React.FC = () => {
     navigate('/cas-usage');
   };
   
-  // Compter le nombre de cas d'usage par dossier
   const countUseCasesInFolder = (folderId: string): number => {
-    return useCases.filter(useCase => useCase.folderId === folderId).length;
+    const storedUseCases = getUseCasesFromStorage(folderId);
+    return storedUseCases.length;
   };
   
-  // Formater la date
   const formatDate = (date: Date): string => {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -220,7 +217,6 @@ const Folders: React.FC = () => {
         </div>
       )}
       
-      {/* Dialog d'édition */}
       <Dialog open={!!editingFolder} onOpenChange={(open) => !open && setEditingFolder(null)}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -258,7 +254,6 @@ const Folders: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Confirmation de suppression */}
       <AlertDialog open={!!folderToDelete} onOpenChange={(open) => !open && setFolderToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
