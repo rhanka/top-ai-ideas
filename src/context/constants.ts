@@ -3,6 +3,7 @@
 export const OPENAI_API_KEY = "openai_api_key";
 export const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
 export const USE_CASE_DETAIL_PROMPT = "use_case_detail_prompt";
+export const FOLDER_NAME_PROMPT = "folder_name_prompt";
 export const FOLDERS_STORAGE_KEY = "ai_folders";
 export const CURRENT_FOLDER_ID = "current_folder_id";
 
@@ -85,3 +86,15 @@ La réponse doit impérativement contenir tous les éléments suivants au format
 }
 
 IMPORTANT: Réponds UNIQUEMENT avec le JSON, sans texte avant ou après. Veille à ce que chaque axe de la matrice fournie ait bien son score correspondant dans les sections valueScores et complexityScores.`;
+
+// Default prompt for folder name and description generation
+export const DEFAULT_FOLDER_NAME_PROMPT = 
+`À partir de la description suivante de l'activité d'une entreprise: "{{user_input}}", génère un titre court et attractif pour un dossier de cas d'usage IA, ainsi qu'une brève description de ce dossier.
+
+La réponse doit impérativement être au format JSON suivant:
+{
+  "name": "Titre du dossier (max 50 caractères)",
+  "description": "Description concise du dossier (max 150 caractères)"
+}
+
+IMPORTANT: Réponds UNIQUEMENT avec le JSON, sans texte avant ou après.`;

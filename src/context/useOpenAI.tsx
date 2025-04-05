@@ -6,15 +6,45 @@ import { OpenAIService } from '../services/OpenAIService';
 import { 
   OPENAI_API_KEY, 
   USE_CASE_LIST_PROMPT, 
-  USE_CASE_DETAIL_PROMPT, 
+  USE_CASE_DETAIL_PROMPT,
+  FOLDER_NAME_PROMPT,
   DEFAULT_USE_CASE_LIST_PROMPT, 
-  DEFAULT_USE_CASE_DETAIL_PROMPT 
+  DEFAULT_USE_CASE_DETAIL_PROMPT,
+  DEFAULT_FOLDER_NAME_PROMPT
 } from './constants';
 import { calcInitialScore } from './useCaseUtils';
 import { v4 as uuidv4 } from 'uuid';
 
 export const useOpenAI = (matrixConfig: MatrixConfig, addUseCase: (useCase: UseCase) => void) => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+
+  // Generate folder name and description based on user input
+  const generateFolderInfo = async (currentInput: string): Promise<{ name: string; description: string } | null> => {
+    // Get OpenAI API key from localStorage
+    const apiKey = localStorage.getItem(OPENAI_API_KEY);
+    if (!apiKey) {
+      toast.error("Clé API OpenAI non configurée", {
+        description: "Veuillez configurer votre clé API dans les paramètres",
+        action: {
+          label: "Paramètres",
+          onClick: () => window.location.href = "/parametres",
+        },
+      });
+      return null;
+    }
+
+    // Get prompt from localStorage or use default
+    const folderNamePrompt = localStorage.getItem(FOLDER_NAME_PROMPT) || DEFAULT_FOLDER_NAME_PROMPT;
+
+    const openai = new OpenAIService(apiKey);
+    try {
+      const folderInfo = await openai.generateFolderInfo(currentInput, folderNamePrompt);
+      return folderInfo;
+    } catch (error) {
+      console.error("Error generating folder info:", error);
+      return null;
+    }
+  };
 
   // Generate new use cases based on user input using OpenAI
   const generateUseCases = async (currentInput: string): Promise<boolean> => {
@@ -101,5 +131,5 @@ export const useOpenAI = (matrixConfig: MatrixConfig, addUseCase: (useCase: UseC
     }
   };
 
-  return { isGenerating, generateUseCases };
+  return { isGenerating, generateUseCases, generateFolderInfo };
 };

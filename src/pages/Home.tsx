@@ -27,9 +27,9 @@ const Home: React.FC = () => {
       return;
     }
     
-    // Si l'utilisateur souhaite créer un nouveau dossier, afficher la boîte de dialogue
+    // Si l'utilisateur souhaite créer un nouveau dossier, créer automatiquement
     if (createNewFolder) {
-      setShowNewFolderDialog(true);
+      await handleAutoCreateFolder();
     } else {
       // Sinon, générer directement les cas d'usage dans le dossier actuel
       await generateUseCases();
@@ -38,6 +38,37 @@ const Home: React.FC = () => {
       if (!isGenerating) {
         navigate('/cas-usage');
       }
+    }
+  };
+  
+  // Nouvelle fonction pour générer automatiquement le dossier
+  const handleAutoCreateFolder = async () => {
+    try {
+      // Générer automatiquement le nom et la description du dossier
+      const folderInfo = await useAppContext().generateFolderInfo(currentInput);
+      
+      if (folderInfo) {
+        // Créer le nouveau dossier
+        const newFolder = addFolder(folderInfo.name, folderInfo.description);
+        
+        // Définir le nouveau dossier comme dossier actif
+        setCurrentFolder(newFolder.id);
+        
+        // Générer les cas d'usage pour ce nouveau dossier
+        await generateUseCases();
+        
+        // Naviguer vers la liste des cas d'usage
+        if (!isGenerating) {
+          navigate('/cas-usage');
+        }
+      } else {
+        // Fallback: afficher la boîte de dialogue manuelle si la génération automatique échoue
+        setShowNewFolderDialog(true);
+      }
+    } catch (error) {
+      console.error("Error in auto folder creation:", error);
+      // Fallback: afficher la boîte de dialogue manuelle
+      setShowNewFolderDialog(true);
     }
   };
   

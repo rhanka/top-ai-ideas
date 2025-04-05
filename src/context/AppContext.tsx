@@ -10,10 +10,10 @@ import {
   getFolders, 
   saveFolders, 
   getCurrentFolderId, 
-  setCurrentFolderId,
+  setCurrentFolderId as storeCurrentFolderId,
   createFolder,
-  updateFolder,
-  deleteFolder,
+  updateFolder as updateFolderUtil,
+  deleteFolder as deleteFolderUtil,
   getFolderById
 } from "./folderUtils";
 
@@ -40,6 +40,7 @@ type AppContextType = {
   updateMatrixConfig: (config: MatrixConfig) => void;
   setCurrentInput: (input: string) => void;
   generateUseCases: () => Promise<void>;
+  generateFolderInfo: (input: string) => Promise<{ name: string; description: string } | null>;
   updateThresholds: (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => void;
   countUseCasesInLevel: (isValue: boolean, level: number) => number;
   isGenerating: boolean;
@@ -148,7 +149,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
   
   // Initialize OpenAI hooks
-  const { isGenerating, generateUseCases: generateUseCasesService } = useOpenAI(matrixConfig, handleAddUseCase);
+  const { isGenerating, generateUseCases: generateUseCasesService, generateFolderInfo: generateFolderInfoService } = useOpenAI(matrixConfig, handleAddUseCase);
   
   // Effect to update cases count in thresholds whenever useCases changes
   useEffect(() => {
@@ -197,7 +198,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   const setCurrentFolder = (folderId: string) => {
     setCurrentFolderId(folderId);
-    setCurrentFolderId(folderId);
+    storeCurrentFolderId(folderId);
     
     // Mettre à jour la configuration de la matrice
     const folder = folders.find(f => f.id === folderId);
@@ -371,6 +372,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentInput("");
     }
   };
+
+  // Wrapper for generateFolderInfo
+  const generateFolderInfo = async (input: string) => {
+    return await generateFolderInfoService(input);
+  };
   
   const value = {
     useCases,
@@ -386,6 +392,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateMatrixConfig,
     setCurrentInput,
     generateUseCases,
+    generateFolderInfo,
     updateThresholds,
     countUseCasesInLevel: countUseCasesInLevelWrapper,
     isGenerating,
