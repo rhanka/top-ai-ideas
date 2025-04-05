@@ -7,20 +7,20 @@ type ComplexityRating = 1 | 2 | 3 | 4 | 5;
 
 // Default value thresholds
 const defaultValueThresholds: LevelThreshold[] = [
-  { level: 1, min: 0, max: 40, points: 0, threshold: 300, cases: 1 },
-  { level: 2, min: 41, max: 100, points: 40, threshold: 700, cases: 4 },
-  { level: 3, min: 101, max: 400, points: 100, threshold: 1000, cases: 2 },
-  { level: 4, min: 401, max: 2000, points: 400, threshold: 1500, cases: 5 },
-  { level: 5, min: 2001, max: Infinity, points: 2000, threshold: 4000, cases: 1 }
+  { level: 1, min: 0, max: 40, points: 0, threshold: 300, cases: 0 },
+  { level: 2, min: 41, max: 100, points: 40, threshold: 700, cases: 0 },
+  { level: 3, min: 101, max: 400, points: 100, threshold: 1000, cases: 0 },
+  { level: 4, min: 401, max: 2000, points: 400, threshold: 1500, cases: 0 },
+  { level: 5, min: 2001, max: Infinity, points: 2000, threshold: 4000, cases: 0 }
 ];
 
 // Default complexity thresholds
 const defaultComplexityThresholds: LevelThreshold[] = [
   { level: 1, min: 0, max: 50, points: 0, threshold: 100, cases: 0 },
-  { level: 2, min: 51, max: 100, points: 50, threshold: 250, cases: 2 },
-  { level: 3, min: 101, max: 250, points: 100, threshold: 500, cases: 4 },
-  { level: 4, min: 251, max: 1000, points: 250, threshold: 1000, cases: 5 },
-  { level: 5, min: 1001, max: Infinity, points: 1000, threshold: 2000, cases: 2 }
+  { level: 2, min: 51, max: 100, points: 50, threshold: 250, cases: 0 },
+  { level: 3, min: 101, max: 250, points: 100, threshold: 500, cases: 0 },
+  { level: 4, min: 251, max: 1000, points: 250, threshold: 1000, cases: 0 },
+  { level: 5, min: 1001, max: Infinity, points: 1000, threshold: 2000, cases: 0 }
 ];
 
 // Default matrix configuration with level descriptions
@@ -266,6 +266,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [matrixConfig, setMatrixConfig] = useState<MatrixConfig>(defaultMatrixConfig);
   const [activeUseCase, setActiveUseCase] = useState<UseCase | null>(null);
   const [currentInput, setCurrentInput] = useState<string>("");
+
+  // Effect to update cases count in thresholds whenever useCases or matrixConfig changes
+  useEffect(() => {
+    updateCasesCounts();
+  }, [useCases, matrixConfig.valueThresholds, matrixConfig.complexityThresholds]);
   
   // Add new use case
   const addUseCase = (useCase: UseCase) => {
@@ -310,6 +315,71 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Helper function to determine value level based on thresholds
+  const getValueLevel = (score: number | undefined) => {
+    if (score === undefined || !matrixConfig.valueThresholds) return 0;
+    
+    for (let i = matrixConfig.valueThresholds.length - 1; i >= 0; i--) {
+      const threshold = matrixConfig.valueThresholds[i];
+      if (score >= threshold.threshold) {
+        return threshold.level;
+      }
+    }
+    return 1; // Default minimum level
+  };
+  
+  // Helper function to determine complexity level based on thresholds
+  const getComplexityLevel = (score: number | undefined) => {
+    if (score === undefined || !matrixConfig.complexityThresholds) return 0;
+    
+    for (let i = matrixConfig.complexityThresholds.length - 1; i >= 0; i--) {
+      const threshold = matrixConfig.complexityThresholds[i];
+      if (score >= threshold.threshold) {
+        return threshold.level;
+      }
+    }
+    return 1; // Default minimum level
+  };
+  
+  // Update cases counts in thresholds
+  const updateCasesCounts = () => {
+    if (!matrixConfig.valueThresholds || !matrixConfig.complexityThresholds) return;
+    
+    // Create new arrays to avoid mutating state directly
+    const updatedValueThresholds = [...matrixConfig.valueThresholds].map(threshold => ({
+      ...threshold,
+      cases: 0
+    }));
+    
+    const updatedComplexityThresholds = [...matrixConfig.complexityThresholds].map(threshold => ({
+      ...threshold,
+      cases: 0
+    }));
+    
+    // Count use cases for each level
+    useCases.forEach(useCase => {
+      const valueLevel = getValueLevel(useCase.totalValueScore);
+      const complexityLevel = getComplexityLevel(useCase.totalComplexityScore);
+      
+      const valueThreshold = updatedValueThresholds.find(t => t.level === valueLevel);
+      if (valueThreshold) {
+        valueThreshold.cases = (valueThreshold.cases || 0) + 1;
+      }
+      
+      const complexityThreshold = updatedComplexityThresholds.find(t => t.level === complexityLevel);
+      if (complexityThreshold) {
+        complexityThreshold.cases = (complexityThreshold.cases || 0) + 1;
+      }
+    });
+    
+    // Update matrix configuration with new counts
+    setMatrixConfig({
+      ...matrixConfig,
+      valueThresholds: updatedValueThresholds,
+      complexityThresholds: updatedComplexityThresholds
+    });
+  };
+
   // Update thresholds
   const updateThresholds = (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => {
     const updatedConfig = { 
@@ -322,18 +392,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   // Count use cases in a specific level
   const countUseCasesInLevel = (isValue: boolean, level: number): number => {
-    if (!matrixConfig.valueThresholds || !matrixConfig.complexityThresholds) return 0;
-    
-    const thresholds = isValue ? matrixConfig.valueThresholds : matrixConfig.complexityThresholds;
-    const levelThreshold = thresholds.find(t => t.level === level);
-    
-    if (!levelThreshold) return 0;
-    
     return useCases.filter(useCase => {
-      const score = isValue ? useCase.totalValueScore : useCase.totalComplexityScore;
-      if (score === undefined) return false;
-      
-      return score >= levelThreshold.min && score <= levelThreshold.max;
+      if (isValue) {
+        return getValueLevel(useCase.totalValueScore) === level;
+      } else {
+        return getComplexityLevel(useCase.totalComplexityScore) === level;
+      }
     }).length;
   };
   
