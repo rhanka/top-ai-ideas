@@ -83,7 +83,26 @@ const UseCaseDetail: React.FC = () => {
           ? { ...score, rating: rating as ValueRating, description } 
           : score
       );
-      setUseCase({ ...useCase, valueScores: newValueScores });
+      
+      // Recalculate the total value score
+      let totalValue = 0;
+      newValueScores.forEach(score => {
+        const axis = matrixConfig.valueAxes.find(a => a.name === score.axisId);
+        if (axis) {
+          // Apply correct point values based on rating
+          let pointValue = 0;
+          switch (score.rating) {
+            case 1: pointValue = 0; break;
+            case 2: pointValue = 40; break;
+            case 3: pointValue = 100; break;
+            case 4: pointValue = 400; break;
+            case 5: pointValue = 2000; break;
+          }
+          totalValue += pointValue * axis.weight;
+        }
+      });
+      
+      setUseCase({ ...useCase, valueScores: newValueScores, totalValueScore: totalValue });
     } else {
       const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
       if (axis && axis.levelDescriptions) {
@@ -96,7 +115,26 @@ const UseCaseDetail: React.FC = () => {
           ? { ...score, rating: rating as ComplexityRating, description } 
           : score
       );
-      setUseCase({ ...useCase, complexityScores: newComplexityScores });
+      
+      // Recalculate the total complexity score
+      let totalComplexity = 0;
+      newComplexityScores.forEach(score => {
+        const axis = matrixConfig.complexityAxes.find(a => a.name === score.axisId);
+        if (axis) {
+          // Apply correct point values based on rating
+          let pointValue = 0;
+          switch (score.rating) {
+            case 1: pointValue = 0; break;
+            case 2: pointValue = 50; break;
+            case 3: pointValue = 100; break;
+            case 4: pointValue = 250; break;
+            case 5: pointValue = 1000; break;
+          }
+          totalComplexity += pointValue * axis.weight;
+        }
+      });
+      
+      setUseCase({ ...useCase, complexityScores: newComplexityScores, totalComplexityScore: totalComplexity });
     }
   };
   
@@ -229,7 +267,7 @@ const UseCaseDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* Nouveau: Affichage de la valeur et complexité calculées en haut */}
+      {/* Affichage de la valeur et complexité calculées en haut */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card className="shadow-md">
           <CardHeader className="bg-yellow-50 pb-3">
