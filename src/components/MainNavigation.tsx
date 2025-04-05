@@ -19,7 +19,7 @@ const MainNavigation: React.FC = () => {
     <nav className="bg-navy text-white p-4 shadow-md">
       <div className="container mx-auto flex flex-col md:flex-row items-center justify-between">
         <div className="flex items-center mb-4 md:mb-0">
-          <h1 className="text-2xl font-bold">Idea-Spark Matrix AI</h1>
+          <h1 className="text-2xl font-bold">AI Top Ideas</h1>
         </div>
         
         <div className="flex space-x-1 md:space-x-4">
