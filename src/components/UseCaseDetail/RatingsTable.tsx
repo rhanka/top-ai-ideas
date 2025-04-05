@@ -68,10 +68,10 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
           value={currentRating.toString()}
           onValueChange={(value) => onRatingChange(isValue, axisId, parseInt(value))}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full text-left">
             <SelectValue placeholder={isValue ? "Sélectionner une note" : "Sélectionner un niveau"} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent align="start">
             {[1, 2, 3, 4, 5].map((rating) => {
               // Find description for this rating
               let ratingDescription = "";
