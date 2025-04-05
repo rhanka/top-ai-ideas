@@ -19,6 +19,7 @@ export const DEFAULT_FOLDER_MODEL = "gpt-4o-mini";
 
 // Available models
 export const OPENAI_MODELS = [
+  { value: "o3-mini", label: "O3 Mini" },
   { value: "gpt-4o-mini", label: "GPT-4o Mini" },
   { value: "gpt-4o", label: "GPT-4o" },
   { value: "gpt-4.5-preview", label: "GPT-4.5 Preview" },
