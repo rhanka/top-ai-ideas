@@ -1,7 +1,6 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UseCase } from "@/types";
+import { UseCase, LevelThreshold } from "@/types";
 import { Separator } from "@/components/ui/separator";
 import { useAppContext } from "@/context/AppContext";
 
@@ -10,24 +9,11 @@ interface ChessboardProps {
 }
 
 export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
-  const { matrixConfig } = useAppContext();
+  const { matrixConfig, countUseCasesInLevel } = useAppContext();
   
-  // Scoring thresholds based on the Excel image
-  const valueThresholds = [
-    { min: 0, max: 40, level: 1, points: 0, threshold: 300, cases: 1 },
-    { min: 41, max: 100, level: 2, points: 40, threshold: 700, cases: 4 },
-    { min: 101, max: 400, level: 3, points: 100, threshold: 1000, cases: 2 },
-    { min: 401, max: 2000, level: 4, points: 400, threshold: 1500, cases: 5 },
-    { min: 2001, max: Infinity, level: 5, points: 2000, threshold: 4000, cases: 1 }
-  ];
-  
-  const complexityThresholds = [
-    { min: 0, max: 50, level: 1, points: 0, threshold: 100, cases: 0 },
-    { min: 51, max: 100, level: 2, points: 50, threshold: 250, cases: 2 },
-    { min: 101, max: 250, level: 3, points: 100, threshold: 500, cases: 4 },
-    { min: 251, max: 1000, level: 4, points: 250, threshold: 1000, cases: 5 },
-    { min: 1001, max: Infinity, level: 5, points: 1000, threshold: 2000, cases: 2 }
-  ];
+  // Get thresholds from context
+  const valueThresholds = matrixConfig.valueThresholds || [];
+  const complexityThresholds = matrixConfig.complexityThresholds || [];
   
   // Categorize use cases based on value and complexity scores
   const categorizeUseCases = () => {
@@ -163,16 +149,16 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
     const valueLevel = 5 - valueIndex;
     const complexityLevel = complexityIndex + 1;
     
-    const valueData = valueThresholds[valueLevel - 1];
-    const complexityData = complexityThresholds[complexityLevel - 1];
+    const valueData = valueThresholds.find(t => t.level === valueLevel);
+    const complexityData = complexityThresholds.find(t => t.level === complexityLevel);
     
     return {
       valuePoints: valueData?.points || "N/A",
       valueThreshold: valueData?.threshold || "N/A",
-      valueCases: valueData?.cases || 0,
+      valueCases: countUseCasesInLevel(true, valueLevel),
       complexityPoints: complexityData?.points || "N/A",
       complexityThreshold: complexityData?.threshold || "N/A",
-      complexityCases: complexityData?.cases || 0
+      complexityCases: countUseCasesInLevel(false, complexityLevel)
     };
   };
   

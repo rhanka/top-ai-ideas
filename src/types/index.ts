@@ -11,6 +11,16 @@ export type LevelDescription = {
   description: string;
 };
 
+// Level threshold values
+export type LevelThreshold = {
+  level: number;
+  min: number;
+  max: number;
+  points: number;
+  threshold: number;
+  cases?: number;
+};
+
 // Axis types for the matrix
 export type ValueAxis = {
   name: string;
@@ -65,4 +75,6 @@ export type UseCase = {
 export type MatrixConfig = {
   valueAxes: ValueAxis[];
   complexityAxes: ComplexityAxis[];
+  valueThresholds?: LevelThreshold[];
+  complexityThresholds?: LevelThreshold[];
 };

@@ -1,9 +1,27 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { UseCase, MatrixConfig, LevelDescription } from "../types";
+import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
 
 // Define the ValueRating and ComplexityRating types that were previously referenced but not imported
 type ValueRating = 1 | 2 | 3 | 4 | 5;
 type ComplexityRating = 1 | 2 | 3 | 4 | 5;
+
+// Default value thresholds
+const defaultValueThresholds: LevelThreshold[] = [
+  { level: 1, min: 0, max: 40, points: 0, threshold: 300, cases: 1 },
+  { level: 2, min: 41, max: 100, points: 40, threshold: 700, cases: 4 },
+  { level: 3, min: 101, max: 400, points: 100, threshold: 1000, cases: 2 },
+  { level: 4, min: 401, max: 2000, points: 400, threshold: 1500, cases: 5 },
+  { level: 5, min: 2001, max: Infinity, points: 2000, threshold: 4000, cases: 1 }
+];
+
+// Default complexity thresholds
+const defaultComplexityThresholds: LevelThreshold[] = [
+  { level: 1, min: 0, max: 50, points: 0, threshold: 100, cases: 0 },
+  { level: 2, min: 51, max: 100, points: 50, threshold: 250, cases: 2 },
+  { level: 3, min: 101, max: 250, points: 100, threshold: 500, cases: 4 },
+  { level: 4, min: 251, max: 1000, points: 250, threshold: 1000, cases: 5 },
+  { level: 5, min: 1001, max: Infinity, points: 1000, threshold: 2000, cases: 2 }
+];
 
 // Default matrix configuration with level descriptions
 const defaultMatrixConfig: MatrixConfig = {
@@ -131,6 +149,8 @@ const defaultMatrixConfig: MatrixConfig = {
       ]
     },
   ],
+  valueThresholds: defaultValueThresholds,
+  complexityThresholds: defaultComplexityThresholds
 };
 
 // Calculate scores for a use case
@@ -232,6 +252,8 @@ type AppContextType = {
   updateMatrixConfig: (config: MatrixConfig) => void;
   setCurrentInput: (input: string) => void;
   generateUseCases: () => void;
+  updateThresholds: (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => void;
+  countUseCasesInLevel: (isValue: boolean, level: number) => number;
 };
 
 // Create context
@@ -287,6 +309,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
   };
+
+  // Update thresholds
+  const updateThresholds = (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => {
+    const updatedConfig = { 
+      ...matrixConfig,
+      valueThresholds: valueThresholds || matrixConfig.valueThresholds,
+      complexityThresholds: complexityThresholds || matrixConfig.complexityThresholds
+    };
+    setMatrixConfig(updatedConfig);
+  };
+  
+  // Count use cases in a specific level
+  const countUseCasesInLevel = (isValue: boolean, level: number): number => {
+    if (!matrixConfig.valueThresholds || !matrixConfig.complexityThresholds) return 0;
+    
+    const thresholds = isValue ? matrixConfig.valueThresholds : matrixConfig.complexityThresholds;
+    const levelThreshold = thresholds.find(t => t.level === level);
+    
+    if (!levelThreshold) return 0;
+    
+    return useCases.filter(useCase => {
+      const score = isValue ? useCase.totalValueScore : useCase.totalComplexityScore;
+      if (score === undefined) return false;
+      
+      return score >= levelThreshold.min && score <= levelThreshold.max;
+    }).length;
+  };
   
   // Generate new use cases based on user input
   const generateUseCases = () => {
@@ -337,7 +386,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setActiveUseCase,
     updateMatrixConfig,
     setCurrentInput,
-    generateUseCases
+    generateUseCases,
+    updateThresholds,
+    countUseCasesInLevel
   };
   
   return (

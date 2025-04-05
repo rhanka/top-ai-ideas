@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Save, AlertCircle, Info, Edit } from "lucide-react";
 import { toast } from "sonner";
-import { ComplexityAxis, LevelDescription, ValueAxis } from "@/types";
+import { ComplexityAxis, LevelDescription, ValueAxis, LevelThreshold } from "@/types";
 import { LevelDescriptionEditor } from "@/components/Matrix/LevelDescriptionEditor";
 import {
   Dialog,
@@ -98,11 +98,38 @@ const defaultComplexityDescriptions = {
 };
 
 const Matrix: React.FC = () => {
-  const { matrixConfig, updateMatrixConfig } = useAppContext();
+  const { matrixConfig, updateMatrixConfig, updateThresholds, countUseCasesInLevel } = useAppContext();
   const [editedConfig, setEditedConfig] = useState({ ...matrixConfig });
   const [selectedAxis, setSelectedAxis] = useState<ValueAxis | ComplexityAxis | null>(null);
   const [isValueAxis, setIsValueAxis] = useState(false);
   const [showDescriptionsDialog, setShowDescriptionsDialog] = useState(false);
+
+  // Initialize thresholds if they don't exist
+  useEffect(() => {
+    if (!editedConfig.valueThresholds || !editedConfig.complexityThresholds) {
+      const defaultValueThresholds = [
+        { level: 1, min: 0, max: 40, points: 0, threshold: 300, cases: 1 },
+        { level: 2, min: 41, max: 100, points: 40, threshold: 700, cases: 4 },
+        { level: 3, min: 101, max: 400, points: 100, threshold: 1000, cases: 2 },
+        { level: 4, min: 401, max: 2000, points: 400, threshold: 1500, cases: 5 },
+        { level: 5, min: 2001, max: Infinity, points: 2000, threshold: 4000, cases: 1 }
+      ];
+
+      const defaultComplexityThresholds = [
+        { level: 1, min: 0, max: 50, points: 0, threshold: 100, cases: 0 },
+        { level: 2, min: 51, max: 100, points: 50, threshold: 250, cases: 2 },
+        { level: 3, min: 101, max: 250, points: 100, threshold: 500, cases: 4 },
+        { level: 4, min: 251, max: 1000, points: 250, threshold: 1000, cases: 5 },
+        { level: 5, min: 1001, max: Infinity, points: 1000, threshold: 2000, cases: 2 }
+      ];
+
+      setEditedConfig({
+        ...editedConfig,
+        valueThresholds: defaultValueThresholds,
+        complexityThresholds: defaultComplexityThresholds
+      });
+    }
+  }, [matrixConfig]);
 
   // Initialize levelDescriptions if they don't exist
   useEffect(() => {
@@ -133,6 +160,7 @@ const Matrix: React.FC = () => {
     });
 
     setEditedConfig({ 
+      ...editedConfig,
       valueAxes: newValueAxes,
       complexityAxes: newComplexityAxes 
     });
@@ -155,6 +183,52 @@ const Matrix: React.FC = () => {
     newComplexityAxes[index] = { ...newComplexityAxes[index], weight: newWeight };
     setEditedConfig({ ...editedConfig, complexityAxes: newComplexityAxes });
   };
+
+  // Handle threshold value changes
+  const handleThresholdChange = (isValue: boolean, level: number, field: keyof LevelThreshold, value: string | number) => {
+    if (isValue && editedConfig.valueThresholds) {
+      const newThresholds = [...editedConfig.valueThresholds];
+      const index = newThresholds.findIndex(t => t.level === level);
+      if (index !== -1) {
+        newThresholds[index] = { ...newThresholds[index], [field]: value };
+        setEditedConfig({ ...editedConfig, valueThresholds: newThresholds });
+      }
+    } else if (!isValue && editedConfig.complexityThresholds) {
+      const newThresholds = [...editedConfig.complexityThresholds];
+      const index = newThresholds.findIndex(t => t.level === level);
+      if (index !== -1) {
+        newThresholds[index] = { ...newThresholds[index], [field]: value };
+        setEditedConfig({ ...editedConfig, complexityThresholds: newThresholds });
+      }
+    }
+  };
+
+  const updateCasesCount = () => {
+    if (editedConfig.valueThresholds && editedConfig.complexityThresholds) {
+      // Update case counts for value thresholds
+      const newValueThresholds = editedConfig.valueThresholds.map(threshold => ({
+        ...threshold,
+        cases: countUseCasesInLevel(true, threshold.level)
+      }));
+
+      // Update case counts for complexity thresholds
+      const newComplexityThresholds = editedConfig.complexityThresholds.map(threshold => ({
+        ...threshold,
+        cases: countUseCasesInLevel(false, threshold.level)
+      }));
+
+      setEditedConfig({
+        ...editedConfig,
+        valueThresholds: newValueThresholds,
+        complexityThresholds: newComplexityThresholds
+      });
+    }
+  };
+
+  // Update counts when component mounts
+  useEffect(() => {
+    updateCasesCount();
+  }, [matrixConfig.valueThresholds, matrixConfig.complexityThresholds]);
 
   const handleUpdateLevelDescription = (levelNum: number, description: string) => {
     if (!selectedAxis) return;
@@ -204,6 +278,7 @@ const Matrix: React.FC = () => {
   
   const saveChanges = () => {
     updateMatrixConfig(editedConfig);
+    updateThresholds(editedConfig.valueThresholds, editedConfig.complexityThresholds);
     toast.success("Configuration de la matrice mise à jour");
   };
   
@@ -352,6 +427,152 @@ const Matrix: React.FC = () => {
                       >
                         Voir niveaux
                       </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Value Threshold Configuration */}
+        <Card className="shadow-md">
+          <CardHeader className="bg-gradient-to-r from-purple-700 to-purple-900">
+            <CardTitle className="text-white">Configuration des seuils de Valeur</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader className="bg-purple-50">
+                <TableRow>
+                  <TableHead className="w-1/5">Valeur</TableHead>
+                  <TableHead className="w-1/5">Points</TableHead>
+                  <TableHead className="w-1/5">Min-Max</TableHead>
+                  <TableHead className="w-1/5">Seuil axes</TableHead>
+                  <TableHead className="w-1/5">Nombre de cas</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="bg-gray-100">
+                  <TableCell className="font-medium">Poids du critère</TableCell>
+                  <TableCell className="text-center">N/A</TableCell>
+                  <TableCell className="text-center">N/A</TableCell>
+                  <TableCell className="text-center">N/A</TableCell>
+                  <TableCell className="text-center">N/A</TableCell>
+                </TableRow>
+                {editedConfig.valueThresholds?.map((threshold) => (
+                  <TableRow key={`value-${threshold.level}`}>
+                    <TableCell className="font-medium">
+                      {renderValueLevels(threshold.level)}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={threshold.points}
+                        onChange={(e) => handleThresholdChange(true, threshold.level, "points", parseInt(e.target.value))}
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="flex gap-1 items-center">
+                        <Input
+                          type="number"
+                          value={threshold.min}
+                          onChange={(e) => handleThresholdChange(true, threshold.level, "min", parseInt(e.target.value))}
+                          className="w-20 text-xs"
+                        />
+                        <span>-</span>
+                        <Input
+                          type="number"
+                          value={threshold.max === Infinity ? 9999 : threshold.max}
+                          onChange={(e) => handleThresholdChange(true, threshold.level, "max", parseInt(e.target.value) === 9999 ? Infinity : parseInt(e.target.value))}
+                          className="w-20 text-xs"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={threshold.threshold}
+                        onChange={(e) => handleThresholdChange(true, threshold.level, "threshold", parseInt(e.target.value))}
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell className="text-center font-semibold">
+                      {threshold.cases || 0}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        
+        {/* Complexity Threshold Configuration */}
+        <Card className="shadow-md">
+          <CardHeader className="bg-gradient-to-r from-gray-700 to-gray-900">
+            <CardTitle className="text-white">Configuration des seuils de Complexité</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader className="bg-gray-50">
+                <TableRow>
+                  <TableHead className="w-1/5">Complexité</TableHead>
+                  <TableHead className="w-1/5">Points</TableHead>
+                  <TableHead className="w-1/5">Min-Max</TableHead>
+                  <TableHead className="w-1/5">Seuil axes</TableHead>
+                  <TableHead className="w-1/5">Nombre de cas</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="bg-gray-100">
+                  <TableCell className="font-medium">Poids du critère</TableCell>
+                  <TableCell className="text-center">N/A</TableCell>
+                  <TableCell className="text-center">N/A</TableCell>
+                  <TableCell className="text-center">N/A</TableCell>
+                  <TableCell className="text-center">N/A</TableCell>
+                </TableRow>
+                {editedConfig.complexityThresholds?.map((threshold) => (
+                  <TableRow key={`complexity-${threshold.level}`}>
+                    <TableCell className="font-medium">
+                      {renderComplexityLevels(threshold.level)}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={threshold.points}
+                        onChange={(e) => handleThresholdChange(false, threshold.level, "points", parseInt(e.target.value))}
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <div className="flex gap-1 items-center">
+                        <Input
+                          type="number"
+                          value={threshold.min}
+                          onChange={(e) => handleThresholdChange(false, threshold.level, "min", parseInt(e.target.value))}
+                          className="w-20 text-xs"
+                        />
+                        <span>-</span>
+                        <Input
+                          type="number"
+                          value={threshold.max === Infinity ? 9999 : threshold.max}
+                          onChange={(e) => handleThresholdChange(false, threshold.level, "max", parseInt(e.target.value) === 9999 ? Infinity : parseInt(e.target.value))}
+                          className="w-20 text-xs"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={threshold.threshold}
+                        onChange={(e) => handleThresholdChange(false, threshold.level, "threshold", parseInt(e.target.value))}
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell className="text-center font-semibold">
+                      {threshold.cases || 0}
                     </TableCell>
                   </TableRow>
                 ))}
