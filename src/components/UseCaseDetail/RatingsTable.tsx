@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Table, TableBody, TableCell, TableRow, TableFooter } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,7 +151,19 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
   return (
     <Card className="shadow-md">
       <CardHeader className={backgroundColor}>
-        <CardTitle>{title}</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle>{title}</CardTitle>
+          {totalScore !== undefined && level !== undefined && (
+            <div className="flex items-center">
+              <div className="mr-2">
+                {renderLevelSymbols()}
+              </div>
+              <span className="text-sm font-medium">
+                {Math.round(totalScore)} points
+              </span>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
