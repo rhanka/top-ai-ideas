@@ -76,13 +76,13 @@ export const useOpenAI = (
     setIsGenerating(true);
     
     try {
-      // If createNewFolder is true, generate a new folder first
-      let folderId: string | null = null;
+      // Si createNewFolder est true, générer un nouveau dossier d'abord
+      let currentFolderId: string | null = null;
       
       if (createNewFolder) {
         const newFolder = await generateFolderNameAndDescription(currentInput, openai);
         if (newFolder) {
-          folderId = newFolder.id;
+          currentFolderId = newFolder.id;
         }
       }
       
@@ -111,7 +111,8 @@ export const useOpenAI = (
           // Ajouter un id unique en plus de celui généré par OpenAI
           const useCaseWithId = {
             ...useCaseDetail,
-            id: uuidv4()
+            id: uuidv4(),
+            folderId: currentFolderId || '' // Assigner explicitement au nouveau dossier créé
           };
           
           // Calculate scores for the use case

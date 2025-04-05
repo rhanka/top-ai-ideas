@@ -194,7 +194,7 @@ export class OpenAIService {
       // Generate a unique ID for the use case
       const id = `ID${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`;
 
-      // Ensure all required fields are present
+      // Ensure all required fields are present and initialize folderId correctly
       const completeUseCase = {
         id,
         name: jsonContent.name || useCase,
@@ -211,7 +211,7 @@ export class OpenAIService {
         relatedData: jsonContent.relatedData || [],
         valueScores: jsonContent.valueScores || [],
         complexityScores: jsonContent.complexityScores || [],
-        folderId: "" // Add the required folderId property (will be set by AppContext)
+        folderId: "" // Initialize empty string, will be set correctly in useOpenAI hook
       };
 
       // Update toast with success for this specific use case
