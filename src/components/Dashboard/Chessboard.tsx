@@ -19,42 +19,42 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
   const getValueLevel = (score: number | undefined) => {
     if (score === undefined) return 0;
     
-    // Define value thresholds
-    const thresholds = [0, 40, 100, 400, 2000];
+    // Define value thresholds - these are the threshold values, not points
+    const thresholds = [300, 700, 1000, 1500, 4000];
     
     let level = 1;
     
-    // Find highest threshold that score exceeds
+    // For each threshold, if score is less than it, return current level
     for (let i = 0; i < thresholds.length; i++) {
-      if (score > thresholds[i]) {
-        level = i + 1;
-      } else {
-        break;
+      if (score < thresholds[i]) {
+        return level;
       }
+      level++;
     }
     
-    return level;
+    // If we reach here, score is above all thresholds
+    return 5;
   };
   
   // Determine complexity level based on score and thresholds
   const getComplexityLevel = (score: number | undefined) => {
     if (score === undefined) return 0;
     
-    // Define complexity thresholds
-    const thresholds = [0, 50, 100, 250, 1000];
+    // Define complexity thresholds - these are the threshold values, not points
+    const thresholds = [100, 250, 500, 1000, 2000];
     
     let level = 1;
     
-    // Find highest threshold that score exceeds
+    // For each threshold, if score is less than it, return current level
     for (let i = 0; i < thresholds.length; i++) {
-      if (score > thresholds[i]) {
-        level = i + 1;
-      } else {
-        break;
+      if (score < thresholds[i]) {
+        return level;
       }
+      level++;
     }
     
-    return level;
+    // If we reach here, score is above all thresholds
+    return 5;
   };
   
   // Categorize use cases based on value and complexity scores

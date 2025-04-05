@@ -92,27 +92,29 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
     );
   };
   
-  // Correctly determine display level based on total score and thresholds
+  // FIXED: Correctly determine display level based on total score and thresholds
   const getDisplayLevel = (score?: number): number => {
     if (!score) return 0;
     
-    // Define the thresholds for each level
+    // Define the thresholds for each level based on the type (value or complexity)
+    // These are the threshold values, not points
     const thresholds = isValue 
-      ? [0, 40, 100, 400, 2000] 
-      : [0, 50, 100, 250, 1000];
+      ? [300, 700, 1000, 1500, 4000]  // Value thresholds
+      : [100, 250, 500, 1000, 2000];  // Complexity thresholds
     
+    // Start at level 1 and increase only if we meet or exceed the threshold for the next level
     let level = 1;
     
-    // Start from level 1 and find the highest level where score exceeds the threshold
     for (let i = 0; i < thresholds.length; i++) {
-      if (score > thresholds[i]) {
-        level = i + 1;
-      } else {
-        break;
+      // If score is less than threshold, we've found our level
+      if (score < thresholds[i]) {
+        return level;
       }
+      level++;
     }
     
-    return level;
+    // If we've reached here, the score is higher than all thresholds
+    return 5;
   };
   
   const displayLevel = getDisplayLevel(totalScore);
