@@ -10,7 +10,13 @@ import {
   FOLDER_NAME_PROMPT,
   DEFAULT_USE_CASE_LIST_PROMPT, 
   DEFAULT_USE_CASE_DETAIL_PROMPT,
-  DEFAULT_FOLDER_NAME_PROMPT
+  DEFAULT_FOLDER_NAME_PROMPT,
+  USE_CASE_LIST_MODEL,
+  USE_CASE_DETAIL_MODEL,
+  FOLDER_NAME_MODEL,
+  DEFAULT_LIST_MODEL,
+  DEFAULT_DETAIL_MODEL,
+  DEFAULT_FOLDER_MODEL
 } from './constants';
 import { calcInitialScore } from './useCaseUtils';
 import { v4 as uuidv4 } from 'uuid';
@@ -31,9 +37,11 @@ export const useOpenAI = (
     try {
       // Get folder generation prompt from localStorage or use default
       const folderPrompt = localStorage.getItem(FOLDER_NAME_PROMPT) || DEFAULT_FOLDER_NAME_PROMPT;
+      // Get the model from localStorage or use default
+      const model = localStorage.getItem(FOLDER_NAME_MODEL) || DEFAULT_FOLDER_MODEL;
       
       // Generate folder name and description
-      const { name, description } = await openai.generateFolderNameAndDescription(currentInput, folderPrompt);
+      const { name, description } = await openai.generateFolderNameAndDescription(currentInput, folderPrompt, model);
       
       // Create the new folder
       const newFolder = addFolder(name, description);
@@ -71,6 +79,10 @@ export const useOpenAI = (
     // Get prompts from localStorage or use defaults
     const listPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT) || DEFAULT_USE_CASE_LIST_PROMPT;
     const detailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT) || DEFAULT_USE_CASE_DETAIL_PROMPT;
+    
+    // Get models from localStorage or use defaults
+    const listModel = localStorage.getItem(USE_CASE_LIST_MODEL) || DEFAULT_LIST_MODEL;
+    const detailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL) || DEFAULT_DETAIL_MODEL;
 
     const openai = new OpenAIService(apiKey);
     setIsGenerating(true);
@@ -88,7 +100,7 @@ export const useOpenAI = (
       
       // Step 1: Generate list of use case titles
       toast.info("Génération des cas d'usage en cours...");
-      const useCaseTitles = await openai.generateUseCaseList(currentInput, listPrompt);
+      const useCaseTitles = await openai.generateUseCaseList(currentInput, listPrompt, listModel);
       
       if (useCaseTitles.length === 0) {
         toast.error("Aucun cas d'usage généré. Veuillez reformuler votre demande.");
@@ -105,7 +117,8 @@ export const useOpenAI = (
             title,
             currentInput,
             matrixConfig,
-            detailPrompt
+            detailPrompt,
+            detailModel
           );
           
           // Ajouter un id unique en plus de celui généré par OpenAI

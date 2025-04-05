@@ -1,251 +1,39 @@
 
-import { toast } from "sonner";
 import { UseCase, MatrixConfig } from "../types";
-import {
-  USE_CASE_LIST_MODEL,
-  USE_CASE_DETAIL_MODEL,
-  FOLDER_NAME_MODEL,
-  DEFAULT_LIST_MODEL,
-  DEFAULT_DETAIL_MODEL,
-  DEFAULT_FOLDER_MODEL
-} from "../context/constants";
+import { FolderGenerationService } from "./generation/FolderGenerationService";
+import { UseCaseListGenerationService } from "./generation/UseCaseListGenerationService";
+import { UseCaseDetailGenerationService } from "./generation/UseCaseDetailGenerationService";
+import { BaseApiService } from "./api/BaseApiService";
+import { toast } from "sonner";
 
-export class OpenAIService {
-  private apiKey: string;
-  private toastId: string | number | undefined;
+export class OpenAIService extends BaseApiService {
+  private folderService: FolderGenerationService;
+  private listService: UseCaseListGenerationService;
+  private detailService: UseCaseDetailGenerationService;
 
   constructor(apiKey: string) {
-    this.apiKey = apiKey;
+    super(apiKey);
+    this.folderService = new FolderGenerationService(apiKey);
+    this.listService = new UseCaseListGenerationService(apiKey);
+    this.detailService = new UseCaseDetailGenerationService(apiKey);
   }
 
-  async generateFolderNameAndDescription(userInput: string, prompt: string): Promise<{ name: string; description: string }> {
-    try {
-      const formattedPrompt = prompt.replace("{{user_input}}", userInput);
-      
-      // Get the model from localStorage or use default
-      const model = localStorage.getItem(FOLDER_NAME_MODEL) || DEFAULT_FOLDER_MODEL;
-
-      // Show toast for folder generation
-      this.toastId = toast.loading("Génération en cours...", {
-        description: "Création automatique d'un dossier",
-        duration: Infinity, // Keep toast open
-        id: this.toastId
-      });
-
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: "user", content: formattedPrompt }],
-          temperature: 0.7,
-          max_tokens: 300,
-          response_format: { type: "json_object" },
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("OpenAI API error:", error);
-        toast.error("Erreur API OpenAI", { 
-          description: error.error?.message || "Échec de la génération du nom de dossier",
-          id: this.toastId 
-        });
-        // Return default values if generation fails
-        return { name: "Nouveau dossier", description: "Dossier créé automatiquement" };
-      }
-
-      const data = await response.json();
-      const content = JSON.parse(data.choices[0].message.content);
-
-      // Update toast to success
-      toast.success("Dossier créé", { 
-        description: `Dossier "${content.name}" créé avec succès`,
-        id: this.toastId,
-        duration: 3000
-      });
-
-      return {
-        name: content.name || "Nouveau dossier",
-        description: content.description || "Dossier créé automatiquement"
-      };
-    } catch (error) {
-      console.error("Error generating folder name:", error);
-      toast.error("Erreur de génération", { 
-        description: `${(error as Error).message}`,
-        id: this.toastId 
-      });
-      // Return default values in case of error
-      return { name: "Nouveau dossier", description: "Dossier créé automatiquement" };
-    }
+  async generateFolderNameAndDescription(userInput: string, prompt: string, model: string): Promise<{ name: string; description: string }> {
+    return this.folderService.generateFolderNameAndDescription(userInput, prompt, model);
   }
 
-  async generateUseCaseList(userInput: string, prompt: string): Promise<string[]> {
-    try {
-      const formattedPrompt = prompt.replace("{{user_input}}", userInput);
-      
-      // Get the model from localStorage or use default
-      const model = localStorage.getItem(USE_CASE_LIST_MODEL) || DEFAULT_LIST_MODEL;
-
-      // Update the existing toast instead of creating a new one
-      this.toastId = toast.loading("Génération en cours...", {
-        description: "Création de la liste des cas d'usage",
-        duration: Infinity, // Keep toast open
-        id: this.toastId
-      });
-
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: "user", content: formattedPrompt }],
-          temperature: 0.7,
-          max_tokens: 1000,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("OpenAI API error:", error);
-        toast.error("Erreur API OpenAI", { 
-          description: error.error?.message || "Échec de la génération des cas d'usage",
-          id: this.toastId 
-        });
-        throw new Error(error.error?.message || "Failed to generate use cases");
-      }
-
-      const data = await response.json();
-      const content = data.choices[0].message.content;
-
-      // Parse the numbered list to extract use case titles
-      const useCases = content
-        .split("\n")
-        .filter((line: string) => /^\d+\./.test(line.trim()))
-        .map((line: string) => line.replace(/^\d+\.\s*/, "").trim());
-
-      // Update toast with success message
-      toast.loading("Liste des cas d'usage créée", { 
-        description: `${useCases.length} cas d'usage identifiés`,
-        id: this.toastId 
-      });
-
-      return useCases;
-    } catch (error) {
-      console.error("Error generating use case list:", error);
-      toast.error("Erreur de génération", { 
-        description: `${(error as Error).message}`,
-        id: this.toastId 
-      });
-      throw error;
-    }
+  async generateUseCaseList(userInput: string, prompt: string, model: string): Promise<string[]> {
+    return this.listService.generateUseCaseList(userInput, prompt, model);
   }
 
   async generateUseCaseDetail(
     useCase: string,
     userInput: string,
     matrixConfig: MatrixConfig,
-    prompt: string
+    prompt: string,
+    model: string
   ): Promise<UseCase> {
-    try {
-      // Get the model from localStorage or use default
-      const model = localStorage.getItem(USE_CASE_DETAIL_MODEL) || DEFAULT_DETAIL_MODEL;
-      
-      // Create a simplified matrix representation for the prompt
-      const matrixSummary = {
-        valueAxes: matrixConfig.valueAxes.map((axis) => ({
-          name: axis.name,
-          description: axis.description,
-        })),
-        complexityAxes: matrixConfig.complexityAxes.map((axis) => ({
-          name: axis.name,
-          description: axis.description,
-        })),
-      };
-
-      // Update the loading toast for this specific use case
-      toast.loading("Génération en cours...", { 
-        description: `Création des détails pour "${useCase}"`,
-        id: this.toastId 
-      });
-
-      const formattedPrompt = prompt
-        .replace("{{use_case}}", useCase)
-        .replace("{{user_input}}", userInput)
-        .replace("{{matrix}}", JSON.stringify(matrixSummary, null, 2));
-
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: "user", content: formattedPrompt }],
-          temperature: 0.7,
-          max_tokens: 4000,
-          response_format: { type: "json_object" },
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("OpenAI API error:", error);
-        toast.error("Erreur API OpenAI", { 
-          description: `Échec pour "${useCase}": ${error.error?.message}`,
-          id: this.toastId 
-        });
-        throw new Error(error.error?.message || "Failed to generate use case detail");
-      }
-
-      const data = await response.json();
-      const jsonContent = JSON.parse(data.choices[0].message.content);
-
-      // Generate a unique ID for the use case
-      const id = `ID${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`;
-
-      // Ensure all required fields are present and initialize folderId correctly
-      const completeUseCase = {
-        id,
-        name: jsonContent.name || useCase,
-        domain: jsonContent.domain || "",
-        description: jsonContent.description || "",
-        technology: jsonContent.technology || "",
-        deadline: jsonContent.deadline || "",
-        contact: jsonContent.contact || "",
-        benefits: jsonContent.benefits || [],
-        metrics: jsonContent.metrics || [],
-        risks: jsonContent.risks || [],
-        nextSteps: jsonContent.nextSteps || [],
-        sources: jsonContent.sources || [],
-        relatedData: jsonContent.relatedData || [],
-        valueScores: jsonContent.valueScores || [],
-        complexityScores: jsonContent.complexityScores || [],
-        folderId: "" // Initialize empty string, will be set correctly in useOpenAI hook
-      };
-
-      // Update toast with success for this specific use case
-      toast.loading("Génération en cours...", { 
-        description: `Cas d'usage "${useCase}" complété avec succès`,
-        id: this.toastId 
-      });
-
-      return completeUseCase;
-    } catch (error) {
-      console.error("Error generating use case detail:", error);
-      toast.error("Erreur de génération", { 
-        description: `${(error as Error).message}`,
-        id: this.toastId 
-      });
-      throw error;
-    }
+    return this.detailService.generateUseCaseDetail(useCase, userInput, matrixConfig, prompt, model);
   }
 
   // Method to finalize the generation process
