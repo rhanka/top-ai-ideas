@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -10,13 +9,6 @@ import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, L
 import { toast } from "sonner";
 import { UseCase, ValueRating, ComplexityRating, LevelDescription } from "@/types";
 import { RatingsTable } from "@/components/UseCaseDetail/RatingsTable";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const UseCaseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,17 +28,14 @@ const UseCaseDetail: React.FC = () => {
       toast.error("Cas d'usage non trouvé");
     }
     
-    // Prepare level descriptions for axes
     const descriptionsMap: Record<string, LevelDescription[]> = {};
     
-    // Value axes
     matrixConfig.valueAxes.forEach(axis => {
       if (axis.levelDescriptions) {
         descriptionsMap[axis.name] = axis.levelDescriptions;
       }
     });
     
-    // Complexity axes
     matrixConfig.complexityAxes.forEach(axis => {
       if (axis.levelDescriptions) {
         descriptionsMap[axis.name] = axis.levelDescriptions;
@@ -60,10 +49,8 @@ const UseCaseDetail: React.FC = () => {
     if (!useCase) return;
     
     if (field === 'benefits' || field === 'metrics' || field === 'risks' || field === 'nextSteps' || field === 'sources' || field === 'relatedData') {
-      // Handle array fields
       let arrayValue: string[];
       if (typeof value === 'string') {
-        // Split by new line if it's a string input
         arrayValue = value.split('\n').filter(item => item.trim() !== '');
       } else {
         arrayValue = value;
@@ -71,7 +58,6 @@ const UseCaseDetail: React.FC = () => {
       
       setUseCase({ ...useCase, [field]: arrayValue });
     } else {
-      // Handle string fields
       setUseCase({ ...useCase, [field]: value });
     }
   };
@@ -83,7 +69,6 @@ const UseCaseDetail: React.FC = () => {
   ) => {
     if (!useCase) return;
     
-    // Find the appropriate description from the matrix configuration
     let description = "";
     if (isValue) {
       const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
@@ -177,27 +162,6 @@ const UseCaseDetail: React.FC = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          {/* Value and Complexity Axes in horizontal table format */}
-          <RatingsTable 
-            title="Axes de Valeur"
-            scores={useCase.valueScores}
-            isValue={true}
-            isEditing={isEditing}
-            backgroundColor="bg-yellow-50"
-            levelDescriptions={levelDescriptions}
-            onRatingChange={handleRatingChange}
-          />
-          
-          <RatingsTable 
-            title="Axes de Complexité"
-            scores={useCase.complexityScores}
-            isValue={false}
-            isEditing={isEditing}
-            backgroundColor="bg-gray-100"
-            levelDescriptions={levelDescriptions}
-            onRatingChange={handleRatingChange}
-          />
-
           <Card className="shadow-md">
             <CardHeader>
               <CardTitle>Description</CardTitle>
@@ -437,6 +401,28 @@ const UseCaseDetail: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+      </div>
+      
+      <div className="mt-8 space-y-8">
+        <RatingsTable 
+          title="Axes de Valeur"
+          scores={useCase.valueScores}
+          isValue={true}
+          isEditing={isEditing}
+          backgroundColor="bg-yellow-50"
+          levelDescriptions={levelDescriptions}
+          onRatingChange={handleRatingChange}
+        />
+        
+        <RatingsTable 
+          title="Axes de Complexité"
+          scores={useCase.complexityScores}
+          isValue={false}
+          isEditing={isEditing}
+          backgroundColor="bg-gray-100"
+          levelDescriptions={levelDescriptions}
+          onRatingChange={handleRatingChange}
+        />
       </div>
     </div>
   );

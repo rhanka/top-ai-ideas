@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription } from "../types";
 
@@ -197,6 +196,7 @@ const exampleUseCase: UseCase = {
     "Web/App Logs",
     "(CRM)"
   ],
+  relatedData: [],
   valueScores: [
     { axisId: "Niveau de Sponsorship", rating: 1, description: "Équipe locale / Aucun sponsor clair" },
     { axisId: "Impact Satisfaction Client (CSAT/NPS)", rating: 4, description: "Amélioration sensible de l'expérience sur motifs importants (déménagement) OU réduction significative de l'effort client." },
@@ -308,6 +308,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         risks: ["À identifier"],
         nextSteps: ["Analyser en détail"],
         sources: ["Génération IA"],
+        relatedData: [],
         valueScores: matrixConfig.valueAxes.map(axis => ({
           axisId: axis.name,
           rating: 3 as ValueRating,
