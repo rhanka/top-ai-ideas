@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppContext } from "@/context/AppContext";
+import { useAppContext } from "@/context/useAppContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, FileText, Trash2, FolderOpen } from "lucide-react";
@@ -31,7 +30,6 @@ const UseCaseList: React.FC = () => {
   const navigate = useNavigate();
   const [useCaseToDelete, setUseCaseToDelete] = useState<UseCase | null>(null);
   
-  // Filtrer les cas d'usage pour n'afficher que ceux du dossier actif
   const currentFolder = getCurrentFolder();
   const filteredUseCases = currentFolderId 
     ? useCases.filter(useCase => useCase.folderId === currentFolderId) 
@@ -48,7 +46,7 @@ const UseCaseList: React.FC = () => {
   };
 
   const handleDeleteClick = (useCase: UseCase, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevents triggering the card click
+    e.stopPropagation();
     setUseCaseToDelete(useCase);
   };
 
@@ -64,35 +62,30 @@ const UseCaseList: React.FC = () => {
     setUseCaseToDelete(null);
   };
   
-  // Function to determine value level based on thresholds
   const getValueLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.valueThresholds) return 0;
     
-    // Find the level corresponding to the score
     for (let i = matrixConfig.valueThresholds.length - 1; i >= 0; i--) {
       const threshold = matrixConfig.valueThresholds[i];
       if (score >= threshold.threshold) {
         return threshold.level;
       }
     }
-    return 1; // Default minimum level
+    return 1;
   };
   
-  // Function to determine complexity level based on thresholds
   const getComplexityLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.complexityThresholds) return 0;
     
-    // Find the level corresponding to the score
     for (let i = matrixConfig.complexityThresholds.length - 1; i >= 0; i--) {
       const threshold = matrixConfig.complexityThresholds[i];
       if (score >= threshold.threshold) {
         return threshold.level;
       }
     }
-    return 1; // Default minimum level
+    return 1;
   };
   
-  // Function to render value rating as stars
   const renderValueRating = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -109,7 +102,6 @@ const UseCaseList: React.FC = () => {
     );
   };
   
-  // Function to render complexity rating as X's
   const renderComplexityRating = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     

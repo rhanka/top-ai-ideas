@@ -1,189 +1,196 @@
 
-import { toast } from "sonner";
-import { UseCase, MatrixConfig } from "../types";
+import { UseCase } from '../types';
+import { toast } from 'sonner';
+
+export interface UseCaseDetailResponse {
+  name: string;
+  description: string;
+  domain: string;
+  technology: string;
+  deadline: string;
+  contact: string;
+  benefits: string[];
+  metrics: string[];
+  risks: string[];
+  nextSteps: string[];
+  sources: string[];
+  relatedData: string[];
+  valueScores: any[];
+  complexityScores: any[];
+}
 
 export class OpenAIService {
   private apiKey: string;
-  private toastId: string | number | undefined;
+  private abortController: AbortController | null = null;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
-  async generateUseCaseList(userInput: string, prompt: string): Promise<string[]> {
+  public async generateUseCaseList(userInput: string, prompt: string): Promise<string[]> {
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+    
+    this.abortController = new AbortController();
+    const signal = this.abortController.signal;
+    
     try {
-      const formattedPrompt = prompt.replace("{{user_input}}", userInput);
-
-      // Update the existing toast instead of creating a new one
-      this.toastId = toast.loading("Génération en cours...", {
-        description: "Création de la liste des cas d'usage",
-        duration: Infinity, // Keep toast open
-        id: this.toastId
-      });
-
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content: "Vous êtes un assistant qui aide à identifier les cas d'usage pertinents pour l'intelligence artificielle."
+            },
+            {
+              role: "user",
+              content: prompt.replace("{{user_input}}", userInput)
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        }),
+        signal
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const content = data.choices[0].message.content;
+      
+      // Extract numbered items
+      const regex = /^\d+\.\s(.+)$/gm;
+      const matches = [...content.matchAll(regex)];
+      const useCaseTitles = matches.map(match => match[1].trim());
+      
+      return useCaseTitles;
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        console.log('Request was aborted');
+        return [];
+      }
+      console.error('Error generating use case list:', error);
+      throw error;
+    }
+  }
+  
+  public async generateUseCaseDetail(
+    useCaseTitle: string, 
+    userInput: string, 
+    matrixConfig: any,
+    prompt: string
+  ): Promise<UseCase> {
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+    
+    this.abortController = new AbortController();
+    const signal = this.abortController.signal;
+    
+    try {
+      // Prepare a simplified matrix for the prompt
+      const simplifiedMatrix = {
+        valueAxes: matrixConfig.valueAxes.map((axis: any) => ({
+          name: axis.name,
+          description: axis.description
+        })),
+        complexityAxes: matrixConfig.complexityAxes.map((axis: any) => ({
+          name: axis.name,
+          description: axis.description
+        }))
+      };
+      
+      // Format the prompt with the use case title, user input, and simplified matrix
+      const formattedPrompt = prompt
+        .replace("{{use_case}}", useCaseTitle)
+        .replace("{{user_input}}", userInput)
+        .replace("{{matrix}}", JSON.stringify(simplifiedMatrix));
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
           model: "gpt-4o",
-          messages: [{ role: "user", content: formattedPrompt }],
+          messages: [
+            {
+              role: "system",
+              content: "Vous êtes un assistant qui aide à créer des cas d'usage détaillés pour l'intelligence artificielle. Répondez uniquement avec un objet JSON valide selon le format demandé."
+            },
+            {
+              role: "user",
+              content: formattedPrompt
+            }
+          ],
           temperature: 0.7,
-          max_tokens: 1000,
+          response_format: { type: "json_object" },
+          max_tokens: 2000
         }),
+        signal
       });
-
+      
       if (!response.ok) {
-        const error = await response.json();
-        console.error("OpenAI API error:", error);
-        toast.error("Erreur API OpenAI", { 
-          description: error.error?.message || "Échec de la génération des cas d'usage",
-          id: this.toastId 
-        });
-        throw new Error(error.error?.message || "Failed to generate use cases");
+        const errorData = await response.json();
+        throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
       }
-
+      
       const data = await response.json();
       const content = data.choices[0].message.content;
-
-      // Parse the numbered list to extract use case titles
-      const useCases = content
-        .split("\n")
-        .filter((line: string) => /^\d+\./.test(line.trim()))
-        .map((line: string) => line.replace(/^\d+\.\s*/, "").trim());
-
-      // Update toast with success message
-      toast.loading("Liste des cas d'usage créée", { 
-        description: `${useCases.length} cas d'usage identifiés`,
-        id: this.toastId 
-      });
-
-      return useCases;
-    } catch (error) {
-      console.error("Error generating use case list:", error);
-      toast.error("Erreur de génération", { 
-        description: `${(error as Error).message}`,
-        id: this.toastId 
-      });
-      throw error;
-    }
-  }
-
-  async generateUseCaseDetail(
-    useCase: string,
-    userInput: string,
-    matrixConfig: MatrixConfig,
-    prompt: string
-  ): Promise<UseCase> {
-    try {
-      // Create a simplified matrix representation for the prompt
-      const matrixSummary = {
-        valueAxes: matrixConfig.valueAxes.map((axis) => ({
-          name: axis.name,
-          description: axis.description,
-        })),
-        complexityAxes: matrixConfig.complexityAxes.map((axis) => ({
-          name: axis.name,
-          description: axis.description,
-        })),
-      };
-
-      // Update the loading toast for this specific use case
-      toast.loading("Génération en cours...", { 
-        description: `Création des détails pour "${useCase}"`,
-        id: this.toastId 
-      });
-
-      const formattedPrompt = prompt
-        .replace("{{use_case}}", useCase)
-        .replace("{{user_input}}", userInput)
-        .replace("{{matrix}}", JSON.stringify(matrixSummary, null, 2));
-
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: formattedPrompt }],
-          temperature: 0.7,
-          max_tokens: 2000,
-          response_format: { type: "json_object" },
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("OpenAI API error:", error);
-        toast.error("Erreur API OpenAI", { 
-          description: `Échec pour "${useCase}": ${error.error?.message}`,
-          id: this.toastId 
-        });
-        throw new Error(error.error?.message || "Failed to generate use case detail");
+      
+      try {
+        const useCaseDetail = JSON.parse(content);
+        
+        return {
+          id: `uc_${Date.now()}`,
+          name: useCaseDetail.name,
+          domain: useCaseDetail.domain,
+          description: useCaseDetail.description,
+          technology: useCaseDetail.technology,
+          deadline: useCaseDetail.deadline,
+          contact: useCaseDetail.contact,
+          benefits: useCaseDetail.benefits,
+          metrics: useCaseDetail.metrics,
+          risks: useCaseDetail.risks,
+          nextSteps: useCaseDetail.nextSteps,
+          sources: useCaseDetail.sources,
+          relatedData: useCaseDetail.relatedData,
+          valueScores: useCaseDetail.valueScores,
+          complexityScores: useCaseDetail.complexityScores,
+          folderId: '' // This will be set by the calling function
+        };
+      } catch (error) {
+        console.error('Failed to parse JSON response:', error);
+        throw new Error('Failed to parse OpenAI response as JSON');
       }
-
-      const data = await response.json();
-      const jsonContent = JSON.parse(data.choices[0].message.content);
-
-      // Generate a unique ID for the use case
-      const id = `ID${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`;
-
-      // Ensure all required fields are present
-      const completeUseCase = {
-        id,
-        name: jsonContent.name || useCase,
-        domain: jsonContent.domain || "",
-        description: jsonContent.description || "",
-        technology: jsonContent.technology || "",
-        deadline: jsonContent.deadline || "",
-        contact: jsonContent.contact || "",
-        benefits: jsonContent.benefits || [],
-        metrics: jsonContent.metrics || [],
-        risks: jsonContent.risks || [],
-        nextSteps: jsonContent.nextSteps || [],
-        sources: jsonContent.sources || [],
-        relatedData: jsonContent.relatedData || [],
-        valueScores: jsonContent.valueScores || [],
-        complexityScores: jsonContent.complexityScores || [],
-      };
-
-      // Update toast with success for this specific use case
-      toast.loading("Génération en cours...", { 
-        description: `Cas d'usage "${useCase}" complété avec succès`,
-        id: this.toastId 
-      });
-
-      return completeUseCase;
     } catch (error) {
-      console.error("Error generating use case detail:", error);
-      toast.error("Erreur de génération", { 
-        description: `${(error as Error).message}`,
-        id: this.toastId 
-      });
+      if ((error as Error).name === 'AbortError') {
+        console.log('Request was aborted');
+        throw new Error('Request was aborted');
+      }
+      console.error('Error generating use case detail:', error);
       throw error;
     }
   }
-
-  // Method to finalize the generation process
-  finalizeGeneration(success: boolean, count: number) {
+  
+  public finalizeGeneration(success: boolean, count: number): void {
     if (success) {
-      toast.success(`Génération terminée`, { 
-        description: `${count} cas d'usage générés avec succès !`,
-        id: this.toastId,
-        duration: 5000 // Close after 5 seconds
-      });
+      toast.success(`${count} cas d'usage générés avec succès`);
     } else {
-      toast.error("Échec de la génération", { 
-        description: "Une erreur est survenue lors de la génération",
-        id: this.toastId,
-        duration: 5000 // Close after 5 seconds
-      });
+      toast.error("Échec de la génération des cas d'usage");
     }
     
-    this.toastId = undefined;
+    this.abortController = null;
   }
 }

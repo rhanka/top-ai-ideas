@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, Grid, FileText, BarChart, Table, Settings, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAppContext } from "@/context/AppContext";
+import { useAppContext } from "@/context/useAppContext";
 
 const MainNavigation: React.FC = () => {
   const location = useLocation();
