@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, ListTodo, Database, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { UseCase, ValueRating, ComplexityRating } from "@/types";
+import { UseCase, ValueRating, ComplexityRating, LevelDescription } from "@/types";
+import { RatingsTable } from "@/components/UseCaseDetail/RatingsTable";
 import {
   Select,
   SelectContent,
@@ -25,6 +25,7 @@ const UseCaseDetail: React.FC = () => {
   
   const [useCase, setUseCase] = useState<UseCase | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [levelDescriptions, setLevelDescriptions] = useState<Record<string, LevelDescription[]>>({});
   
   useEffect(() => {
     const foundUseCase = useCases.find(uc => uc.id === id);
@@ -34,7 +35,26 @@ const UseCaseDetail: React.FC = () => {
       navigate('/cas-usage');
       toast.error("Cas d'usage non trouvé");
     }
-  }, [id, useCases, navigate]);
+    
+    // Prepare level descriptions for axes
+    const descriptionsMap: Record<string, LevelDescription[]> = {};
+    
+    // Value axes
+    matrixConfig.valueAxes.forEach(axis => {
+      if (axis.levelDescriptions) {
+        descriptionsMap[axis.name] = axis.levelDescriptions;
+      }
+    });
+    
+    // Complexity axes
+    matrixConfig.complexityAxes.forEach(axis => {
+      if (axis.levelDescriptions) {
+        descriptionsMap[axis.name] = axis.levelDescriptions;
+      }
+    });
+    
+    setLevelDescriptions(descriptionsMap);
+  }, [id, useCases, navigate, matrixConfig]);
   
   const handleInputChange = (field: keyof UseCase, value: string | string[]) => {
     if (!useCase) return;
@@ -102,134 +122,6 @@ const UseCaseDetail: React.FC = () => {
     toast.success("Cas d'usage mis à jour");
   };
   
-  const renderValueRating = (axisId: string) => {
-    if (!useCase) return null;
-    
-    const score = useCase.valueScores.find(s => s.axisId === axisId);
-    if (!score) return null;
-    
-    // Find the axis in the matrix config
-    const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
-    
-    return (
-      <>
-        <div className="flex mb-2">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              onClick={() => isEditing && handleRatingChange(true, axisId, star)}
-              disabled={!isEditing}
-              className={`text-2xl ${star <= score.rating ? "text-yellow-500" : "text-gray-300"} ${isEditing ? "cursor-pointer hover:text-yellow-400" : "cursor-default"}`}
-            >
-              ★
-            </button>
-          ))}
-        </div>
-        
-        {isEditing && (
-          <div className="mt-2 mb-3">
-            <Select
-              value={score.rating.toString()}
-              onValueChange={(value) => handleRatingChange(true, axisId, parseInt(value) as ValueRating)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Sélectionner une note" />
-              </SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4, 5].map((rating) => {
-                  // Find description for this rating
-                  let ratingDescription = "";
-                  if (axis && axis.levelDescriptions) {
-                    const levelDesc = axis.levelDescriptions.find(level => level.level === rating);
-                    ratingDescription = levelDesc ? levelDesc.description : `Niveau ${rating}`;
-                  } else {
-                    ratingDescription = `Niveau ${rating}`;
-                  }
-                  
-                  return (
-                    <SelectItem key={rating} value={rating.toString()}>
-                      {rating} - {ratingDescription}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        
-        {/* Show the description based on the rating from matrix config */}
-        <p className="text-sm text-gray-600">
-          {score.description}
-        </p>
-      </>
-    );
-  };
-  
-  const renderComplexityRating = (axisId: string) => {
-    if (!useCase) return null;
-    
-    const score = useCase.complexityScores.find(s => s.axisId === axisId);
-    if (!score) return null;
-    
-    // Find the axis in the matrix config
-    const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
-    
-    return (
-      <>
-        <div className="flex mb-2">
-          {[1, 2, 3, 4, 5].map((level) => (
-            <button
-              key={level}
-              type="button"
-              onClick={() => isEditing && handleRatingChange(false, axisId, level)}
-              disabled={!isEditing}
-              className={`text-xl font-bold mx-1 ${level <= score.rating ? "text-gray-800" : "text-gray-300"} ${isEditing ? "cursor-pointer hover:text-gray-600" : "cursor-default"}`}
-            >
-              X
-            </button>
-          ))}
-        </div>
-        
-        {isEditing && (
-          <div className="mt-2 mb-3">
-            <Select
-              value={score.rating.toString()}
-              onValueChange={(value) => handleRatingChange(false, axisId, parseInt(value) as ComplexityRating)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Sélectionner un niveau" />
-              </SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4, 5].map((rating) => {
-                  // Find description for this rating
-                  let ratingDescription = "";
-                  if (axis && axis.levelDescriptions) {
-                    const levelDesc = axis.levelDescriptions.find(level => level.level === rating);
-                    ratingDescription = levelDesc ? levelDesc.description : `Niveau ${rating}`;
-                  } else {
-                    ratingDescription = `Niveau ${rating}`;
-                  }
-                  
-                  return (
-                    <SelectItem key={rating} value={rating.toString()}>
-                      {rating} - {ratingDescription}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        
-        {/* Show the description based on the rating from matrix config */}
-        <p className="text-sm text-gray-600">
-          {score.description}
-        </p>
-      </>
-    );
-  };
-  
   if (!useCase) {
     return (
       <div className="container mx-auto px-4 py-8 flex justify-center">
@@ -283,8 +175,29 @@ const UseCaseDetail: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-3 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {/* Value and Complexity Axes in horizontal table format */}
+          <RatingsTable 
+            title="Axes de Valeur"
+            scores={useCase.valueScores}
+            isValue={true}
+            isEditing={isEditing}
+            backgroundColor="bg-yellow-50"
+            levelDescriptions={levelDescriptions}
+            onRatingChange={handleRatingChange}
+          />
+          
+          <RatingsTable 
+            title="Axes de Complexité"
+            scores={useCase.complexityScores}
+            isValue={false}
+            isEditing={isEditing}
+            backgroundColor="bg-gray-100"
+            levelDescriptions={levelDescriptions}
+            onRatingChange={handleRatingChange}
+          />
+
           <Card className="shadow-md">
             <CardHeader>
               <CardTitle>Description</CardTitle>
@@ -521,34 +434,6 @@ const UseCaseDetail: React.FC = () => {
                   <p className="font-medium">{useCase.contact || "Non défini"}</p>
                 )}
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-md">
-            <CardHeader className="bg-yellow-50">
-              <CardTitle>Axes de Valeur</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-4">
-              {useCase.valueScores.map(score => (
-                <div key={score.axisId}>
-                  <p className="font-medium mb-1">{score.axisId}</p>
-                  {renderValueRating(score.axisId)}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-md">
-            <CardHeader className="bg-gray-100">
-              <CardTitle>Axes de Complexité</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-4">
-              {useCase.complexityScores.map(score => (
-                <div key={score.axisId}>
-                  <p className="font-medium mb-1">{score.axisId}</p>
-                  {renderComplexityRating(score.axisId)}
-                </div>
-              ))}
             </CardContent>
           </Card>
         </div>
