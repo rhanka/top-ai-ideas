@@ -1,6 +1,12 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
+import { toast } from "sonner";
+import { OpenAIService } from "../services/OpenAIService";
+
+// Constants
+const OPENAI_API_KEY = "openai_api_key";
+const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
+const USE_CASE_DETAIL_PROMPT = "use_case_detail_prompt";
 
 // Define the ValueRating and ComplexityRating types that were previously referenced but not imported
 type ValueRating = 1 | 2 | 3 | 4 | 5;
@@ -266,9 +272,10 @@ type AppContextType = {
   setActiveUseCase: (useCase: UseCase | null) => void;
   updateMatrixConfig: (config: MatrixConfig) => void;
   setCurrentInput: (input: string) => void;
-  generateUseCases: () => void;
+  generateUseCases: () => Promise<void>;
   updateThresholds: (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => void;
   countUseCasesInLevel: (isValue: boolean, level: number) => number;
+  isGenerating: boolean;
 };
 
 // Create context
@@ -281,6 +288,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [matrixConfig, setMatrixConfig] = useState<MatrixConfig>(defaultMatrixConfig);
   const [activeUseCase, setActiveUseCase] = useState<UseCase | null>(null);
   const [currentInput, setCurrentInput] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
   
   // Effect to update cases count in thresholds whenever useCases changes
   useEffect(() => {
@@ -419,41 +427,81 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }).length;
   };
   
-  // Generate new use cases based on user input
-  const generateUseCases = () => {
-    // For demonstration, we'll create a mock use case
-    // In a real application, this would call an API to generate use cases
-    if (currentInput.trim().length > 0) {
-      const newId = `ID${(useCases.length + 1).toString().padStart(2, '0')}`;
+  // Generate new use cases based on user input using OpenAI
+  const generateUseCases = async () => {
+    if (currentInput.trim().length === 0) {
+      toast.error("Veuillez saisir une description de votre activité");
+      return;
+    }
+
+    // Get OpenAI API key from localStorage
+    const apiKey = localStorage.getItem(OPENAI_API_KEY);
+    if (!apiKey) {
+      toast.error("Clé API OpenAI non configurée", {
+        description: "Veuillez configurer votre clé API dans les paramètres",
+        action: {
+          label: "Paramètres",
+          onClick: () => window.location.href = "/parametres",
+        },
+      });
+      return;
+    }
+
+    // Get prompts from localStorage or use defaults
+    const listPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT) || DEFAULT_USE_CASE_LIST_PROMPT;
+    const detailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT) || DEFAULT_USE_CASE_DETAIL_PROMPT;
+
+    const openai = new OpenAIService(apiKey);
+    setIsGenerating(true);
+    
+    try {
+      // Step 1: Generate list of use case titles
+      toast.info("Génération des cas d'usage en cours...");
+      const useCaseTitles = await openai.generateUseCaseList(currentInput, listPrompt);
       
-      const newUseCase: UseCase = {
-        id: newId,
-        name: `Cas d'usage généré ${useCases.length + 1}`,
-        domain: "Généré",
-        description: `Use case généré basé sur: ${currentInput.substring(0, 100)}...`,
-        technology: "IA Générative",
-        deadline: "À déterminer",
-        contact: "",
-        benefits: ["À définir"],
-        metrics: ["À définir"],
-        risks: ["À identifier"],
-        nextSteps: ["Analyser en détail"],
-        sources: ["Génération IA"],
-        relatedData: [],
-        valueScores: matrixConfig.valueAxes.map(axis => ({
-          axisId: axis.name,
-          rating: 3 as ValueRating,
-          description: "À évaluer"
-        })),
-        complexityScores: matrixConfig.complexityAxes.map(axis => ({
-          axisId: axis.name,
-          rating: 3 as ComplexityRating,
-          description: "À évaluer"
-        })),
-      };
+      if (useCaseTitles.length === 0) {
+        toast.error("Aucun cas d'usage généré. Veuillez reformuler votre demande.");
+        setIsGenerating(false);
+        return;
+      }
+
+      // Step 2: For each use case title, generate detailed use case
+      const newUseCases: UseCase[] = [];
       
-      addUseCase(newUseCase);
-      setCurrentInput("");
+      for (const title of useCaseTitles) {
+        toast.info(`Génération des détails pour "${title}"...`);
+        try {
+          const useCaseDetail = await openai.generateUseCaseDetail(
+            title,
+            currentInput,
+            matrixConfig,
+            detailPrompt
+          );
+          
+          // Calculate scores for the use case
+          const scoredUseCase = calcInitialScore(useCaseDetail, matrixConfig);
+          newUseCases.push(scoredUseCase);
+        } catch (error) {
+          console.error(`Error generating details for "${title}":`, error);
+          toast.error(`Erreur lors de la génération des détails pour "${title}"`);
+        }
+      }
+
+      // Add all successfully generated use cases
+      if (newUseCases.length > 0) {
+        setUseCases([...useCases, ...newUseCases]);
+        toast.success(`${newUseCases.length} cas d'usage générés avec succès!`);
+        setCurrentInput("");
+      } else {
+        toast.error("Échec de la génération des cas d'usage");
+      }
+    } catch (error) {
+      console.error("Error in use case generation:", error);
+      toast.error("Erreur lors de la génération des cas d'usage", {
+        description: (error as Error).message,
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
   
@@ -470,7 +518,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentInput,
     generateUseCases,
     updateThresholds,
-    countUseCasesInLevel
+    countUseCasesInLevel,
+    isGenerating
   };
   
   return (

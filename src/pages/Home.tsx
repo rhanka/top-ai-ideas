@@ -4,16 +4,18 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, Loader2 } from "lucide-react";
 
 const Home: React.FC = () => {
-  const { currentInput, setCurrentInput, generateUseCases } = useAppContext();
+  const { currentInput, setCurrentInput, generateUseCases, isGenerating } = useAppContext();
   const navigate = useNavigate();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    generateUseCases();
-    navigate('/cas-usage');
+    await generateUseCases();
+    if (!isGenerating) {
+      navigate('/cas-usage');
+    }
   };
   
   return (
@@ -40,6 +42,7 @@ const Home: React.FC = () => {
               value={currentInput}
               onChange={(e) => setCurrentInput(e.target.value)}
               required
+              disabled={isGenerating}
             />
           </div>
           
@@ -47,11 +50,20 @@ const Home: React.FC = () => {
             <Button 
               type="submit" 
               className="bg-navy hover:bg-navy/90 text-white px-6 py-6 text-lg rounded-md flex items-center"
-              disabled={currentInput.trim().length === 0}
+              disabled={currentInput.trim().length === 0 || isGenerating}
             >
-              <Sparkles className="w-6 h-6 mr-2" />
-              Générer vos cas d'usage
-              <Send className="w-5 h-5 ml-2" />
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+                  Génération en cours...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-6 h-6 mr-2" />
+                  Générer vos cas d'usage
+                  <Send className="w-5 h-5 ml-2" />
+                </>
+              )}
             </Button>
           </div>
         </form>
