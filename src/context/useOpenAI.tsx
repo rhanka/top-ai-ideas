@@ -11,6 +11,7 @@ import {
   DEFAULT_USE_CASE_DETAIL_PROMPT 
 } from './constants';
 import { calcInitialScore } from './useCaseUtils';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useOpenAI = (matrixConfig: MatrixConfig, addUseCase: (useCase: UseCase) => void) => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -65,8 +66,14 @@ export const useOpenAI = (matrixConfig: MatrixConfig, addUseCase: (useCase: UseC
             detailPrompt
           );
           
+          // Ajouter un id unique en plus de celui généré par OpenAI
+          const useCaseWithId = {
+            ...useCaseDetail,
+            id: uuidv4()
+          };
+          
           // Calculate scores for the use case
-          const scoredUseCase = calcInitialScore(useCaseDetail, matrixConfig);
+          const scoredUseCase = calcInitialScore(useCaseWithId, matrixConfig);
           addUseCase(scoredUseCase);
           successCount++;
           

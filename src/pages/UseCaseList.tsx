@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, FileText, Trash2 } from "lucide-react";
+import { PlusCircle, FileText, Trash2, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { UseCase } from "@/types";
 import {
@@ -16,13 +16,26 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 const UseCaseList: React.FC = () => {
-  const { useCases, setActiveUseCase, deleteUseCase, matrixConfig } = useAppContext();
+  const { 
+    useCases, 
+    setActiveUseCase, 
+    deleteUseCase, 
+    matrixConfig,
+    currentFolderId,
+    getCurrentFolder
+  } = useAppContext();
+  
   const navigate = useNavigate();
   const [useCaseToDelete, setUseCaseToDelete] = useState<UseCase | null>(null);
+  
+  // Filtrer les cas d'usage pour n'afficher que ceux du dossier actif
+  const currentFolder = getCurrentFolder();
+  const filteredUseCases = currentFolderId 
+    ? useCases.filter(useCase => useCase.folderId === currentFolderId) 
+    : [];
   
   const handleCreateNew = () => {
     toast.info("Fonctionnalité de création manuelle à venir");
@@ -116,21 +129,50 @@ const UseCaseList: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-navy">Cas d'usage IA</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-navy">Cas d'usage IA</h1>
+          {currentFolder && (
+            <p className="text-gray-600 mt-1">
+              Dossier: {currentFolder.name}
+            </p>
+          )}
+        </div>
         
-        <Button 
-          onClick={handleCreateNew} 
-          className="bg-navy hover:bg-navy/90"
-        >
-          <PlusCircle className="mr-2 h-5 w-5" /> Nouveau cas d'usage
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => navigate('/dossiers')}
+            variant="outline" 
+            className="mr-2"
+          >
+            <FolderOpen className="mr-2 h-5 w-5" /> Voir les dossiers
+          </Button>
+          
+          <Button 
+            onClick={handleCreateNew} 
+            className="bg-navy hover:bg-navy/90"
+          >
+            <PlusCircle className="mr-2 h-5 w-5" /> Nouveau cas d'usage
+          </Button>
+        </div>
       </div>
       
-      {useCases.length === 0 ? (
+      {!currentFolder ? (
+        <div className="text-center py-16 bg-gray-50 rounded-lg">
+          <FolderOpen className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+          <h3 className="text-xl font-medium text-gray-600 mb-2">Aucun dossier sélectionné</h3>
+          <p className="text-gray-500 mb-6">Veuillez sélectionner un dossier pour voir ses cas d'usage</p>
+          <Button 
+            onClick={() => navigate('/dossiers')}
+            variant="outline"
+          >
+            Voir les dossiers
+          </Button>
+        </div>
+      ) : filteredUseCases.length === 0 ? (
         <div className="text-center py-16 bg-gray-50 rounded-lg">
           <FileText className="mx-auto h-16 w-16 text-gray-400 mb-4" />
           <h3 className="text-xl font-medium text-gray-600 mb-2">Aucun cas d'usage</h3>
-          <p className="text-gray-500 mb-6">Commencez par générer des cas d'usage depuis la page d'accueil</p>
+          <p className="text-gray-500 mb-6">Ce dossier ne contient aucun cas d'usage. Générez-en depuis la page d'accueil.</p>
           <Button 
             onClick={() => navigate('/')}
             variant="outline"
@@ -140,7 +182,7 @@ const UseCaseList: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {useCases.map((useCase) => (
+          {filteredUseCases.map((useCase) => (
             <Card 
               key={useCase.id} 
               className="shadow-md hover:shadow-lg transition-shadow cursor-pointer"
@@ -149,7 +191,7 @@ const UseCaseList: React.FC = () => {
               <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 border-b">
                 <CardTitle className="text-navy text-xl flex items-center justify-between">
                   <span className="truncate">{useCase.name}</span>
-                  <span className="text-sm text-gray-600 font-normal">{useCase.id}</span>
+                  <span className="text-sm text-gray-600 font-normal">{useCase.id.substring(0, 8)}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">

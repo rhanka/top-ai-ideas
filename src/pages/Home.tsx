@@ -1,18 +1,48 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Sparkles, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Send, Sparkles, Loader2, FolderPlus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const Home: React.FC = () => {
-  const { currentInput, setCurrentInput, generateUseCases, isGenerating } = useAppContext();
+  const { currentInput, setCurrentInput, generateUseCases, isGenerating, addFolder, setCurrentFolder } = useAppContext();
   const navigate = useNavigate();
   
+  const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
+  const [folderName, setFolderName] = useState("");
+  const [folderDescription, setFolderDescription] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Afficher la boîte de dialogue pour créer un nouveau dossier
+    setShowNewFolderDialog(true);
+  };
+  
+  const handleCreateFolder = async () => {
+    if (!folderName.trim()) {
+      toast.error("Veuillez saisir un nom de dossier");
+      return;
+    }
+    
+    // Créer le nouveau dossier
+    const newFolder = addFolder(folderName, folderDescription);
+    
+    // Définir le nouveau dossier comme dossier actif
+    setCurrentFolder(newFolder.id);
+    
+    // Fermer la boîte de dialogue
+    setShowNewFolderDialog(false);
+    
+    // Générer les cas d'usage pour ce nouveau dossier
     await generateUseCases();
+    
+    // Naviguer vers la liste des cas d'usage
     if (!isGenerating) {
       navigate('/cas-usage');
     }
@@ -59,8 +89,8 @@ const Home: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-6 h-6 mr-2" />
-                  Générer vos cas d'usage
+                  <FolderPlus className="w-6 h-6 mr-2" />
+                  Créer un dossier et générer vos cas d'usage
                   <Send className="w-5 h-5 ml-2" />
                 </>
               )}
@@ -85,8 +115,8 @@ const Home: React.FC = () => {
             <div className="rounded-full bg-blue-100 w-10 h-10 flex items-center justify-center mb-3">
               <span className="text-navy font-bold">2</span>
             </div>
-            <h3 className="font-medium mb-2">Générez des cas d'usage</h3>
-            <p className="text-gray-600 text-sm">Notre outil créera des cas d'usage pertinents basés sur votre description.</p>
+            <h3 className="font-medium mb-2">Créez un dossier</h3>
+            <p className="text-gray-600 text-sm">Organisez vos cas d'usage dans un dossier dédié avec sa propre matrice.</p>
           </div>
           
           <div className="bg-white p-4 rounded shadow-sm">
@@ -98,6 +128,64 @@ const Home: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Boîte de dialogue pour créer un nouveau dossier */}
+      <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Créer un nouveau dossier</DialogTitle>
+            <DialogDescription>
+              Donnez un nom à votre dossier pour regrouper les cas d'usage qui vont être générés.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="folder-name" className="text-sm font-medium">Nom du dossier</label>
+              <Input
+                id="folder-name"
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                placeholder="Ex: Centre d'appel - Projet 2025"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="folder-description" className="text-sm font-medium">Description (optionnelle)</label>
+              <Textarea
+                id="folder-description"
+                value={folderDescription}
+                onChange={(e) => setFolderDescription(e.target.value)}
+                placeholder="Description du contenu de ce dossier..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowNewFolderDialog(false)}
+              disabled={isGenerating}
+            >
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleCreateFolder} 
+              className="bg-navy hover:bg-navy/90"
+              disabled={isGenerating}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Génération...
+                </>
+              ) : (
+                <>
+                  Créer et générer
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

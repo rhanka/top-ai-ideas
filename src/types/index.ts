@@ -64,11 +64,12 @@ export type UseCase = {
   risks: string[];
   nextSteps: string[];
   sources: string[];
-  relatedData: string[]; // New field for related data (client identity, invoices, call history)
+  relatedData: string[]; 
   valueScores: ValueAxisScore[];
   complexityScores: ComplexityAxisScore[];
   totalValueScore?: number;
   totalComplexityScore?: number;
+  folderId: string; // ID du dossier associé
 };
 
 // Matrix configuration
@@ -77,4 +78,13 @@ export type MatrixConfig = {
   complexityAxes: ComplexityAxis[];
   valueThresholds?: LevelThreshold[];
   complexityThresholds?: LevelThreshold[];
+};
+
+// Folder type
+export type Folder = {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: Date;
+  matrixConfig: MatrixConfig;
 };

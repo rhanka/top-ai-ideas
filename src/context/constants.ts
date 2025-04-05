@@ -3,6 +3,8 @@
 export const OPENAI_API_KEY = "openai_api_key";
 export const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
 export const USE_CASE_DETAIL_PROMPT = "use_case_detail_prompt";
+export const FOLDERS_STORAGE_KEY = "ai_folders";
+export const CURRENT_FOLDER_ID = "current_folder_id";
 
 // Default prompts with placeholders
 export const DEFAULT_USE_CASE_LIST_PROMPT = 
