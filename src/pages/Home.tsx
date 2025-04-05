@@ -8,20 +8,37 @@ import { Input } from "@/components/ui/input";
 import { Send, Sparkles, Loader2, FolderPlus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Home: React.FC = () => {
-  const { currentInput, setCurrentInput, generateUseCases, isGenerating, addFolder, setCurrentFolder } = useAppContext();
+  const { currentInput, setCurrentInput, generateUseCases, isGenerating, addFolder, setCurrentFolder, currentFolderId } = useAppContext();
   const navigate = useNavigate();
   
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [folderName, setFolderName] = useState("");
   const [folderDescription, setFolderDescription] = useState("");
+  const [createNewFolder, setCreateNewFolder] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Afficher la boîte de dialogue pour créer un nouveau dossier
-    setShowNewFolderDialog(true);
+    if (!currentFolderId && !createNewFolder) {
+      toast.error("Aucun dossier sélectionné. Veuillez créer un nouveau dossier.");
+      return;
+    }
+    
+    // Si l'utilisateur souhaite créer un nouveau dossier, afficher la boîte de dialogue
+    if (createNewFolder) {
+      setShowNewFolderDialog(true);
+    } else {
+      // Sinon, générer directement les cas d'usage dans le dossier actuel
+      await generateUseCases();
+      
+      // Naviguer vers la liste des cas d'usage
+      if (!isGenerating) {
+        navigate('/cas-usage');
+      }
+    }
   };
   
   const handleCreateFolder = async () => {
@@ -76,6 +93,20 @@ const Home: React.FC = () => {
             />
           </div>
           
+          <div className="flex items-center space-x-2 mt-4">
+            <Checkbox 
+              id="createNewFolder" 
+              checked={createNewFolder} 
+              onCheckedChange={(checked) => setCreateNewFolder(checked === true)}
+            />
+            <label
+              htmlFor="createNewFolder"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Créer un nouveau dossier
+            </label>
+          </div>
+          
           <div className="flex justify-center mt-6">
             <Button 
               type="submit" 
@@ -89,8 +120,8 @@ const Home: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <FolderPlus className="w-6 h-6 mr-2" />
-                  Créer un dossier et générer vos cas d'usage
+                  <Sparkles className="w-6 h-6 mr-2" />
+                  Générer vos cas d'usage
                   <Send className="w-5 h-5 ml-2" />
                 </>
               )}
