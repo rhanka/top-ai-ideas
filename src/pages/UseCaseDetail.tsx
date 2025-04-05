@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -56,86 +56,58 @@ const UseCaseDetail: React.FC = () => {
         arrayValue = value;
       }
       
-      setUseCase({ ...useCase, [field]: arrayValue });
+      setUseCase(prev => {
+        if (!prev) return null;
+        return { ...prev, [field]: arrayValue };
+      });
     } else {
-      setUseCase({ ...useCase, [field]: value });
+      setUseCase(prev => {
+        if (!prev) return null;
+        return { ...prev, [field]: value };
+      });
     }
   };
   
-  const handleRatingChange = (
+  const handleRatingChange = useCallback((
     isValue: boolean,
     axisId: string,
     rating: number
   ) => {
     if (!useCase) return;
     
-    let description = "";
-    if (isValue) {
-      const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
-      if (axis && axis.levelDescriptions) {
-        const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
-        description = levelDescription?.description || "";
-      }
+    setUseCase(prevUseCase => {
+      if (!prevUseCase) return null;
       
-      const newValueScores = useCase.valueScores.map(score => 
-        score.axisId === axisId 
-          ? { ...score, rating: rating as ValueRating, description } 
-          : score
-      );
-      
-      // Recalculate the total value score
-      let totalValue = 0;
-      newValueScores.forEach(score => {
-        const axis = matrixConfig.valueAxes.find(a => a.name === score.axisId);
-        if (axis) {
-          // Apply correct point values based on rating
-          let pointValue = 0;
-          switch (score.rating) {
-            case 1: pointValue = 0; break;
-            case 2: pointValue = 40; break;
-            case 3: pointValue = 100; break;
-            case 4: pointValue = 400; break;
-            case 5: pointValue = 2000; break;
-          }
-          totalValue += pointValue * axis.weight;
+      let description = "";
+      if (isValue) {
+        const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
+        if (axis && axis.levelDescriptions) {
+          const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
+          description = levelDescription?.description || "";
         }
-      });
-      
-      setUseCase({ ...useCase, valueScores: newValueScores, totalValueScore: totalValue });
-    } else {
-      const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
-      if (axis && axis.levelDescriptions) {
-        const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
-        description = levelDescription?.description || "";
-      }
-      
-      const newComplexityScores = useCase.complexityScores.map(score => 
-        score.axisId === axisId 
-          ? { ...score, rating: rating as ComplexityRating, description } 
-          : score
-      );
-      
-      // Recalculate the total complexity score
-      let totalComplexity = 0;
-      newComplexityScores.forEach(score => {
-        const axis = matrixConfig.complexityAxes.find(a => a.name === score.axisId);
-        if (axis) {
-          // Apply correct point values based on rating
-          let pointValue = 0;
-          switch (score.rating) {
-            case 1: pointValue = 0; break;
-            case 2: pointValue = 50; break;
-            case 3: pointValue = 100; break;
-            case 4: pointValue = 250; break;
-            case 5: pointValue = 1000; break;
-          }
-          totalComplexity += pointValue * axis.weight;
+        
+        const newValueScores = prevUseCase.valueScores.map(score => 
+          score.axisId === axisId 
+            ? { ...score, rating: rating as ValueRating, description } 
+            : score
+        );
+        return { ...prevUseCase, valueScores: newValueScores };
+      } else {
+        const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
+        if (axis && axis.levelDescriptions) {
+          const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
+          description = levelDescription?.description || "";
         }
-      });
-      
-      setUseCase({ ...useCase, complexityScores: newComplexityScores, totalComplexityScore: totalComplexity });
-    }
-  };
+        
+        const newComplexityScores = prevUseCase.complexityScores.map(score => 
+          score.axisId === axisId 
+            ? { ...score, rating: rating as ComplexityRating, description } 
+            : score
+        );
+        return { ...prevUseCase, complexityScores: newComplexityScores };
+      }
+    });
+  }, [useCase, matrixConfig]);
   
   const handleSave = () => {
     if (!useCase) return;
@@ -156,7 +128,7 @@ const UseCaseDetail: React.FC = () => {
     }
     return 1;
   };
-
+  
   const getComplexityLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.complexityThresholds) return 0;
     
@@ -168,7 +140,7 @@ const UseCaseDetail: React.FC = () => {
     }
     return 1;
   };
-
+  
   const renderValueStars = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -186,7 +158,7 @@ const UseCaseDetail: React.FC = () => {
       </div>
     );
   };
-
+  
   const renderComplexityX = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -206,7 +178,7 @@ const UseCaseDetail: React.FC = () => {
       </div>
     );
   };
-
+  
   if (!useCase) {
     return (
       <div className="container mx-auto px-4 py-8 flex justify-center">

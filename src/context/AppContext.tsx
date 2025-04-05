@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
 
@@ -158,35 +159,32 @@ const calcInitialScore = (useCase: UseCase, config: MatrixConfig) => {
   let totalValue = 0;
   let totalComplexity = 0;
   
+  // Get the points for each rating based on thresholds
+  const getValuePoints = (rating: number) => {
+    const threshold = config.valueThresholds?.find(t => t.level === rating);
+    return threshold ? threshold.points : 0;
+  };
+  
+  const getComplexityPoints = (rating: number) => {
+    const threshold = config.complexityThresholds?.find(t => t.level === rating);
+    return threshold ? threshold.points : 0;
+  };
+  
   useCase.valueScores.forEach(score => {
     const axis = config.valueAxes.find(a => a.name === score.axisId);
     if (axis) {
-      // Apply correct point values based on rating
-      let pointValue = 0;
-      switch (score.rating) {
-        case 1: pointValue = 0; break;
-        case 2: pointValue = 40; break;
-        case 3: pointValue = 100; break;
-        case 4: pointValue = 400; break;
-        case 5: pointValue = 2000; break;
-      }
-      totalValue += pointValue * axis.weight;
+      // Use points associated with the rating level, not the rating itself
+      const points = getValuePoints(score.rating);
+      totalValue += points * axis.weight;
     }
   });
   
   useCase.complexityScores.forEach(score => {
     const axis = config.complexityAxes.find(a => a.name === score.axisId);
     if (axis) {
-      // Apply correct point values based on rating
-      let pointValue = 0;
-      switch (score.rating) {
-        case 1: pointValue = 0; break;
-        case 2: pointValue = 50; break;
-        case 3: pointValue = 100; break;
-        case 4: pointValue = 250; break;
-        case 5: pointValue = 1000; break;
-      }
-      totalComplexity += pointValue * axis.weight;
+      // Use points associated with the rating level, not the rating itself
+      const points = getComplexityPoints(score.rating);
+      totalComplexity += points * axis.weight;
     }
   });
   
@@ -245,7 +243,7 @@ const exampleUseCase: UseCase = {
   complexityScores: [
     { axisId: "Maturité & Fiabilité Solution IA", rating: 3, description: "Technologie maîtrisée mais nécessite adaptation/paramétrage fin (chatbot transactionnel). Fiabilité à valider." },
     { axisId: "Effort d'Implémentation & Intégration", rating: 3, description: "Intégration avec systèmes clés (CRM, téléphonie) via API existantes. Dev/config modéré." },
-    { axisId: "IA Responsable & Conformité Données", rating: 3, description: "Utilisation de DP (Loi 25), pseudonymisation/anonymisation, gestion consentement, tests biais standards, xAI simple." },
+    { axisId: "IA Responsable & Conformité Données", rating: 3, description: "Utilisation de DP (Loi 25), pseudonymisation/anonymisation, gestion consentement, tests biais standards, ×AI simple." },
     { axisId: "Disponibilité, Qualité & Accès Données", rating: 3, description: "Données dans quelques systèmes (<5), nettoyage/approchement modéré, qualité acceptable, accès gérable." },
     { axisId: "Gestion du Changement & Impact Métier", rating: 2, description: "Léger ajustement processus, formation courte nécessaire." },
   ],
@@ -276,32 +274,6 @@ type AppContextType = {
 
 // Create context
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-// Helper function to determine value level based on thresholds
-const getValueLevel = (score: number | undefined, thresholds?: LevelThreshold[]) => {
-  if (score === undefined || !thresholds) return 0;
-  
-  for (let i = thresholds.length - 1; i >= 0; i--) {
-    const threshold = thresholds[i];
-    if (score >= threshold.threshold) {
-      return threshold.level;
-    }
-  }
-  return 1; // Default minimum level
-};
-
-// Helper function to determine complexity level based on thresholds
-const getComplexityLevel = (score: number | undefined, thresholds?: LevelThreshold[]) => {
-  if (score === undefined || !thresholds) return 0;
-  
-  for (let i = thresholds.length - 1; i >= 0; i--) {
-    const threshold = thresholds[i];
-    if (score >= threshold.threshold) {
-      return threshold.level;
-    }
-  }
-  return 1; // Default minimum level
-};
 
 // Provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -359,6 +331,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Helper function to determine value level based on thresholds
+  const getValueLevel = (score: number | undefined) => {
+    if (score === undefined || !matrixConfig.valueThresholds) return 0;
+    
+    for (let i = matrixConfig.valueThresholds.length - 1; i >= 0; i--) {
+      const threshold = matrixConfig.valueThresholds[i];
+      if (score >= threshold.threshold) {
+        return threshold.level;
+      }
+    }
+    return 1; // Default minimum level
+  };
+  
+  // Helper function to determine complexity level based on thresholds
+  const getComplexityLevel = (score: number | undefined) => {
+    if (score === undefined || !matrixConfig.complexityThresholds) return 0;
+    
+    for (let i = matrixConfig.complexityThresholds.length - 1; i >= 0; i--) {
+      const threshold = matrixConfig.complexityThresholds[i];
+      if (score >= threshold.threshold) {
+        return threshold.level;
+      }
+    }
+    return 1; // Default minimum level
+  };
+  
   // Update cases counts in thresholds
   const updateCasesCounts = () => {
     if (!matrixConfig.valueThresholds || !matrixConfig.complexityThresholds) return;
@@ -376,8 +374,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     // Count use cases for each level
     useCases.forEach(useCase => {
-      const valueLevel = getValueLevel(useCase.totalValueScore, matrixConfig.valueThresholds);
-      const complexityLevel = getComplexityLevel(useCase.totalComplexityScore, matrixConfig.complexityThresholds);
+      const valueLevel = getValueLevel(useCase.totalValueScore);
+      const complexityLevel = getComplexityLevel(useCase.totalComplexityScore);
       
       const valueThreshold = updatedValueThresholds.find(t => t.level === valueLevel);
       if (valueThreshold) {
@@ -412,9 +410,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const countUseCasesInLevel = (isValue: boolean, level: number): number => {
     return useCases.filter(useCase => {
       if (isValue) {
-        return getValueLevel(useCase.totalValueScore, matrixConfig.valueThresholds) === level;
+        return getValueLevel(useCase.totalValueScore) === level;
       } else {
-        return getComplexityLevel(useCase.totalComplexityScore, matrixConfig.complexityThresholds) === level;
+        return getComplexityLevel(useCase.totalComplexityScore) === level;
       }
     }).length;
   };
