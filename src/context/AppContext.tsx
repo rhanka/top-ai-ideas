@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
 
@@ -269,6 +268,9 @@ type AppContextType = {
   generateUseCases: () => void;
   updateThresholds: (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => void;
   countUseCasesInLevel: (isValue: boolean, level: number) => number;
+  getOpenAIApiKey: () => string | null;
+  setOpenAIApiKey: (key: string) => void;
+  clearOpenAIApiKey: () => void;
 };
 
 // Create context
@@ -457,6 +459,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
   
+  // OpenAI API key management functions
+  const getOpenAIApiKey = (): string | null => {
+    return localStorage.getItem("openai-api-key");
+  };
+  
+  const setOpenAIApiKey = (key: string): void => {
+    localStorage.setItem("openai-api-key", key);
+  };
+  
+  const clearOpenAIApiKey = (): void => {
+    localStorage.removeItem("openai-api-key");
+  };
+  
   const value = {
     useCases,
     matrixConfig,
@@ -470,7 +485,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentInput,
     generateUseCases,
     updateThresholds,
-    countUseCasesInLevel
+    countUseCasesInLevel,
+    getOpenAIApiKey,
+    setOpenAIApiKey,
+    clearOpenAIApiKey
   };
   
   return (
