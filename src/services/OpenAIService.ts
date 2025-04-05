@@ -211,7 +211,7 @@ export class OpenAIService {
         relatedData: jsonContent.relatedData || [],
         valueScores: jsonContent.valueScores || [],
         complexityScores: jsonContent.complexityScores || [],
-        folderId: "" // Add the required folderId property (will be set by AppContext)
+        folderId: "" // Initialize folderId as empty string, it will be set properly in useOpenAI.tsx
       };
 
       // Update toast with success for this specific use case

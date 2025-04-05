@@ -111,7 +111,9 @@ export const useOpenAI = (
           // Ajouter un id unique en plus de celui généré par OpenAI
           const useCaseWithId = {
             ...useCaseDetail,
-            id: uuidv4()
+            id: uuidv4(),
+            // Ensure the folderId is set to the newly created folder's ID or remains as is
+            folderId: folderId || useCaseDetail.folderId
           };
           
           // Calculate scores for the use case
