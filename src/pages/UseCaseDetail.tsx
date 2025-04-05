@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -176,7 +175,7 @@ const UseCaseDetail: React.FC = () => {
                   withMargin={true}
                 />
               ) : (
-                <p className="whitespace-pre-line">{useCase.description}</p>
+                <p className="whitespace-pre-line mt-2">{useCase.description}</p>
               )}
             </CardContent>
           </Card>
@@ -199,7 +198,7 @@ const UseCaseDetail: React.FC = () => {
                     withMargin={true}
                   />
                 ) : (
-                  <ul className="list-disc pl-5 space-y-1">
+                  <ul className="list-disc pl-5 space-y-1 mt-2">
                     {useCase.benefits.map((benefit, index) => (
                       <li key={index}>{benefit}</li>
                     ))}
@@ -225,7 +224,7 @@ const UseCaseDetail: React.FC = () => {
                     withMargin={true}
                   />
                 ) : (
-                  <ul className="list-disc pl-5 space-y-1">
+                  <ul className="list-disc pl-5 space-y-1 mt-2">
                     {useCase.metrics.map((metric, index) => (
                       <li key={index}>{metric}</li>
                     ))}
@@ -251,7 +250,7 @@ const UseCaseDetail: React.FC = () => {
                     withMargin={true}
                   />
                 ) : (
-                  <ul className="list-disc pl-5 space-y-1">
+                  <ul className="list-disc pl-5 space-y-1 mt-2">
                     {useCase.risks.map((risk, index) => (
                       <li key={index}>{risk}</li>
                     ))}
@@ -277,7 +276,7 @@ const UseCaseDetail: React.FC = () => {
                     withMargin={true}
                   />
                 ) : (
-                  <ul className="list-disc pl-5 space-y-1">
+                  <ul className="list-disc pl-5 space-y-1 mt-2">
                     {useCase.nextSteps.map((step, index) => (
                       <li key={index}>{step}</li>
                     ))}
@@ -301,7 +300,7 @@ const UseCaseDetail: React.FC = () => {
                   withMargin={true}
                 />
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                   {useCase.sources.map((source, index) => (
                     <span key={index} className="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center">
                       <Database className="h-3 w-3 mr-1" />
@@ -330,7 +329,7 @@ const UseCaseDetail: React.FC = () => {
                   withMargin={true}
                 />
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                   {useCase.relatedData && useCase.relatedData.length > 0 ? (
                     useCase.relatedData.map((data, index) => (
                       <span key={index} className="bg-blue-50 px-3 py-1 rounded-full text-sm flex items-center border border-blue-200">
