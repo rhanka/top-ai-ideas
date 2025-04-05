@@ -92,20 +92,23 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
     );
   };
   
-  // Determine display level based on total score
+  // Correctly determine display level based on total score
   const getDisplayLevel = (score?: number): number => {
     if (!score) return 0;
     
-    const thresholds = isValue 
-      ? [0, 40, 100, 400, 2000] 
-      : [0, 50, 100, 250, 1000];
-    
-    for (let i = 4; i >= 0; i--) {
-      if (score > thresholds[i]) {
-        return i + 1;
-      }
+    if (isValue) {
+      if (score <= 40) return 1;
+      if (score <= 100) return 2;
+      if (score <= 400) return 3;
+      if (score <= 2000) return 4;
+      return 5;
+    } else {
+      if (score <= 50) return 1;
+      if (score <= 100) return 2;
+      if (score <= 250) return 3;
+      if (score <= 1000) return 4;
+      return 5;
     }
-    return 1;
   };
   
   const displayLevel = getDisplayLevel(totalScore);
