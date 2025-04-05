@@ -229,7 +229,7 @@ const UseCaseDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* Nouveau: Affichage de la valeur et complexité calculées en haut */}
+      {/* Affichage de la valeur et complexité calculées en haut */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card className="shadow-md">
           <CardHeader className="bg-yellow-50 pb-3">

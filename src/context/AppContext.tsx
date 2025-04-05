@@ -159,17 +159,31 @@ const calcInitialScore = (useCase: UseCase, config: MatrixConfig) => {
   let totalValue = 0;
   let totalComplexity = 0;
   
+  // Calculate value score based on rating points * axis weight
   useCase.valueScores.forEach(score => {
     const axis = config.valueAxes.find(a => a.name === score.axisId);
     if (axis) {
-      totalValue += score.rating * axis.weight;
+      // Map rating to points based on thresholds
+      let points = 0;
+      if (config.valueThresholds) {
+        const threshold = config.valueThresholds.find(t => t.level === score.rating);
+        points = threshold ? threshold.points : 0;
+      }
+      totalValue += points * axis.weight;
     }
   });
   
+  // Calculate complexity score based on rating points * axis weight
   useCase.complexityScores.forEach(score => {
     const axis = config.complexityAxes.find(a => a.name === score.axisId);
     if (axis) {
-      totalComplexity += score.rating * axis.weight;
+      // Map rating to points based on thresholds
+      let points = 0;
+      if (config.complexityThresholds) {
+        const threshold = config.complexityThresholds.find(t => t.level === score.rating);
+        points = threshold ? threshold.points : 0;
+      }
+      totalComplexity += points * axis.weight;
     }
   });
   
