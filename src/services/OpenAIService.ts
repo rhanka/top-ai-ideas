@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { UseCase, MatrixConfig } from "../types";
 
@@ -7,6 +8,68 @@ export class OpenAIService {
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
+  }
+
+  async generateFolderNameAndDescription(userInput: string, prompt: string): Promise<{ name: string; description: string }> {
+    try {
+      const formattedPrompt = prompt.replace("{{user_input}}", userInput);
+
+      // Show toast for folder generation
+      this.toastId = toast.loading("Génération en cours...", {
+        description: "Création automatique d'un dossier",
+        duration: Infinity, // Keep toast open
+        id: this.toastId
+      });
+
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: formattedPrompt }],
+          temperature: 0.7,
+          max_tokens: 300,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("OpenAI API error:", error);
+        toast.error("Erreur API OpenAI", { 
+          description: error.error?.message || "Échec de la génération du nom de dossier",
+          id: this.toastId 
+        });
+        // Return default values if generation fails
+        return { name: "Nouveau dossier", description: "Dossier créé automatiquement" };
+      }
+
+      const data = await response.json();
+      const content = JSON.parse(data.choices[0].message.content);
+
+      // Update toast to success
+      toast.success("Dossier créé", { 
+        description: `Dossier "${content.name}" créé avec succès`,
+        id: this.toastId,
+        duration: 3000
+      });
+
+      return {
+        name: content.name || "Nouveau dossier",
+        description: content.description || "Dossier créé automatiquement"
+      };
+    } catch (error) {
+      console.error("Error generating folder name:", error);
+      toast.error("Erreur de génération", { 
+        description: `${(error as Error).message}`,
+        id: this.toastId 
+      });
+      // Return default values in case of error
+      return { name: "Nouveau dossier", description: "Dossier créé automatiquement" };
+    }
   }
 
   async generateUseCaseList(userInput: string, prompt: string): Promise<string[]> {

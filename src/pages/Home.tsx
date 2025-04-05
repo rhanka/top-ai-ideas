@@ -4,19 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Send, Sparkles, Loader2, FolderPlus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Send, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const Home: React.FC = () => {
-  const { currentInput, setCurrentInput, generateUseCases, isGenerating, addFolder, setCurrentFolder, currentFolderId } = useAppContext();
+  const { currentInput, setCurrentInput, generateUseCases, isGenerating, currentFolderId } = useAppContext();
   const navigate = useNavigate();
   
-  const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
-  const [folderName, setFolderName] = useState("");
-  const [folderDescription, setFolderDescription] = useState("");
   const [createNewFolder, setCreateNewFolder] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,40 +22,10 @@ const Home: React.FC = () => {
       return;
     }
     
-    // Si l'utilisateur souhaite créer un nouveau dossier, afficher la boîte de dialogue
-    if (createNewFolder) {
-      setShowNewFolderDialog(true);
-    } else {
-      // Sinon, générer directement les cas d'usage dans le dossier actuel
-      await generateUseCases();
-      
-      // Naviguer vers la liste des cas d'usage
-      if (!isGenerating) {
-        navigate('/cas-usage');
-      }
-    }
-  };
-  
-  const handleCreateFolder = async () => {
-    if (!folderName.trim()) {
-      toast.error("Veuillez saisir un nom de dossier");
-      return;
-    }
+    const success = await generateUseCases(currentInput, createNewFolder);
     
-    // Créer le nouveau dossier
-    const newFolder = addFolder(folderName, folderDescription);
-    
-    // Définir le nouveau dossier comme dossier actif
-    setCurrentFolder(newFolder.id);
-    
-    // Fermer la boîte de dialogue
-    setShowNewFolderDialog(false);
-    
-    // Générer les cas d'usage pour ce nouveau dossier
-    await generateUseCases();
-    
-    // Naviguer vers la liste des cas d'usage
-    if (!isGenerating) {
+    // Naviguer vers la liste des cas d'usage si la génération a réussi
+    if (success) {
       navigate('/cas-usage');
     }
   };
@@ -159,64 +124,6 @@ const Home: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {/* Boîte de dialogue pour créer un nouveau dossier */}
-      <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Créer un nouveau dossier</DialogTitle>
-            <DialogDescription>
-              Donnez un nom à votre dossier pour regrouper les cas d'usage qui vont être générés.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="folder-name" className="text-sm font-medium">Nom du dossier</label>
-              <Input
-                id="folder-name"
-                value={folderName}
-                onChange={(e) => setFolderName(e.target.value)}
-                placeholder="Ex: Centre d'appel - Projet 2025"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="folder-description" className="text-sm font-medium">Description (optionnelle)</label>
-              <Textarea
-                id="folder-description"
-                value={folderDescription}
-                onChange={(e) => setFolderDescription(e.target.value)}
-                placeholder="Description du contenu de ce dossier..."
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowNewFolderDialog(false)}
-              disabled={isGenerating}
-            >
-              Annuler
-            </Button>
-            <Button 
-              onClick={handleCreateFolder} 
-              className="bg-navy hover:bg-navy/90"
-              disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Génération...
-                </>
-              ) : (
-                <>
-                  Créer et générer
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

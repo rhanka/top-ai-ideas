@@ -1,23 +1,55 @@
 
 import { useState } from 'react';
-import { UseCase, MatrixConfig } from '../types';
+import { UseCase, MatrixConfig, Folder } from '../types';
 import { toast } from 'sonner';
 import { OpenAIService } from '../services/OpenAIService';
 import { 
   OPENAI_API_KEY, 
   USE_CASE_LIST_PROMPT, 
   USE_CASE_DETAIL_PROMPT, 
+  FOLDER_NAME_PROMPT,
   DEFAULT_USE_CASE_LIST_PROMPT, 
-  DEFAULT_USE_CASE_DETAIL_PROMPT 
+  DEFAULT_USE_CASE_DETAIL_PROMPT,
+  DEFAULT_FOLDER_NAME_PROMPT
 } from './constants';
 import { calcInitialScore } from './useCaseUtils';
 import { v4 as uuidv4 } from 'uuid';
 
-export const useOpenAI = (matrixConfig: MatrixConfig, addUseCase: (useCase: UseCase) => void) => {
+export const useOpenAI = (
+  matrixConfig: MatrixConfig, 
+  addUseCase: (useCase: UseCase) => void, 
+  addFolder: (name: string, description: string) => Folder,
+  setCurrentFolder: (folderId: string) => void
+) => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
+  // Generate folder name and description using OpenAI
+  const generateFolderNameAndDescription = async (
+    currentInput: string, 
+    openai: OpenAIService
+  ): Promise<Folder | null> => {
+    try {
+      // Get folder generation prompt from localStorage or use default
+      const folderPrompt = localStorage.getItem(FOLDER_NAME_PROMPT) || DEFAULT_FOLDER_NAME_PROMPT;
+      
+      // Generate folder name and description
+      const { name, description } = await openai.generateFolderNameAndDescription(currentInput, folderPrompt);
+      
+      // Create the new folder
+      const newFolder = addFolder(name, description);
+      
+      // Set new folder as active
+      setCurrentFolder(newFolder.id);
+      
+      return newFolder;
+    } catch (error) {
+      console.error("Error generating folder name:", error);
+      return null;
+    }
+  };
+
   // Generate new use cases based on user input using OpenAI
-  const generateUseCases = async (currentInput: string): Promise<boolean> => {
+  const generateUseCases = async (currentInput: string, createNewFolder: boolean): Promise<boolean> => {
     if (currentInput.trim().length === 0) {
       toast.error("Veuillez saisir une description de votre activité");
       return false;
@@ -44,6 +76,16 @@ export const useOpenAI = (matrixConfig: MatrixConfig, addUseCase: (useCase: UseC
     setIsGenerating(true);
     
     try {
+      // If createNewFolder is true, generate a new folder first
+      let folderId: string | null = null;
+      
+      if (createNewFolder) {
+        const newFolder = await generateFolderNameAndDescription(currentInput, openai);
+        if (newFolder) {
+          folderId = newFolder.id;
+        }
+      }
+      
       // Step 1: Generate list of use case titles
       toast.info("Génération des cas d'usage en cours...");
       const useCaseTitles = await openai.generateUseCaseList(currentInput, listPrompt);

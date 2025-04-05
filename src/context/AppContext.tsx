@@ -10,10 +10,10 @@ import {
   getFolders, 
   saveFolders, 
   getCurrentFolderId, 
-  setCurrentFolderId,
+  setCurrentFolderId as setCurrentFolderIdUtil,
   createFolder,
-  updateFolder,
-  deleteFolder,
+  updateFolder as updateFolderUtil,
+  deleteFolder as deleteFolderUtil,
   getFolderById
 } from "./folderUtils";
 
@@ -39,7 +39,7 @@ type AppContextType = {
   setActiveUseCase: (useCase: UseCase | null) => void;
   updateMatrixConfig: (config: MatrixConfig) => void;
   setCurrentInput: (input: string) => void;
-  generateUseCases: () => Promise<void>;
+  generateUseCases: (input?: string, createNewFolder?: boolean) => Promise<boolean>;
   updateThresholds: (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => void;
   countUseCasesInLevel: (isValue: boolean, level: number) => number;
   isGenerating: boolean;
@@ -93,7 +93,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       // Définir le dossier par défaut comme dossier actif
       setCurrentFolderId(defaultFolder.id);
-      setCurrentFolderId(defaultFolder.id);
+      setCurrentFolderIdUtil(defaultFolder.id);
     } else {
       setFolders(storedFolders);
       
@@ -104,7 +104,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else {
         // Si pas de dossier actif ou invalide, utiliser le premier dossier
         setCurrentFolderId(storedFolders[0].id);
-        setCurrentFolderId(storedFolders[0].id);
+        setCurrentFolderIdUtil(storedFolders[0].id);
       }
       
       // Charger les données des cas d'usage
@@ -146,29 +146,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newUseCase = calcInitialScore(useCaseWithFolder, currentConfig);
     setUseCases(prev => [...prev, newUseCase]);
   };
-  
-  // Initialize OpenAI hooks
-  const { isGenerating, generateUseCases: generateUseCasesService } = useOpenAI(matrixConfig, handleAddUseCase);
-  
-  // Effect to update cases count in thresholds whenever useCases changes
-  useEffect(() => {
-    updateCasesCounts();
-  }, [useCases, currentFolderId]);
-  
+
   // Fonctions pour gérer les dossiers
   const addFolder = (name: string, description: string): Folder => {
     const newFolder = createFolder(name, description, defaultMatrixConfig);
     setFolders(prev => [...prev, newFolder]);
+    saveFolders([...folders, newFolder]);
     return newFolder;
   };
   
   const handleUpdateFolder = (updatedFolder: Folder) => {
-    const folder = updateFolder(updatedFolder);
-    setFolders(prev => prev.map(f => f.id === folder.id ? folder : f));
+    const updatedFolderResult = updateFolderUtil(updatedFolder);
+    setFolders(prev => prev.map(f => f.id === updatedFolderResult.id ? updatedFolderResult : f));
     
     // Mise à jour de la matrixConfig si c'est le dossier actif
-    if (folder.id === currentFolderId) {
-      setMatrixConfig(folder.matrixConfig);
+    if (updatedFolderResult.id === currentFolderId) {
+      setMatrixConfig(updatedFolderResult.matrixConfig);
     }
   };
   
@@ -183,7 +176,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUseCases(prev => prev.filter(useCase => useCase.folderId !== id));
     
     // Supprimer le dossier
-    deleteFolder(id);
+    deleteFolderUtil(id);
     setFolders(prev => prev.filter(folder => folder.id !== id));
     
     // Si c'était le dossier actif, passer au premier dossier disponible
@@ -197,7 +190,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   const setCurrentFolder = (folderId: string) => {
     setCurrentFolderId(folderId);
-    setCurrentFolderId(folderId);
+    setCurrentFolderIdUtil(folderId);
     
     // Mettre à jour la configuration de la matrice
     const folder = folders.find(f => f.id === folderId);
@@ -209,6 +202,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const getCurrentFolder = (): Folder | undefined => {
     return currentFolderId ? folders.find(folder => folder.id === currentFolderId) : undefined;
   };
+  
+  // Initialize OpenAI hooks
+  const { isGenerating, generateUseCases: generateUseCasesService } = useOpenAI(
+    matrixConfig, 
+    handleAddUseCase, 
+    addFolder, 
+    setCurrentFolder
+  );
+  
+  // Effect to update cases count in thresholds whenever useCases changes
+  useEffect(() => {
+    updateCasesCounts();
+  }, [useCases, currentFolderId]);
   
   // Add new use case
   const addUseCase = (useCase: UseCase) => {
@@ -360,16 +366,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
   
   // Wrapper for generateUseCases to update currentInput
-  const generateUseCases = async () => {
-    if (!currentFolderId) {
+  const generateUseCases = async (input?: string, createNewFolder: boolean = true): Promise<boolean> => {
+    if (!currentFolderId && !createNewFolder) {
       toast.error("Aucun dossier actif");
-      return;
+      return false;
     }
     
-    const success = await generateUseCasesService(currentInput);
+    const inputToUse = input || currentInput;
+    
+    const success = await generateUseCasesService(inputToUse, createNewFolder);
     if (success) {
       setCurrentInput("");
     }
+    return success;
   };
   
   const value = {

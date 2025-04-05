@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 const OPENAI_API_KEY = "openai_api_key";
 const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
 const USE_CASE_DETAIL_PROMPT = "use_case_detail_prompt";
+const FOLDER_NAME_PROMPT = "folder_name_prompt";
 
 // Default prompts with placeholders
 const DEFAULT_USE_CASE_LIST_PROMPT = 
@@ -91,10 +92,21 @@ La réponse doit impérativement contenir tous les éléments suivants au format
 
 IMPORTANT: Réponds UNIQUEMENT avec le JSON, sans texte avant ou après. Veille à ce que chaque axe de la matrice fournie ait bien son score correspondant dans les sections valueScores et complexityScores.`;
 
+const DEFAULT_FOLDER_NAME_PROMPT = 
+`Génère un nom et une brève description pour un dossier qui contiendra des cas d'usage d'IA pour le contexte suivant: {{user_input}}.
+Le nom doit être court et représentatif du domaine ou secteur d'activité principal.
+La description doit expliquer en 1-2 phrases le contenu du dossier.
+Format de réponse en JSON:
+{
+  "name": "Nom du dossier (4-6 mots max)",
+  "description": "Description concise du dossier (20-30 mots max)"
+}`;
+
 const Settings: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>("");
   const [useCaseListPrompt, setUseCaseListPrompt] = useState<string>(DEFAULT_USE_CASE_LIST_PROMPT);
   const [useCaseDetailPrompt, setUseCaseDetailPrompt] = useState<string>(DEFAULT_USE_CASE_DETAIL_PROMPT);
+  const [folderNamePrompt, setFolderNamePrompt] = useState<string>(DEFAULT_FOLDER_NAME_PROMPT);
   const [saved, setSaved] = useState<boolean>(false);
   const { toast } = useToast();
 
@@ -103,6 +115,7 @@ const Settings: React.FC = () => {
     const savedKey = localStorage.getItem(OPENAI_API_KEY);
     const savedListPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT);
     const savedDetailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT);
+    const savedFolderNamePrompt = localStorage.getItem(FOLDER_NAME_PROMPT);
     
     if (savedKey) {
       setApiKey(savedKey);
@@ -115,6 +128,10 @@ const Settings: React.FC = () => {
     
     if (savedDetailPrompt) {
       setUseCaseDetailPrompt(savedDetailPrompt);
+    }
+    
+    if (savedFolderNamePrompt) {
+      setFolderNamePrompt(savedFolderNamePrompt);
     }
   }, []);
 
@@ -141,6 +158,7 @@ const Settings: React.FC = () => {
     localStorage.setItem(OPENAI_API_KEY, apiKey);
     localStorage.setItem(USE_CASE_LIST_PROMPT, useCaseListPrompt);
     localStorage.setItem(USE_CASE_DETAIL_PROMPT, useCaseDetailPrompt);
+    localStorage.setItem(FOLDER_NAME_PROMPT, folderNamePrompt);
     
     setSaved(true);
     
@@ -166,6 +184,7 @@ const Settings: React.FC = () => {
   const resetPrompts = () => {
     setUseCaseListPrompt(DEFAULT_USE_CASE_LIST_PROMPT);
     setUseCaseDetailPrompt(DEFAULT_USE_CASE_DETAIL_PROMPT);
+    setFolderNamePrompt(DEFAULT_FOLDER_NAME_PROMPT);
     
     toast({
       title: "Prompts réinitialisés",
@@ -263,6 +282,24 @@ const Settings: React.FC = () => {
             onChange={(e) => setUseCaseDetailPrompt(e.target.value)}
             placeholder="Entrez votre prompt personnalisé..."
             className="min-h-[200px]"
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Prompt pour la génération de noms de dossiers</CardTitle>
+          <CardDescription>
+            Ce prompt sera utilisé pour générer automatiquement un nom et une description pour les nouveaux dossiers.
+            Utilisez {"{{user_input}}"} comme placeholder pour l'entrée de l'utilisateur.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Textarea 
+            value={folderNamePrompt}
+            onChange={(e) => setFolderNamePrompt(e.target.value)}
+            placeholder="Entrez votre prompt personnalisé..."
+            className="min-h-[150px]"
           />
           
           <div className="mt-4 flex gap-2 justify-end">
