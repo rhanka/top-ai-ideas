@@ -1,21 +1,101 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Save, AlertCircle, Info } from "lucide-react";
+import { Save, AlertCircle, Info, Edit } from "lucide-react";
 import { toast } from "sonner";
-import { ComplexityAxis, ValueAxis } from "@/types";
+import { ComplexityAxis, LevelDescription, ValueAxis } from "@/types";
+import { LevelDescriptionEditor } from "@/components/Matrix/LevelDescriptionEditor";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+
+// Value descriptions based on the Excel image - we'll use these as defaults
+const defaultValueDescriptions = {
+  "Niveau de Sponsorship": [
+    "Équipe locale / Aucun sponsor clair",
+    "Opérationnel / Gestionnaire 1er niveau",
+    "Direction Service Client / TI",
+    "Direction Principale / VP Service Client",
+    "Vice-Présidence Exécutive / Comité Exécutif"
+  ],
+  "Impact Satisfaction Client (CSAT/NPS)": [
+    "Impact négligeable ou très localisé sur la satisfaction client.",
+    "Amélioration mineure d'un point de contact peu fréquent ou irritant mineur.",
+    "Réduction notable des irritants sur motifs courants (ex: facturation simple). Impact mesurable sur le CSAT.",
+    "Amélioration sensible de l'expérience sur motifs importants (déménagement) OU réduction significative de l'effort client.",
+    "Amélioration majeure sur motifs critiques (pannes) OU refonte positive d'un parcours client clé. Fort impact potentiel sur CSAT/NPS."
+  ],
+  "Gains de Productivité (Agents & Opérations)": [
+    "Impact quasi nul sur le TMT (<2%) ou les ETP (<0.5).",
+    "Réduction mineure du TMT (2-5%) ou RPC, économie 0.5-1 ETP.",
+    "Réduction significative du TMT (5-10%), amélioration du RPC, économie 1-3 ETP.",
+    "Réduction importante du TMT (10-15%), automatisation partielle d'une tâche, économie 3-5 ETP.",
+    "Réduction majeure du TMT (>15%) ou RPC, forte automatisation/déviation vers self-service, économie > 5 ETP."
+  ],
+  "Amélioration Expérience Agent & Rétention": [
+    "Pas d'impact notable sur le travail de l'agent.",
+    "Simplifie une tâche très spécifique ou rarement frustrante.",
+    "Simplifie des tâches modérément complexes, réduit le stress sur certains types d'appels, aide à la formation initiale.",
+    "Automatise une partie des tâches répétitives, fournit une assistance contextuelle utile.",
+    "Automatise tâches frustrantes, assistance temps réel précieuse, réduit la charge cognitive, améliore satisfaction agent."
+  ],
+  "Conformité & Image Publique": [
+    "N/A ou impact neutre.",
+    "Aide marginale à la conformité (ex: logging simple).",
+    "Aide à maintenir la conformité OU améliore l'image sur un aspect spécifique (ex: transparence facturation).",
+    "Renforce la conformité sur un point précis OU améliore l'image sur un sujet sensible.",
+    "Renforce significativement la conformité (traçabilité, données) OU améliore l'image publique sur des enjeux clés (pannes)."
+  ]
+};
+
+// Complexity descriptions based on the Excel image - we'll use these as defaults
+const defaultComplexityDescriptions = {
+  "Maturité & Fiabilité Solution IA": [
+    "Technologie éprouvée et stable pour l'usage (SVI basique).",
+    "Technologie éprouvée mais requiert configuration standard (classification simple, chatbot FAQ).",
+    "Technologie maîtrisée mais nécessite adaptation/paramétrage fin (chatbot transactionnel). Fiabilité à valider.",
+    "Technologie récente ou appliquée de manière nouvelle, nécessite PoC/validation poussée. Fiabilité modérée attendue.",
+    "Technologie émergente/expérimentale ou R&D importante. Fiabilité incertaine."
+  ],
+  "Effort d'Implémentation & Intégration": [
+    "Solution quasi \"sur étagère\", intégration minimale via API très simples.",
+    "Intégration légère avec 1-2 systèmes via API standard. Configuration simple.",
+    "Intégration avec systèmes clés (CRM, téléphonie) via API existantes. Dev/config modéré.",
+    "Intégration plus complexe avec plusieurs systèmes (certains moins modernes), création d'API simples, orchestration basique.",
+    "Intégration profonde avec multiples systèmes. Dev custom important, création/modif API complexes, orchestration avancée."
+  ],
+  "IA Responsable & Conformité Données": [
+    "Pas ou peu de DP, risque biais faible, pas d'enjeux éthiques majeurs.",
+    "Utilisation de DP non sensibles, risque biais faible mais à vérifier, besoin de documentation conformité simple (Loi 25).",
+    "Utilisation de DP (Loi 25), pseudonymisation/anonymisation, gestion consentement, tests biais standards, xAI simple.",
+    "Utilisation de DP potentiellement sensibles, risque biais modéré nécessitant mitigation active, enjeu C-27/AI Act naissant, transparence accrue.",
+    "Utilisation DP sensibles, risque biais élevé, enjeux éthiques importants (décisions importantes), conformité C-27/AI Act stricte, audits complexes, xAI avancées."
+  ],
+  "Disponibilité, Qualité & Accès Données": [
+    "Données centralisées, propres, documentées.",
+    "Données dans 1-2 systèmes, qualité bonne, accès simple, léger nettoyage.",
+    "Données dans quelques systèmes (<5), nettoyage/rapprochement modéré, qualité acceptable, accès gérable.",
+    "Données dans plusieurs systèmes, qualité hétérogène, effort ETL notable, complexité d'accès moyenne.",
+    "Données dispersées (>5 systèmes, legacy), faible qualité, gros efforts ETL/qualité, complexité d'accès (sécurité, silos), besoin datamart/lac."
+  ],
+  "Gestion du Changement & Impact Métier": [
+    "Impact minimal sur processus agents, formation rapide/intuitive.",
+    "Léger ajustement processus, formation courte nécessaire.",
+    "Modification notable processus/outils, formation structurée, communication nécessaire.",
+    "Changement important processus, formation approfondie, accompagnement soutenu requis.",
+    "Refonte majeure processus, fort impact rôle agent, formation + accompagnement intensifs, plan GOC robuste, implication syndicats (si applicable)."
+  ]
+};
 
 const Matrix: React.FC = () => {
   const { matrixConfig, updateMatrixConfig } = useAppContext();
@@ -23,6 +103,40 @@ const Matrix: React.FC = () => {
   const [selectedAxis, setSelectedAxis] = useState<ValueAxis | ComplexityAxis | null>(null);
   const [isValueAxis, setIsValueAxis] = useState(false);
   const [showDescriptionsDialog, setShowDescriptionsDialog] = useState(false);
+
+  // Initialize levelDescriptions if they don't exist
+  useEffect(() => {
+    // Initialize value axes level descriptions
+    const newValueAxes = editedConfig.valueAxes.map(axis => {
+      if (!axis.levelDescriptions) {
+        const defaultDescs = defaultValueDescriptions[axis.name as keyof typeof defaultValueDescriptions] || [];
+        const levelDescs = defaultDescs.map((desc, index) => ({
+          level: index + 1,
+          description: desc || `Niveau ${index + 1}`
+        }));
+        return { ...axis, levelDescriptions: levelDescs };
+      }
+      return axis;
+    });
+
+    // Initialize complexity axes level descriptions
+    const newComplexityAxes = editedConfig.complexityAxes.map(axis => {
+      if (!axis.levelDescriptions) {
+        const defaultDescs = defaultComplexityDescriptions[axis.name as keyof typeof defaultComplexityDescriptions] || [];
+        const levelDescs = defaultDescs.map((desc, index) => ({
+          level: index + 1,
+          description: desc || `Niveau ${index + 1}`
+        }));
+        return { ...axis, levelDescriptions: levelDescs };
+      }
+      return axis;
+    });
+
+    setEditedConfig({ 
+      valueAxes: newValueAxes,
+      complexityAxes: newComplexityAxes 
+    });
+  }, [matrixConfig]);
   
   const handleValueWeightChange = (index: number, weight: string) => {
     const newWeight = parseFloat(weight);
@@ -40,6 +154,52 @@ const Matrix: React.FC = () => {
     const newComplexityAxes = [...editedConfig.complexityAxes];
     newComplexityAxes[index] = { ...newComplexityAxes[index], weight: newWeight };
     setEditedConfig({ ...editedConfig, complexityAxes: newComplexityAxes });
+  };
+
+  const handleUpdateLevelDescription = (levelNum: number, description: string) => {
+    if (!selectedAxis) return;
+    
+    if (isValueAxis) {
+      const axisIndex = editedConfig.valueAxes.findIndex(a => a.name === selectedAxis.name);
+      if (axisIndex === -1) return;
+      
+      const newValueAxes = [...editedConfig.valueAxes];
+      const currentLevelDescs = [...(newValueAxes[axisIndex].levelDescriptions || [])];
+      
+      const levelIndex = currentLevelDescs.findIndex(ld => ld.level === levelNum);
+      if (levelIndex >= 0) {
+        currentLevelDescs[levelIndex] = { ...currentLevelDescs[levelIndex], description };
+      } else {
+        currentLevelDescs.push({ level: levelNum, description });
+      }
+      
+      newValueAxes[axisIndex] = { 
+        ...newValueAxes[axisIndex], 
+        levelDescriptions: currentLevelDescs 
+      };
+      
+      setEditedConfig({ ...editedConfig, valueAxes: newValueAxes });
+    } else {
+      const axisIndex = editedConfig.complexityAxes.findIndex(a => a.name === selectedAxis.name);
+      if (axisIndex === -1) return;
+      
+      const newComplexityAxes = [...editedConfig.complexityAxes];
+      const currentLevelDescs = [...(newComplexityAxes[axisIndex].levelDescriptions || [])];
+      
+      const levelIndex = currentLevelDescs.findIndex(ld => ld.level === levelNum);
+      if (levelIndex >= 0) {
+        currentLevelDescs[levelIndex] = { ...currentLevelDescs[levelIndex], description };
+      } else {
+        currentLevelDescs.push({ level: levelNum, description });
+      }
+      
+      newComplexityAxes[axisIndex] = { 
+        ...newComplexityAxes[axisIndex], 
+        levelDescriptions: currentLevelDescs 
+      };
+      
+      setEditedConfig({ ...editedConfig, complexityAxes: newComplexityAxes });
+    }
   };
   
   const saveChanges = () => {
@@ -77,82 +237,11 @@ const Matrix: React.FC = () => {
     );
   };
   
-  // Value descriptions based on the Excel image
-  const valueDescriptions = {
-    "Niveau de Sponsorship": [
-      "Équipe locale / Aucun sponsor clair",
-      "Opérationnel / Gestionnaire 1er niveau",
-      "Direction Service Client / TI",
-      "Direction Principale / VP Service Client",
-      "Vice-Présidence Exécutive / Comité Exécutif"
-    ],
-    "Impact Satisfaction Client (CSAT/NPS)": [
-      "Impact négligeable ou très localisé sur la satisfaction client.",
-      "Amélioration mineure d'un point de contact peu fréquent ou irritant mineur.",
-      "Réduction notable des irritants sur motifs courants (ex: facturation simple). Impact mesurable sur le CSAT.",
-      "Amélioration sensible de l'expérience sur motifs importants (déménagement) OU réduction significative de l'effort client.",
-      "Amélioration majeure sur motifs critiques (pannes) OU refonte positive d'un parcours client clé. Fort impact potentiel sur CSAT/NPS."
-    ],
-    "Gains de Productivité (Agents & Opérations)": [
-      "Impact quasi nul sur le TMT (<2%) ou les ETP (<0.5).",
-      "Réduction mineure du TMT (2-5%) ou RPC, économie 0.5-1 ETP.",
-      "Réduction significative du TMT (5-10%), amélioration du RPC, économie 1-3 ETP.",
-      "Réduction importante du TMT (10-15%), automatisation partielle d'une tâche, économie 3-5 ETP.",
-      "Réduction majeure du TMT (>15%) ou RPC, forte automatisation/déviation vers self-service, économie > 5 ETP."
-    ],
-    "Amélioration Expérience Agent & Rétention": [
-      "Pas d'impact notable sur le travail de l'agent.",
-      "Simplifie une tâche très spécifique ou rarement frustrante.",
-      "Simplifie des tâches modérément complexes, réduit le stress sur certains types d'appels, aide à la formation initiale.",
-      "Automatise une partie des tâches répétitives, fournit une assistance contextuelle utile.",
-      "Automatise tâches frustrantes, assistance temps réel précieuse, réduit la charge cognitive, améliore satisfaction agent."
-    ],
-    "Conformité & Image Publique": [
-      "N/A ou impact neutre.",
-      "Aide marginale à la conformité (ex: logging simple).",
-      "Aide à maintenir la conformité OU améliore l'image sur un aspect spécifique (ex: transparence facturation).",
-      "Renforce la conformité sur un point précis OU améliore l'image sur un sujet sensible.",
-      "Renforce significativement la conformité (traçabilité, données) OU améliore l'image publique sur des enjeux clés (pannes)."
-    ]
-  };
-  
-  // Complexity descriptions based on the Excel image
-  const complexityDescriptions = {
-    "Maturité & Fiabilité Solution IA": [
-      "Technologie éprouvée et stable pour l'usage (SVI basique).",
-      "Technologie éprouvée mais requiert configuration standard (classification simple, chatbot FAQ).",
-      "Technologie maîtrisée mais nécessite adaptation/paramétrage fin (chatbot transactionnel). Fiabilité à valider.",
-      "Technologie récente ou appliquée de manière nouvelle, nécessite PoC/validation poussée. Fiabilité modérée attendue.",
-      "Technologie émergente/expérimentale ou R&D importante. Fiabilité incertaine."
-    ],
-    "Effort d'Implémentation & Intégration": [
-      "Solution quasi \"sur étagère\", intégration minimale via API très simples.",
-      "Intégration légère avec 1-2 systèmes via API standard. Configuration simple.",
-      "Intégration avec systèmes clés (CRM, téléphonie) via API existantes. Dev/config modéré.",
-      "Intégration plus complexe avec plusieurs systèmes (certains moins modernes), création d'API simples, orchestration basique.",
-      "Intégration profonde avec multiples systèmes. Dev custom important, création/modif API complexes, orchestration avancée."
-    ],
-    "IA Responsable & Conformité Données": [
-      "Pas ou peu de DP, risque biais faible, pas d'enjeux éthiques majeurs.",
-      "Utilisation de DP non sensibles, risque biais faible mais à vérifier, besoin de documentation conformité simple (Loi 25).",
-      "Utilisation de DP (Loi 25), pseudonymisation/anonymisation, gestion consentement, tests biais standards, xAI simple.",
-      "Utilisation de DP potentiellement sensibles, risque biais modéré nécessitant mitigation active, enjeu C-27/AI Act naissant, transparence accrue.",
-      "Utilisation DP sensibles, risque biais élevé, enjeux éthiques importants (décisions importantes), conformité C-27/AI Act stricte, audits complexes, xAI avancées."
-    ],
-    "Disponibilité, Qualité & Accès Données": [
-      "Données centralisées, propres, documentées.",
-      "Données dans 1-2 systèmes, qualité bonne, accès simple, léger nettoyage.",
-      "Données dans quelques systèmes (<5), nettoyage/rapprochement modéré, qualité acceptable, accès gérable.",
-      "Données dans plusieurs systèmes, qualité hétérogène, effort ETL notable, complexité d'accès moyenne.",
-      "Données dispersées (>5 systèmes, legacy), faible qualité, gros efforts ETL/qualité, complexité d'accès (sécurité, silos), besoin datamart/lac."
-    ],
-    "Gestion du Changement & Impact Métier": [
-      "Impact minimal sur processus agents, formation rapide/intuitive.",
-      "Léger ajustement processus, formation courte nécessaire.",
-      "Modification notable processus/outils, formation structurée, communication nécessaire.",
-      "Changement important processus, formation approfondie, accompagnement soutenu requis.",
-      "Refonte majeure processus, fort impact rôle agent, formation + accompagnement intensifs, plan GOC robuste, implication syndicats (si applicable)."
-    ]
+  const getLevelDescription = (axis: ValueAxis | ComplexityAxis, level: number): string => {
+    if (!axis.levelDescriptions) return `Niveau ${level}`;
+    
+    const levelDesc = axis.levelDescriptions.find(ld => ld.level === level);
+    return levelDesc?.description || `Niveau ${level}`;
   };
 
   return (
@@ -168,7 +257,7 @@ const Matrix: React.FC = () => {
             </p>
             <p className="text-sm">
               La matrice utilise 5 niveaux pour chaque critère, avec des descriptions spécifiques pour chacun.
-              Cliquez sur un critère pour voir les descriptions détaillées des 5 niveaux.
+              Cliquez sur un critère pour voir et modifier les descriptions détaillées des 5 niveaux.
             </p>
           </div>
         </div>
@@ -290,15 +379,15 @@ const Matrix: React.FC = () => {
         </Button>
       </div>
       
-      {/* Dialog for displaying detailed level descriptions */}
+      {/* Dialog for displaying and editing detailed level descriptions */}
       <Dialog open={showDescriptionsDialog} onOpenChange={setShowDescriptionsDialog}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedAxis?.name} - Niveaux détaillés
+              {selectedAxis?.name} - Description des niveaux
             </DialogTitle>
             <DialogDescription>
-              Les 5 niveaux pour ce critère sont définis comme suit:
+              Vous pouvez modifier les descriptions des 5 niveaux pour ce critère en cliquant sur le texte:
             </DialogDescription>
           </DialogHeader>
           
@@ -310,25 +399,31 @@ const Matrix: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {selectedAxis && isValueAxis && valueDescriptions[selectedAxis.name as keyof typeof valueDescriptions]?.map((description, index) => (
-                <TableRow key={index}>
+              {selectedAxis && [1, 2, 3, 4, 5].map((level) => (
+                <TableRow key={level}>
                   <TableCell className="align-top">
-                    {renderValueLevels(index + 1)}
+                    {isValueAxis 
+                      ? renderValueLevels(level)
+                      : renderComplexityLevels(level)
+                    }
                   </TableCell>
-                  <TableCell>{description}</TableCell>
-                </TableRow>
-              ))}
-              
-              {selectedAxis && !isValueAxis && complexityDescriptions[selectedAxis.name as keyof typeof complexityDescriptions]?.map((description, index) => (
-                <TableRow key={index}>
-                  <TableCell className="align-top">
-                    {renderComplexityLevels(index + 1)}
+                  <TableCell>
+                    <LevelDescriptionEditor
+                      level={level}
+                      currentDescription={getLevelDescription(selectedAxis, level)}
+                      onSave={handleUpdateLevelDescription}
+                    />
                   </TableCell>
-                  <TableCell>{description}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          
+          <DialogFooter className="mt-4">
+            <Button onClick={() => setShowDescriptionsDialog(false)}>
+              Fermer
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

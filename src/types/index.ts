@@ -1,21 +1,30 @@
 
+
 // Value rating types (stars)
 export type ValueRating = 1 | 2 | 3 | 4 | 5;
 
 // Complexity rating types (x)
 export type ComplexityRating = 1 | 2 | 3 | 4 | 5;
 
+// Level descriptions
+export type LevelDescription = {
+  level: number;
+  description: string;
+};
+
 // Axis types for the matrix
 export type ValueAxis = {
   name: string;
   weight: number;
   description: string;
+  levelDescriptions?: LevelDescription[];
 };
 
 export type ComplexityAxis = {
   name: string;
   weight: number;
   description: string;
+  levelDescriptions?: LevelDescription[];
 };
 
 // Value axis scores
@@ -57,3 +66,4 @@ export type MatrixConfig = {
   valueAxes: ValueAxis[];
   complexityAxes: ComplexityAxis[];
 };
+

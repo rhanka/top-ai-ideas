@@ -1,13 +1,17 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UseCase } from "@/types";
 import { Separator } from "@/components/ui/separator";
+import { useAppContext } from "@/context/AppContext";
 
 interface ChessboardProps {
   useCases: UseCase[];
 }
 
 export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
+  const { matrixConfig } = useAppContext();
+  
   // Scoring thresholds based on the Excel image
   const valueThresholds = [
     { min: 0, max: 40, level: 1, points: 0, threshold: 300, cases: 1 },
