@@ -1,7 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
 import { toast } from "sonner";
 import { OpenAIService } from "../services/OpenAIService";
+import initialUseCasesData from "../data/useCasesData.json";
 
 // Constants
 const OPENAI_API_KEY = "openai_api_key";
@@ -280,65 +282,8 @@ const calcInitialScore = (useCase: UseCase, config: MatrixConfig) => {
   };
 };
 
-// Provide example use case for demonstration
-const exampleUseCase: UseCase = {
-  id: "ID01",
-  name: "Chatbot FAQ & Triage (Web & Mobile)",
-  domain: "Web",
-  description: "Mise en place d'un agent conversationnel (chatbot) sur le site web et l'application mobile, capable de comprendre le langage naturel pour répondre aux questions les plus fréquentes des clients (ex: horaires, suivi de commande, tarifs de base) et de les guider vers des ressources en libre-service (FAQ détaillée, espace client) ou de les transférer vers le canal de contact approprié (chat avec agent humain, appel téléphonique) si nécessaire.",
-  technology: "GenAI Texte",
-  deadline: "2026-Q1",
-  contact: "",
-  benefits: [
-    "Réduction appels N1",
-    "Dispo 24/7",
-    "Amélioration Self-service",
-    "Baisse coûts"
-  ],
-  metrics: [
-    "Taux résolution auto",
-    "CSAT bot",
-    "Baisse volume appels FAQ"
-  ],
-  risks: [
-    "Mauvaise compréhension",
-    "Frustration client",
-    "Triage incorrect",
-    "Maintenance KB"
-  ],
-  nextSteps: [
-    "Identifier TOP FAQs",
-    "Rédiger réponses claires",
-    "Choisir plateforme",
-    "Définir règles de triage"
-  ],
-  sources: [
-    "Base de connaissances (KB)",
-    "Web/App Logs",
-    "(CRM)"
-  ],
-  relatedData: [],
-  valueScores: [
-    { axisId: "Niveau de Sponsorship", rating: 1, description: "Équipe locale / Aucun sponsor clair" },
-    { axisId: "Impact Satisfaction Client (CSAT/NPS)", rating: 4, description: "Amélioration sensible de l'expérience sur motifs importants (déménagement) OU réduction significative de l'effort client." },
-    { axisId: "Gains de Productivité (Agents & Opérations)", rating: 4, description: "Réduction importante du TMT (10-15%), automatisation partielle d'une tâche, économie 3-5 ETP." },
-    { axisId: "Amélioration Expérience Agent & Rétention", rating: 2, description: "Simplifie des tâches modérément complexes, réduit le stress sur certains types d'appels, aide à la formation initiale." },
-    { axisId: "Conformité & Image Publique", rating: 2, description: "Aide à maintenir la conformité OU améliore l'image sur un aspect spécifique (ex: transparence facturation)." },
-  ],
-  complexityScores: [
-    { axisId: "Maturité & Fiabilité Solution IA", rating: 3, description: "Technologie maîtrisée mais nécessite adaptation/paramétrage fin (chatbot transactionnel). Fiabilité à valider." },
-    { axisId: "Effort d'Implémentation & Intégration", rating: 3, description: "Intégration avec systèmes clés (CRM, téléphonie) via API existantes. Dev/config modéré." },
-    { axisId: "IA Responsable & Conformité Données", rating: 3, description: "Utilisation de DP (Loi 25), pseudonymisation/anonymisation, gestion consentement, tests biais standards, ×AI simple." },
-    { axisId: "Disponibilité, Qualité & Accès Données", rating: 3, description: "Données dans quelques systèmes (<5), nettoyage/approchement modéré, qualité acceptable, accès gérable." },
-    { axisId: "Gestion du Changement & Impact Métier", rating: 2, description: "Léger ajustement processus, formation courte nécessaire." },
-  ],
-  totalValueScore: 0,
-  totalComplexityScore: 0,
-};
-
-// Initialize with calculated scores and create initial use cases
-const initialCalculatedExample = calcInitialScore(exampleUseCase, defaultMatrixConfig);
-const initialUseCases = [initialCalculatedExample];
+// Initialize use cases with calculated scores
+const initialUseCases = initialUseCasesData.map(useCase => calcInitialScore(useCase, defaultMatrixConfig));
 
 // Context type
 type AppContextType = {
