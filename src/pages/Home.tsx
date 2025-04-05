@@ -5,6 +5,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Sparkles, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const Home: React.FC = () => {
   const { currentInput, setCurrentInput, generateUseCases, isGenerating } = useAppContext();
@@ -12,9 +13,32 @@ const Home: React.FC = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await generateUseCases();
-    if (!isGenerating) {
-      navigate('/cas-usage');
+    
+    // Create a persistent toast that we'll update during the generation process
+    const toastId = toast.loading("Préparation de la génération des cas d'usage...", {
+      duration: Infinity, // Keep toast visible until we dismiss it
+      position: "bottom-right",
+    });
+    
+    try {
+      // Pass the toast ID to the generate function so it can update the toast
+      await generateUseCases(toastId);
+      
+      // Only navigate if generation completed successfully
+      if (!isGenerating) {
+        // Update toast to success state before navigating
+        toast.success("Génération terminée avec succès!", { 
+          id: toastId,
+          duration: 3000,
+        });
+        navigate('/cas-usage');
+      }
+    } catch (error) {
+      // Handle any errors
+      toast.error(`Erreur lors de la génération: ${error instanceof Error ? error.message : "Erreur inconnue"}`, {
+        id: toastId,
+        duration: 5000,
+      });
     }
   };
   

@@ -9,8 +9,12 @@ export class OpenAIService {
     this.apiKey = apiKey;
   }
 
-  async generateUseCaseList(userInput: string, prompt: string): Promise<string[]> {
+  async generateUseCaseList(userInput: string, prompt: string, toastId?: string): Promise<string[]> {
     try {
+      if (toastId) {
+        toast.loading("Génération de la liste des cas d'usage avec GPT-4o...", { id: toastId });
+      }
+      
       const formattedPrompt = prompt.replace("{{user_input}}", userInput);
 
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -41,6 +45,10 @@ export class OpenAIService {
         .split("\n")
         .filter((line: string) => /^\d+\./.test(line.trim()))
         .map((line: string) => line.replace(/^\d+\.\s*/, "").trim());
+      
+      if (toastId) {
+        toast.loading(`${useCases.length} cas d'usage identifiés. Génération des détails en cours...`, { id: toastId });
+      }
 
       return useCases;
     } catch (error) {
@@ -53,9 +61,16 @@ export class OpenAIService {
     useCase: string,
     userInput: string,
     matrixConfig: MatrixConfig,
-    prompt: string
+    prompt: string,
+    toastId?: string,
+    index?: number,
+    total?: number
   ): Promise<UseCase> {
     try {
+      if (toastId && index !== undefined && total !== undefined) {
+        toast.loading(`Génération du cas d'usage ${index + 1}/${total}: "${useCase}"...`, { id: toastId });
+      }
+      
       // Create a simplified matrix representation for the prompt
       const matrixSummary = {
         valueAxes: matrixConfig.valueAxes.map((axis) => ({
