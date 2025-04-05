@@ -22,17 +22,26 @@ const UseCaseList: React.FC = () => {
     navigate(`/cas-usage/${useCase.id}`);
   };
   
-  // Function to render value rating as stars
-  const renderValueRating = (rating: number | undefined) => {
-    if (!rating) return "N/A";
+  // Function to render value rating as stars based on score
+  const renderValueRating = (score: number | undefined) => {
+    if (!score) return "N/A";
     
-    // Convert to stars
-    const normalizedRating = Math.min(Math.max(Math.round(rating / 8), 1), 5);
+    // Determine level based on value thresholds
+    let level = 1;
+    const thresholds = [0, 40, 100, 400, 1500];
+    
+    for (let i = 0; i < thresholds.length; i++) {
+      if (score > thresholds[i]) {
+        level = i + 1;
+      } else {
+        break;
+      }
+    }
     
     return (
       <div className="flex">
         {[1, 2, 3, 4, 5].map((star) => (
-          <span key={star} className={`text-lg ${star <= normalizedRating ? "text-yellow-500" : "text-gray-300"}`}>
+          <span key={star} className={`text-lg ${star <= level ? "text-yellow-500" : "text-gray-300"}`}>
             ★
           </span>
         ))}
@@ -40,17 +49,26 @@ const UseCaseList: React.FC = () => {
     );
   };
   
-  // Function to render complexity rating as X's
-  const renderComplexityRating = (rating: number | undefined) => {
-    if (!rating) return "N/A";
+  // Function to render complexity rating as X's based on score
+  const renderComplexityRating = (score: number | undefined) => {
+    if (!score) return "N/A";
     
-    // Convert to X scale
-    const normalizedRating = Math.min(Math.max(Math.round(rating / 6), 1), 5);
+    // Determine level based on complexity thresholds
+    let level = 1;
+    const thresholds = [0, 50, 100, 250, 500];
+    
+    for (let i = 0; i < thresholds.length; i++) {
+      if (score > thresholds[i]) {
+        level = i + 1;
+      } else {
+        break;
+      }
+    }
     
     return (
       <div className="flex">
-        {[1, 2, 3, 4, 5].map((level) => (
-          <span key={level} className={`font-bold ${level <= normalizedRating ? "text-gray-800" : "text-gray-300"}`}>
+        {[1, 2, 3, 4, 5].map((x) => (
+          <span key={x} className={`font-bold ${x <= level ? "text-gray-800" : "text-gray-300"}`}>
             X
           </span>
         ))}
