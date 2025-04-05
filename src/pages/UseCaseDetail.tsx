@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -146,35 +145,30 @@ const UseCaseDetail: React.FC = () => {
     toast.success("Cas d'usage mis à jour");
   };
 
-  // Fonction pour déterminer le niveau de valeur basé sur les seuils
   const getValueLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.valueThresholds) return 0;
     
-    // Trouver le niveau correspondant au score
     for (let i = matrixConfig.valueThresholds.length - 1; i >= 0; i--) {
       const threshold = matrixConfig.valueThresholds[i];
       if (score >= threshold.threshold) {
         return threshold.level;
       }
     }
-    return 1; // Niveau minimum par défaut
+    return 1;
   };
-  
-  // Fonction pour déterminer le niveau de complexité basé sur les seuils
+
   const getComplexityLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.complexityThresholds) return 0;
     
-    // Trouver le niveau correspondant au score
     for (let i = matrixConfig.complexityThresholds.length - 1; i >= 0; i--) {
       const threshold = matrixConfig.complexityThresholds[i];
       if (score >= threshold.threshold) {
         return threshold.level;
       }
     }
-    return 1; // Niveau minimum par défaut
+    return 1;
   };
-  
-  // Rendu des étoiles pour la valeur
+
   const renderValueStars = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -192,8 +186,7 @@ const UseCaseDetail: React.FC = () => {
       </div>
     );
   };
-  
-  // Rendu des X pour la complexité
+
   const renderComplexityX = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -213,7 +206,7 @@ const UseCaseDetail: React.FC = () => {
       </div>
     );
   };
-  
+
   if (!useCase) {
     return (
       <div className="container mx-auto px-4 py-8 flex justify-center">
@@ -267,7 +260,6 @@ const UseCaseDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* Affichage de la valeur et complexité calculées en haut */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card className="shadow-md">
           <CardHeader className="bg-yellow-50 pb-3">
