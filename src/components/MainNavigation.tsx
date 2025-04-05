@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Grid, FileText, BarChart, Table } from "lucide-react";
+import { Home, Grid, FileText, BarChart, Table, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MainNavigation: React.FC = () => {
@@ -13,6 +13,7 @@ const MainNavigation: React.FC = () => {
     { name: "Cas d'usage", path: "/cas-usage", icon: FileText },
     { name: "Dashboard", path: "/dashboard", icon: BarChart },
     { name: "Données", path: "/donnees", icon: Table },
+    { name: "Paramètres", path: "/parametres", icon: Settings },
   ];
   
   return (
