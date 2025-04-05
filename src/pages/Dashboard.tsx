@@ -42,12 +42,12 @@ const Dashboard: React.FC = () => {
   
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
-      <h1 className="text-3xl font-bold mb-6 text-navy">Dashboard Cas d'usage</h1>
+      <h1 className="text-3xl font-bold mb-6 text-navy">Dashboard Cas d&apos;usage</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Nombre total de cas d'usage</CardTitle>
+            <CardTitle>Nombre total de cas d&apos;usage</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-5xl font-bold text-navy">{useCases.length}</p>
@@ -86,7 +86,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-8 mb-8">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Projection Valeur / Facilité d'implémentation</CardTitle>
+            <CardTitle>Projection Valeur / Facilité d&apos;implémentation</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="h-[600px]">
@@ -100,25 +100,25 @@ const Dashboard: React.FC = () => {
                     dataKey="ease" 
                     name="Facilité d'implémentation" 
                     domain={[0, 30]}
-                    label={{ value: 'Facilité d'implémentation', position: 'insideBottom', offset: -10 }}
+                    label={{ value: "Facilité d'implémentation", position: "insideBottom", offset: -10 }}
                   />
                   <YAxis 
                     type="number" 
                     dataKey="value" 
                     name="Valeur" 
                     domain={[0, 40]}
-                    label={{ value: 'Valeur', angle: -90, position: 'insideLeft' }}
+                    label={{ value: "Valeur", angle: -90, position: "insideLeft" }}
                   />
                   <ZAxis type="category" dataKey="name" />
                   <Tooltip 
-                    cursor={{ strokeDasharray: '3 3' }}
+                    cursor={{ strokeDasharray: "3 3" }}
                     formatter={(value, name, props) => {
                       if (name === "value") return [`${value}`, "Valeur"];
                       if (name === "ease") return [`${value}`, "Facilité"];
                       return [value, name];
                     }}
                     labelFormatter={(label) => label}
-                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '6px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                    contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "6px", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}
                   />
                   <Legend
                     payload={domains.map(domain => ({
