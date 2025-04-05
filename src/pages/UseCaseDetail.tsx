@@ -10,6 +10,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, ListTodo, Database } from "lucide-react";
 import { toast } from "sonner";
 import { UseCase, ValueRating, ComplexityRating } from "@/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const UseCaseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -120,6 +127,37 @@ const UseCaseDetail: React.FC = () => {
           ))}
         </div>
         
+        {isEditing && (
+          <div className="mt-2 mb-3">
+            <Select
+              value={score.rating.toString()}
+              onValueChange={(value) => handleRatingChange(true, axisId, parseInt(value) as ValueRating)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sélectionner une note" />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 4, 5].map((rating) => {
+                  // Find description for this rating
+                  let ratingDescription = "";
+                  if (axis && axis.levelDescriptions) {
+                    const levelDesc = axis.levelDescriptions.find(level => level.level === rating);
+                    ratingDescription = levelDesc ? levelDesc.description : `Niveau ${rating}`;
+                  } else {
+                    ratingDescription = `Niveau ${rating}`;
+                  }
+                  
+                  return (
+                    <SelectItem key={rating} value={rating.toString()}>
+                      {rating} - {ratingDescription}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        
         {/* Show the description based on the rating from matrix config */}
         <p className="text-sm text-gray-600">
           {score.description}
@@ -152,6 +190,37 @@ const UseCaseDetail: React.FC = () => {
             </button>
           ))}
         </div>
+        
+        {isEditing && (
+          <div className="mt-2 mb-3">
+            <Select
+              value={score.rating.toString()}
+              onValueChange={(value) => handleRatingChange(false, axisId, parseInt(value) as ComplexityRating)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sélectionner un niveau" />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 4, 5].map((rating) => {
+                  // Find description for this rating
+                  let ratingDescription = "";
+                  if (axis && axis.levelDescriptions) {
+                    const levelDesc = axis.levelDescriptions.find(level => level.level === rating);
+                    ratingDescription = levelDesc ? levelDesc.description : `Niveau ${rating}`;
+                  } else {
+                    ratingDescription = `Niveau ${rating}`;
+                  }
+                  
+                  return (
+                    <SelectItem key={rating} value={rating.toString()}>
+                      {rating} - {ratingDescription}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         
         {/* Show the description based on the rating from matrix config */}
         <p className="text-sm text-gray-600">
