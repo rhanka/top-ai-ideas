@@ -4,12 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, FileText, Loader2 } from "lucide-react";
+import { PlusCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { UseCase } from "@/types";
 
 const UseCaseList: React.FC = () => {
-  const { useCases, setActiveUseCase, deleteUseCase, matrixConfig, isGenerating } = useAppContext();
+  const { useCases, setActiveUseCase, deleteUseCase, matrixConfig } = useAppContext();
   const navigate = useNavigate();
   
   const handleCreateNew = () => {
@@ -92,20 +92,12 @@ const UseCaseList: React.FC = () => {
         <Button 
           onClick={handleCreateNew} 
           className="bg-navy hover:bg-navy/90"
-          disabled={isGenerating}
         >
           <PlusCircle className="mr-2 h-5 w-5" /> Nouveau cas d'usage
         </Button>
       </div>
       
-      {isGenerating && (
-        <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg mb-6 flex items-center">
-          <Loader2 className="h-5 w-5 text-blue-500 animate-spin mr-3" />
-          <p className="text-blue-700">Génération de cas d'usage en cours...</p>
-        </div>
-      )}
-      
-      {useCases.length === 0 && !isGenerating ? (
+      {useCases.length === 0 ? (
         <div className="text-center py-16 bg-gray-50 rounded-lg">
           <FileText className="mx-auto h-16 w-16 text-gray-400 mb-4" />
           <h3 className="text-xl font-medium text-gray-600 mb-2">Aucun cas d'usage</h3>
