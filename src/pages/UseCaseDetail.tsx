@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, ListTodo, Database, FileText, Star, X } from "lucide-react";
+import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, ListTodo, Database, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { UseCase, ValueRating, ComplexityRating, LevelDescription } from "@/types";
 import { RatingsTable } from "@/components/UseCaseDetail/RatingsTable";
@@ -107,74 +106,6 @@ const UseCaseDetail: React.FC = () => {
     setIsEditing(false);
     toast.success("Cas d'usage mis à jour");
   };
-
-  // Fonction pour déterminer le niveau de valeur basé sur les seuils
-  const getValueLevel = (score: number | undefined) => {
-    if (score === undefined || !matrixConfig.valueThresholds) return 0;
-    
-    // Trouver le niveau correspondant au score
-    for (let i = matrixConfig.valueThresholds.length - 1; i >= 0; i--) {
-      const threshold = matrixConfig.valueThresholds[i];
-      if (score >= threshold.threshold) {
-        return threshold.level;
-      }
-    }
-    return 1; // Niveau minimum par défaut
-  };
-  
-  // Fonction pour déterminer le niveau de complexité basé sur les seuils
-  const getComplexityLevel = (score: number | undefined) => {
-    if (score === undefined || !matrixConfig.complexityThresholds) return 0;
-    
-    // Trouver le niveau correspondant au score
-    for (let i = matrixConfig.complexityThresholds.length - 1; i >= 0; i--) {
-      const threshold = matrixConfig.complexityThresholds[i];
-      if (score >= threshold.threshold) {
-        return threshold.level;
-      }
-    }
-    return 1; // Niveau minimum par défaut
-  };
-  
-  // Rendu des étoiles pour la valeur
-  const renderValueStars = (score: number | undefined) => {
-    if (score === undefined) return "N/A";
-    
-    const level = getValueLevel(score);
-    
-    return (
-      <div className="flex items-center">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star 
-            key={star} 
-            className={`h-5 w-5 ${star <= level ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`}
-          />
-        ))}
-        <span className="ml-2 text-sm font-medium">({score} points)</span>
-      </div>
-    );
-  };
-  
-  // Rendu des X pour la complexité
-  const renderComplexityX = (score: number | undefined) => {
-    if (score === undefined) return "N/A";
-    
-    const level = getComplexityLevel(score);
-    
-    return (
-      <div className="flex items-center">
-        {[1, 2, 3, 4, 5].map((x) => (
-          <span 
-            key={x} 
-            className={`font-bold text-lg mr-1 ${x <= level ? "text-gray-800" : "text-gray-300"}`}
-          >
-            X
-          </span>
-        ))}
-        <span className="ml-2 text-sm font-medium">({score} points)</span>
-      </div>
-    );
-  };
   
   if (!useCase) {
     return (
@@ -227,27 +158,6 @@ const UseCaseDetail: React.FC = () => {
             </Button>
           )}
         </div>
-      </div>
-      
-      {/* Nouveau: Affichage de la valeur et complexité calculées en haut */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card className="shadow-md">
-          <CardHeader className="bg-yellow-50 pb-3">
-            <CardTitle className="text-sm">Valeur calculée</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-3">
-            {renderValueStars(useCase.totalValueScore)}
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-md">
-          <CardHeader className="bg-gray-100 pb-3">
-            <CardTitle className="text-sm">Complexité calculée</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-3">
-            {renderComplexityX(useCase.totalComplexityScore)}
-          </CardContent>
-        </Card>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -509,8 +419,6 @@ const UseCaseDetail: React.FC = () => {
           backgroundColor="bg-yellow-50"
           levelDescriptions={levelDescriptions}
           onRatingChange={handleRatingChange}
-          totalScore={useCase.totalValueScore}
-          level={getValueLevel(useCase.totalValueScore)}
         />
         
         <RatingsTable 
@@ -521,8 +429,6 @@ const UseCaseDetail: React.FC = () => {
           backgroundColor="bg-gray-100"
           levelDescriptions={levelDescriptions}
           onRatingChange={handleRatingChange}
-          totalScore={useCase.totalComplexityScore}
-          level={getComplexityLevel(useCase.totalComplexityScore)}
         />
       </div>
     </div>
