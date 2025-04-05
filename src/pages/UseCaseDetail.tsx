@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -67,12 +66,10 @@ const UseCaseDetail: React.FC = () => {
     }
   };
   
-  // Calculate scores based on current ratings
   const calculateScores = (updatedUseCase: UseCase) => {
     let valueScore = 0;
     let complexityScore = 0;
     
-    // Calculate value score
     updatedUseCase.valueScores.forEach(score => {
       const axis = matrixConfig.valueAxes.find(a => a.name === score.axisId);
       if (axis) {
@@ -85,7 +82,6 @@ const UseCaseDetail: React.FC = () => {
       }
     });
     
-    // Calculate complexity score
     updatedUseCase.complexityScores.forEach(score => {
       const axis = matrixConfig.complexityAxes.find(a => a.name === score.axisId);
       if (axis) {
@@ -143,7 +139,6 @@ const UseCaseDetail: React.FC = () => {
       setUseCase(updatedUseCase);
     }
     
-    // Calculate and update scores immediately
     const { valueScore, complexityScore } = calculateScores(updatedUseCase);
     setTotalValueScore(valueScore);
     setTotalComplexityScore(complexityScore);
@@ -152,10 +147,8 @@ const UseCaseDetail: React.FC = () => {
   const handleSave = () => {
     if (!useCase) return;
     
-    // Calculate final scores before saving
     const { valueScore, complexityScore } = calculateScores(useCase);
     
-    // Update use case with calculated scores
     const finalUseCase = {
       ...useCase,
       totalValueScore: valueScore,
@@ -167,35 +160,30 @@ const UseCaseDetail: React.FC = () => {
     toast.success("Cas d'usage mis à jour");
   };
 
-  // Fonction pour déterminer le niveau de valeur basé sur les seuils
   const getValueLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.valueThresholds) return 0;
     
-    // Trouver le niveau correspondant au score
     for (let i = matrixConfig.valueThresholds.length - 1; i >= 0; i--) {
       const threshold = matrixConfig.valueThresholds[i];
       if (score >= threshold.threshold) {
         return threshold.level;
       }
     }
-    return 1; // Niveau minimum par défaut
+    return 1;
   };
   
-  // Fonction pour déterminer le niveau de complexité basé sur les seuils
   const getComplexityLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.complexityThresholds) return 0;
     
-    // Trouver le niveau correspondant au score
     for (let i = matrixConfig.complexityThresholds.length - 1; i >= 0; i--) {
       const threshold = matrixConfig.complexityThresholds[i];
       if (score >= threshold.threshold) {
         return threshold.level;
       }
     }
-    return 1; // Niveau minimum par défaut
+    return 1;
   };
   
-  // Rendu des étoiles pour la valeur
   const renderValueStars = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -214,7 +202,6 @@ const UseCaseDetail: React.FC = () => {
     );
   };
   
-  // Rendu des X pour la complexité
   const renderComplexityX = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -288,7 +275,6 @@ const UseCaseDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* Affichage de la valeur et complexité calculées en haut */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card className="shadow-md">
           <CardHeader className="bg-yellow-50 pb-3">
@@ -434,65 +420,6 @@ const UseCaseDetail: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-          
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>Sources</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isEditing ? (
-                <Textarea
-                  value={useCase.sources.join('\n')}
-                  onChange={(e) => handleInputChange('sources', e.target.value)}
-                  className="min-h-[80px]"
-                  placeholder="Un élément par ligne"
-                  withMargin={true}
-                />
-              ) : (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {useCase.sources.map((source, index) => (
-                    <span key={index} className="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center">
-                      <Database className="h-3 w-3 mr-1" />
-                      {source}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-md">
-            <CardHeader className="bg-blue-100">
-              <CardTitle className="flex items-center">
-                <FileText className="mr-2 h-5 w-5 text-blue-600" />
-                Données associées
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isEditing ? (
-                <Textarea
-                  value={useCase.relatedData ? useCase.relatedData.join('\n') : ''}
-                  onChange={(e) => handleInputChange('relatedData', e.target.value)}
-                  className="min-h-[80px]"
-                  placeholder="Identité client, factures, historique d'appels... (un élément par ligne)"
-                  withMargin={true}
-                />
-              ) : (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {useCase.relatedData && useCase.relatedData.length > 0 ? (
-                    useCase.relatedData.map((data, index) => (
-                      <span key={index} className="bg-blue-50 px-3 py-1 rounded-full text-sm flex items-center border border-blue-200">
-                        <FileText className="h-3 w-3 mr-1 text-blue-500" />
-                        {data}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 italic">Aucune donnée associée</p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
         
         <div className="space-y-8">
@@ -554,6 +481,65 @@ const UseCaseDetail: React.FC = () => {
                   <p className="font-medium">{useCase.contact || "Non défini"}</p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle>Sources</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <Textarea
+                  value={useCase.sources.join('\n')}
+                  onChange={(e) => handleInputChange('sources', e.target.value)}
+                  className="min-h-[80px]"
+                  placeholder="Un élément par ligne"
+                  withMargin={true}
+                />
+              ) : (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {useCase.sources.map((source, index) => (
+                    <span key={index} className="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center">
+                      <Database className="h-3 w-3 mr-1" />
+                      {source}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-md">
+            <CardHeader className="bg-blue-100">
+              <CardTitle className="flex items-center">
+                <FileText className="mr-2 h-5 w-5 text-blue-600" />
+                Données associées
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <Textarea
+                  value={useCase.relatedData ? useCase.relatedData.join('\n') : ''}
+                  onChange={(e) => handleInputChange('relatedData', e.target.value)}
+                  className="min-h-[80px]"
+                  placeholder="Identité client, factures, historique d'appels... (un élément par ligne)"
+                  withMargin={true}
+                />
+              ) : (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {useCase.relatedData && useCase.relatedData.length > 0 ? (
+                    useCase.relatedData.map((data, index) => (
+                      <span key={index} className="bg-blue-50 px-3 py-1 rounded-full text-sm flex items-center border border-blue-200">
+                        <FileText className="h-3 w-3 mr-1 text-blue-500" />
+                        {data}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 italic">Aucune donnée associée</p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
