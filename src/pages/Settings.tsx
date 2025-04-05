@@ -173,7 +173,7 @@ const Settings: React.FC = () => {
           <CardTitle>Prompt pour la liste de cas d'usage</CardTitle>
           <CardDescription>
             Ce prompt sera utilisé pour générer une liste de cas d'usage à partir de l'entrée utilisateur. 
-            Utilisez {{user_input}} comme placeholder pour l'entrée de l'utilisateur.
+            Utilisez {"{{user_input}}"} comme placeholder pour l'entrée de l'utilisateur.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -191,7 +191,7 @@ const Settings: React.FC = () => {
           <CardTitle>Prompt pour le détail d'un cas d'usage</CardTitle>
           <CardDescription>
             Ce prompt sera utilisé pour générer le contenu détaillé d'un cas d'usage. 
-            Utilisez {{use_case}} pour le cas d'usage sélectionné et {{matrix}} pour la matrice de valeur/complexité.
+            Utilisez {"{{use_case}}"} pour le cas d'usage sélectionné et {"{{matrix}}"} pour la matrice de valeur/complexité.
           </CardDescription>
         </CardHeader>
         <CardContent>
