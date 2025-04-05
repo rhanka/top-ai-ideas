@@ -105,8 +105,11 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
                   {renderRatingSymbols(score.axisId, score.rating)}
                 </TableCell>
                 <TableCell>
-                  {isEditing && renderRatingDropdown(score.axisId, score.rating)}
-                  <p className="text-sm">{score.description}</p>
+                  {isEditing ? (
+                    renderRatingDropdown(score.axisId, score.rating)
+                  ) : (
+                    <p className="text-sm">{score.description}</p>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
