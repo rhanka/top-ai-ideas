@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -56,48 +57,52 @@ const UseCaseDetail: React.FC = () => {
         arrayValue = value;
       }
       
-      setUseCase({ ...useCase, [field]: arrayValue });
+      setUseCase(prev => prev ? { ...prev, [field]: arrayValue } : null);
     } else {
-      setUseCase({ ...useCase, [field]: value });
+      setUseCase(prev => prev ? { ...prev, [field]: value } : null);
     }
   };
   
-  const handleRatingChange = (
+  const handleRatingChange = useCallback((
     isValue: boolean,
     axisId: string,
     rating: number
   ) => {
     if (!useCase) return;
     
-    let description = "";
-    if (isValue) {
-      const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
-      if (axis && axis.levelDescriptions) {
-        const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
-        description = levelDescription?.description || "";
-      }
+    setUseCase(prevCase => {
+      if (!prevCase) return null;
       
-      const newValueScores = useCase.valueScores.map(score => 
-        score.axisId === axisId 
-          ? { ...score, rating: rating as ValueRating, description } 
-          : score
-      );
-      setUseCase({ ...useCase, valueScores: newValueScores });
-    } else {
-      const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
-      if (axis && axis.levelDescriptions) {
-        const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
-        description = levelDescription?.description || "";
+      let description = "";
+      if (isValue) {
+        const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
+        if (axis && axis.levelDescriptions) {
+          const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
+          description = levelDescription?.description || "";
+        }
+        
+        const newValueScores = prevCase.valueScores.map(score => 
+          score.axisId === axisId 
+            ? { ...score, rating: rating as ValueRating, description } 
+            : score
+        );
+        return { ...prevCase, valueScores: newValueScores };
+      } else {
+        const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
+        if (axis && axis.levelDescriptions) {
+          const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
+          description = levelDescription?.description || "";
+        }
+        
+        const newComplexityScores = prevCase.complexityScores.map(score => 
+          score.axisId === axisId 
+            ? { ...score, rating: rating as ComplexityRating, description } 
+            : score
+        );
+        return { ...prevCase, complexityScores: newComplexityScores };
       }
-      
-      const newComplexityScores = useCase.complexityScores.map(score => 
-        score.axisId === axisId 
-          ? { ...score, rating: rating as ComplexityRating, description } 
-          : score
-      );
-      setUseCase({ ...useCase, complexityScores: newComplexityScores });
-    }
-  };
+    });
+  }, [useCase, matrixConfig]);
   
   const handleSave = () => {
     if (!useCase) return;
@@ -419,6 +424,7 @@ const UseCaseDetail: React.FC = () => {
           backgroundColor="bg-yellow-50"
           levelDescriptions={levelDescriptions}
           onRatingChange={handleRatingChange}
+          totalScore={useCase.totalValueScore}
         />
         
         <RatingsTable 
@@ -429,6 +435,7 @@ const UseCaseDetail: React.FC = () => {
           backgroundColor="bg-gray-100"
           levelDescriptions={levelDescriptions}
           onRatingChange={handleRatingChange}
+          totalScore={useCase.totalComplexityScore}
         />
       </div>
     </div>

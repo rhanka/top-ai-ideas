@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
 
@@ -158,17 +159,37 @@ const calcInitialScore = (useCase: UseCase, config: MatrixConfig) => {
   let totalValue = 0;
   let totalComplexity = 0;
   
+  // Calculate value score
   useCase.valueScores.forEach(score => {
     const axis = config.valueAxes.find(a => a.name === score.axisId);
     if (axis) {
-      totalValue += score.rating * axis.weight;
+      // Get points based on rating
+      let points = 0;
+      switch(score.rating) {
+        case 1: points = 0; break;
+        case 2: points = 40; break;
+        case 3: points = 100; break;
+        case 4: points = 400; break;
+        case 5: points = 2000; break;
+      }
+      totalValue += points * axis.weight;
     }
   });
   
+  // Calculate complexity score
   useCase.complexityScores.forEach(score => {
     const axis = config.complexityAxes.find(a => a.name === score.axisId);
     if (axis) {
-      totalComplexity += score.rating * axis.weight;
+      // Get points based on rating
+      let points = 0;
+      switch(score.rating) {
+        case 1: points = 0; break;
+        case 2: points = 50; break;
+        case 3: points = 100; break;
+        case 4: points = 250; break;
+        case 5: points = 1000; break;
+      }
+      totalComplexity += points * axis.weight;
     }
   });
   

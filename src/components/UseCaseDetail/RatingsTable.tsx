@@ -19,6 +19,7 @@ interface RatingsTableProps {
   backgroundColor: string;
   levelDescriptions?: Record<string, LevelDescription[]>;
   onRatingChange: (isValue: boolean, axisId: string, rating: number) => void;
+  totalScore?: number;
 }
 
 export const RatingsTable: React.FC<RatingsTableProps> = ({
@@ -28,7 +29,8 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
   isEditing,
   backgroundColor,
   levelDescriptions,
-  onRatingChange
+  onRatingChange,
+  totalScore
 }) => {
   const renderRatingSymbols = (axisId: string, rating: number) => {
     return (
@@ -90,10 +92,48 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
     );
   };
   
+  // Determine display level based on total score
+  const getDisplayLevel = (score?: number): number => {
+    if (!score) return 0;
+    
+    const thresholds = isValue 
+      ? [0, 40, 100, 400, 2000] 
+      : [0, 50, 100, 250, 1000];
+    
+    for (let i = 4; i >= 0; i--) {
+      if (score > thresholds[i]) {
+        return i + 1;
+      }
+    }
+    return 1;
+  };
+  
+  const displayLevel = getDisplayLevel(totalScore);
+  
   return (
     <Card className="shadow-md">
       <CardHeader className={backgroundColor}>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="flex justify-between items-center">
+          <span>{title}</span>
+          {totalScore !== undefined && (
+            <span className="text-base font-normal bg-white px-3 py-1 rounded-full shadow-sm">
+              Score: {totalScore.toLocaleString()} - Niveau {displayLevel}
+              {isValue ? (
+                <span className="ml-2">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <span key={star} className={`text-lg ${star <= displayLevel ? "text-yellow-500" : "text-gray-300"}`}>★</span>
+                  ))}
+                </span>
+              ) : (
+                <span className="ml-2">
+                  {[1, 2, 3, 4, 5].map(x => (
+                    <span key={x} className={`font-bold ml-1 ${x <= displayLevel ? "text-gray-800" : "text-gray-300"}`}>X</span>
+                  ))}
+                </span>
+              )}
+            </span>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
