@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -448,15 +447,13 @@ const Matrix: React.FC = () => {
                 <TableRow>
                   <TableHead className="w-1/5">Valeur</TableHead>
                   <TableHead className="w-1/5">Points</TableHead>
-                  <TableHead className="w-1/5">Min-Max</TableHead>
-                  <TableHead className="w-1/5">Seuil axes</TableHead>
+                  <TableHead className="w-2/5">Seuil</TableHead>
                   <TableHead className="w-1/5">Nombre de cas</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 <TableRow className="bg-gray-100">
                   <TableCell className="font-medium">Poids du critère</TableCell>
-                  <TableCell className="text-center">N/A</TableCell>
                   <TableCell className="text-center">N/A</TableCell>
                   <TableCell className="text-center">N/A</TableCell>
                   <TableCell className="text-center">N/A</TableCell>
@@ -474,29 +471,12 @@ const Matrix: React.FC = () => {
                         className="w-20"
                       />
                     </TableCell>
-                    <TableCell className="text-xs">
-                      <div className="flex gap-1 items-center">
-                        <Input
-                          type="number"
-                          value={threshold.min}
-                          onChange={(e) => handleThresholdChange(true, threshold.level, "min", parseInt(e.target.value))}
-                          className="w-20 text-xs"
-                        />
-                        <span>-</span>
-                        <Input
-                          type="number"
-                          value={threshold.max === Infinity ? 9999 : threshold.max}
-                          onChange={(e) => handleThresholdChange(true, threshold.level, "max", parseInt(e.target.value) === 9999 ? Infinity : parseInt(e.target.value))}
-                          className="w-20 text-xs"
-                        />
-                      </div>
-                    </TableCell>
                     <TableCell>
                       <Input
                         type="number"
                         value={threshold.threshold}
                         onChange={(e) => handleThresholdChange(true, threshold.level, "threshold", parseInt(e.target.value))}
-                        className="w-20"
+                        className="w-full"
                       />
                     </TableCell>
                     <TableCell className="text-center font-semibold">
@@ -520,15 +500,13 @@ const Matrix: React.FC = () => {
                 <TableRow>
                   <TableHead className="w-1/5">Complexité</TableHead>
                   <TableHead className="w-1/5">Points</TableHead>
-                  <TableHead className="w-1/5">Min-Max</TableHead>
-                  <TableHead className="w-1/5">Seuil axes</TableHead>
+                  <TableHead className="w-2/5">Seuil</TableHead>
                   <TableHead className="w-1/5">Nombre de cas</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 <TableRow className="bg-gray-100">
                   <TableCell className="font-medium">Poids du critère</TableCell>
-                  <TableCell className="text-center">N/A</TableCell>
                   <TableCell className="text-center">N/A</TableCell>
                   <TableCell className="text-center">N/A</TableCell>
                   <TableCell className="text-center">N/A</TableCell>
@@ -546,29 +524,12 @@ const Matrix: React.FC = () => {
                         className="w-20"
                       />
                     </TableCell>
-                    <TableCell className="text-xs">
-                      <div className="flex gap-1 items-center">
-                        <Input
-                          type="number"
-                          value={threshold.min}
-                          onChange={(e) => handleThresholdChange(false, threshold.level, "min", parseInt(e.target.value))}
-                          className="w-20 text-xs"
-                        />
-                        <span>-</span>
-                        <Input
-                          type="number"
-                          value={threshold.max === Infinity ? 9999 : threshold.max}
-                          onChange={(e) => handleThresholdChange(false, threshold.level, "max", parseInt(e.target.value) === 9999 ? Infinity : parseInt(e.target.value))}
-                          className="w-20 text-xs"
-                        />
-                      </div>
-                    </TableCell>
                     <TableCell>
                       <Input
                         type="number"
                         value={threshold.threshold}
                         onChange={(e) => handleThresholdChange(false, threshold.level, "threshold", parseInt(e.target.value))}
-                        className="w-20"
+                        className="w-full"
                       />
                     </TableCell>
                     <TableCell className="text-center font-semibold">
