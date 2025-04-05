@@ -73,6 +73,11 @@ export const deleteFolder = (folderId: string): void => {
   if (getCurrentFolderId() === folderId) {
     localStorage.removeItem(CURRENT_FOLDER_ID);
   }
+  
+  // Supprimer également les cas d'usage associés au dossier
+  const useCases = getUseCases();
+  const filteredUseCases = useCases.filter(useCase => useCase.folderId !== folderId);
+  saveUseCases(filteredUseCases);
 };
 
 // Récupérer un dossier par son ID
@@ -83,5 +88,58 @@ export const getFolderById = (folderId: string): Folder | undefined => {
 
 // Filtrer les cas d'usage par dossier
 export const filterUseCasesByFolder = (useCases: UseCase[], folderId: string): UseCase[] => {
+  return useCases.filter(useCase => useCase.folderId === folderId);
+};
+
+// Clé pour stocker les cas d'usage dans le localStorage
+const USE_CASES_STORAGE_KEY = 'use_cases';
+
+// Récupérer tous les cas d'usage depuis le localStorage
+export const getUseCases = (): UseCase[] => {
+  const useCasesJson = localStorage.getItem(USE_CASES_STORAGE_KEY);
+  if (!useCasesJson) return [];
+  
+  try {
+    return JSON.parse(useCasesJson);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des cas d'usage:", error);
+    return [];
+  }
+};
+
+// Sauvegarder tous les cas d'usage dans le localStorage
+export const saveUseCases = (useCases: UseCase[]): void => {
+  localStorage.setItem(USE_CASES_STORAGE_KEY, JSON.stringify(useCases));
+};
+
+// Ajouter un cas d'usage
+export const addUseCase = (useCase: UseCase): UseCase => {
+  const useCases = getUseCases();
+  const updatedUseCases = [...useCases, useCase];
+  saveUseCases(updatedUseCases);
+  return useCase;
+};
+
+// Mettre à jour un cas d'usage existant
+export const updateUseCase = (updatedUseCase: UseCase): UseCase => {
+  const useCases = getUseCases();
+  const updatedUseCases = useCases.map(useCase => 
+    useCase.id === updatedUseCase.id ? updatedUseCase : useCase
+  );
+  
+  saveUseCases(updatedUseCases);
+  return updatedUseCase;
+};
+
+// Supprimer un cas d'usage
+export const deleteUseCase = (useCaseId: string): void => {
+  const useCases = getUseCases();
+  const updatedUseCases = useCases.filter(useCase => useCase.id !== useCaseId);
+  saveUseCases(updatedUseCases);
+};
+
+// Récupérer les cas d'usage d'un dossier spécifique
+export const getUseCasesForFolder = (folderId: string): UseCase[] => {
+  const useCases = getUseCases();
   return useCases.filter(useCase => useCase.folderId === folderId);
 };

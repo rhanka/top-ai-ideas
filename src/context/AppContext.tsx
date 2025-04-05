@@ -14,16 +14,14 @@ import {
   createFolder,
   updateFolder as updateFolderUtil,
   deleteFolder as deleteFolderUtil,
-  getFolderById
+  getFolderById,
+  getUseCases,
+  saveUseCases,
+  addUseCase as addUseCaseUtil,
+  updateUseCase as updateUseCaseUtil,
+  deleteUseCase as deleteUseCaseUtil,
+  getUseCasesForFolder
 } from "./folderUtils";
-
-// Assigner les cas d'usage initiaux au premier dossier créé
-const getInitialUseCasesWithFolder = (folderId: string) => {
-  return initialUseCasesData.map(useCase => ({
-    ...useCase as UseCase,
-    folderId
-  }));
-};
 
 // Context type with folders
 type AppContextType = {
@@ -43,7 +41,7 @@ type AppContextType = {
   updateThresholds: (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => void;
   countUseCasesInLevel: (isValue: boolean, level: number) => number;
   isGenerating: boolean;
-  // Nouvelles fonctions pour gérer les dossiers
+  // Fonctions pour gérer les dossiers
   addFolder: (name: string, description: string) => Folder;
   updateFolder: (folder: Folder) => void;
   deleteFolder: (id: string) => void;
@@ -85,11 +83,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setFolders([defaultFolder]);
       
       // Ajouter les cas d'usage initiaux au dossier par défaut
-      const initialUseCases = getInitialUseCasesWithFolder(defaultFolder.id);
+      const initialUseCases = initialUseCasesData.map(useCase => ({
+        ...useCase as UseCase,
+        folderId: defaultFolder.id
+      }));
+      
       const scoredUseCases = initialUseCases.map(useCase => 
         calcInitialScore(useCase as UseCase, defaultFolder.matrixConfig)
       );
+      
       setUseCases(scoredUseCases);
+      saveUseCases(scoredUseCases); // Sauvegarder dans le localStorage
       
       // Définir le dossier par défaut comme dossier actif
       setCurrentFolderId(defaultFolder.id);
@@ -107,20 +111,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentFolderIdUtil(storedFolders[0].id);
       }
       
-      // Charger les données des cas d'usage
-      // Pour un projet réel, nous chargerions les cas d'usage depuis une API
-      // Ici, nous utilisons les données initiales et les attribuons au premier dossier
-      const allUseCases = initialUseCasesData.map(useCase => ({
-        ...useCase as UseCase,
-        folderId: storedFolders[0].id
-      }));
+      // Charger les cas d'usage depuis le localStorage
+      const storedUseCases = getUseCases();
       
-      const scoredUseCases = allUseCases.map(useCase => {
-        const folder = storedFolders.find(f => f.id === useCase.folderId);
-        return calcInitialScore(useCase, folder ? folder.matrixConfig : defaultMatrixConfig);
-      });
-      
-      setUseCases(scoredUseCases);
+      if (storedUseCases.length === 0) {
+        // Si pas de cas d'usage enregistrés, utiliser les données initiales
+        // et les attribuer au premier dossier
+        const initialUseCases = initialUseCasesData.map(useCase => ({
+          ...useCase as UseCase,
+          folderId: storedFolders[0].id
+        }));
+        
+        const scoredUseCases = initialUseCases.map(useCase => {
+          const folder = storedFolders.find(f => f.id === useCase.folderId);
+          return calcInitialScore(useCase, folder ? folder.matrixConfig : defaultMatrixConfig);
+        });
+        
+        setUseCases(scoredUseCases);
+        saveUseCases(scoredUseCases); // Sauvegarder dans le localStorage
+      } else {
+        setUseCases(storedUseCases);
+      }
     }
   }, []);
   
@@ -144,14 +155,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     const currentConfig = getCurrentMatrixConfig();
     const newUseCase = calcInitialScore(useCaseWithFolder, currentConfig);
+    
     setUseCases(prev => [...prev, newUseCase]);
+    addUseCaseUtil(newUseCase); // Ajouter au localStorage
   };
 
   // Fonctions pour gérer les dossiers
   const addFolder = (name: string, description: string): Folder => {
     const newFolder = createFolder(name, description, defaultMatrixConfig);
     setFolders(prev => [...prev, newFolder]);
-    saveFolders([...folders, newFolder]);
     return newFolder;
   };
   
@@ -172,11 +184,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
     
-    // Supprimer les cas d'usage associés
-    setUseCases(prev => prev.filter(useCase => useCase.folderId !== id));
-    
-    // Supprimer le dossier
+    // Supprimer les cas d'usage associés (folderUtils.deleteFolder gère déjà cela)
     deleteFolderUtil(id);
+    
+    // Mettre à jour l'état local
+    setUseCases(prev => prev.filter(useCase => useCase.folderId !== id));
     setFolders(prev => prev.filter(folder => folder.id !== id));
     
     // Si c'était le dossier actif, passer au premier dossier disponible
@@ -225,15 +237,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     
     const newUseCase = calcInitialScore(updatedUseCase, matrixConfig);
-    setUseCases([...useCases, newUseCase]);
+    setUseCases(prev => [...prev, newUseCase]);
+    addUseCaseUtil(newUseCase); // Ajouter au localStorage
   };
   
   // Update existing use case
   const updateUseCase = (updatedUseCase: UseCase) => {
     const updated = calcInitialScore(updatedUseCase, matrixConfig);
+    
     setUseCases(useCases.map(useCase => 
       useCase.id === updated.id ? updated : useCase
     ));
+    
+    updateUseCaseUtil(updated); // Mettre à jour dans le localStorage
     
     if (activeUseCase?.id === updated.id) {
       setActiveUseCase(updated);
@@ -243,6 +259,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Delete use case
   const deleteUseCase = (id: string) => {
     setUseCases(useCases.filter(useCase => useCase.id !== id));
+    deleteUseCaseUtil(id); // Supprimer du localStorage
+    
     if (activeUseCase?.id === id) {
       setActiveUseCase(null);
     }
@@ -279,7 +297,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
     
     const updatedUseCases = currentFolderUseCases.map(useCase => calcInitialScore(useCase, config));
-    setUseCases([...otherFolderUseCases, ...updatedUseCases]);
+    const allUpdatedUseCases = [...otherFolderUseCases, ...updatedUseCases];
+    
+    setUseCases(allUpdatedUseCases);
+    saveUseCases(allUpdatedUseCases); // Sauvegarder les cas d'usage mis à jour
     
     // Update active use case if any
     if (activeUseCase && activeUseCase.folderId === currentFolderId) {
