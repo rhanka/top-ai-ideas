@@ -5,17 +5,29 @@ import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowUpDown, Search, FileText, RefreshCw, Download } from "lucide-react";
+import { ArrowUpDown, Search, FileText, RefreshCw, Download, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { UseCase } from "@/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const DataTable: React.FC = () => {
-  const { useCases } = useAppContext();
+  const { useCases, deleteUseCase } = useAppContext();
   const navigate = useNavigate();
   
   // Table state
   const [sortField, setSortField] = useState<keyof UseCase>('id');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [searchQuery, setSearchQuery] = useState('');
+  const [useCaseToDelete, setUseCaseToDelete] = useState<UseCase | null>(null);
   
   // Handle sort
   const handleSort = (field: keyof UseCase) => {
@@ -25,6 +37,23 @@ const DataTable: React.FC = () => {
       setSortField(field);
       setSortDirection('asc');
     }
+  };
+
+  const handleDeleteClick = (useCase: UseCase, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUseCaseToDelete(useCase);
+  };
+
+  const confirmDelete = () => {
+    if (useCaseToDelete) {
+      deleteUseCase(useCaseToDelete.id);
+      toast.success(`Cas d'usage "${useCaseToDelete.name}" supprimé`);
+      setUseCaseToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setUseCaseToDelete(null);
   };
   
   // Sort & filter data
@@ -195,7 +224,7 @@ const DataTable: React.FC = () => {
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </div>
                 </TableHead>
-                <TableHead className="w-24">Actions</TableHead>
+                <TableHead className="w-24 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -210,13 +239,23 @@ const DataTable: React.FC = () => {
                     <TableCell>{useCase.deadline}</TableCell>
                     <TableCell className="text-yellow-500">{renderValueRating(useCase.totalValueScore)}</TableCell>
                     <TableCell className="font-bold">{renderComplexityRating(useCase.totalComplexityScore)}</TableCell>
-                    <TableCell>
+                    <TableCell className="space-x-1 text-right">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={() => viewDetails(useCase.id)}
+                        title="Voir détails"
                       >
                         <FileText className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleDeleteClick(useCase, e)}
+                        className="text-red-500 hover:bg-red-50"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -232,6 +271,28 @@ const DataTable: React.FC = () => {
           </Table>
         </div>
       </div>
+
+      <AlertDialog open={useCaseToDelete !== null} onOpenChange={cancelDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer le cas d'usage "{useCaseToDelete?.name}" ?
+              <br />
+              Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

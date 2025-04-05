@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -6,21 +5,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, ListTodo, Database, FileText, Star, X } from "lucide-react";
+import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, ListTodo, Database, FileText, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { UseCase, ValueRating, ComplexityRating, LevelDescription } from "@/types";
 import { RatingsTable } from "@/components/UseCaseDetail/RatingsTable";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const UseCaseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { useCases, updateUseCase, matrixConfig } = useAppContext();
+  const { useCases, updateUseCase, deleteUseCase, matrixConfig } = useAppContext();
   
   const [useCase, setUseCase] = useState<UseCase | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [levelDescriptions, setLevelDescriptions] = useState<Record<string, LevelDescription[]>>({});
   const [totalValueScore, setTotalValueScore] = useState<number>(0);
   const [totalComplexityScore, setTotalComplexityScore] = useState<number>(0);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   useEffect(() => {
     const foundUseCase = useCases.find(uc => uc.id === id);
@@ -161,6 +171,22 @@ const UseCaseDetail: React.FC = () => {
     toast.success("Cas d'usage mis à jour");
   };
 
+  const handleDelete = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (useCase) {
+      deleteUseCase(useCase.id);
+      toast.success(`Cas d'usage "${useCase.name}" supprimé`);
+      navigate('/cas-usage');
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteDialog(false);
+  };
+
   const getValueLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.valueThresholds) return 0;
     
@@ -266,12 +292,21 @@ const UseCaseDetail: React.FC = () => {
               <Save className="mr-2 h-4 w-4" /> Enregistrer
             </Button>
           ) : (
-            <Button 
-              onClick={() => setIsEditing(true)}
-              variant="outline"
-            >
-              Modifier
-            </Button>
+            <>
+              <Button 
+                onClick={() => setIsEditing(true)}
+                variant="outline"
+              >
+                Modifier
+              </Button>
+              <Button 
+                onClick={handleDelete}
+                variant="outline"
+                className="text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Supprimer
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -546,7 +581,6 @@ const UseCaseDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* Modification ici: Affichage des axes valeur et complexité sur 2 colonnes */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
         <RatingsTable 
           title="Axes de Valeur"
@@ -572,6 +606,28 @@ const UseCaseDetail: React.FC = () => {
           level={getComplexityLevel(isEditing ? totalComplexityScore : useCase.totalComplexityScore)}
         />
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer le cas d'usage "{useCase.name}" ?
+              <br />
+              Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

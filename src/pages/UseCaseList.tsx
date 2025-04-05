@@ -1,16 +1,28 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, FileText } from "lucide-react";
+import { PlusCircle, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { UseCase } from "@/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const UseCaseList: React.FC = () => {
   const { useCases, setActiveUseCase, deleteUseCase, matrixConfig } = useAppContext();
   const navigate = useNavigate();
+  const [useCaseToDelete, setUseCaseToDelete] = useState<UseCase | null>(null);
   
   const handleCreateNew = () => {
     toast.info("Fonctionnalité de création manuelle à venir");
@@ -20,6 +32,23 @@ const UseCaseList: React.FC = () => {
   const handleViewDetails = (useCase: UseCase) => {
     setActiveUseCase(useCase);
     navigate(`/cas-usage/${useCase.id}`);
+  };
+
+  const handleDeleteClick = (useCase: UseCase, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevents triggering the card click
+    setUseCaseToDelete(useCase);
+  };
+
+  const confirmDelete = () => {
+    if (useCaseToDelete) {
+      deleteUseCase(useCaseToDelete.id);
+      toast.success(`Cas d'usage "${useCaseToDelete.name}" supprimé`);
+      setUseCaseToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setUseCaseToDelete(null);
   };
   
   // Function to determine value level based on thresholds
@@ -155,13 +184,21 @@ const UseCaseList: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="mt-6 flex justify-center">
+                <div className="mt-6 flex justify-between">
                   <Button 
                     onClick={() => handleViewDetails(useCase)} 
                     variant="outline" 
-                    className="w-full"
+                    className="flex-1 mr-2"
                   >
                     Voir les détails
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-red-500 hover:bg-red-50"
+                    size="icon"
+                    onClick={(e) => handleDeleteClick(useCase, e)}
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -169,6 +206,28 @@ const UseCaseList: React.FC = () => {
           ))}
         </div>
       )}
+
+      <AlertDialog open={useCaseToDelete !== null} onOpenChange={cancelDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer le cas d'usage "{useCaseToDelete?.name}" ?
+              <br />
+              Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
