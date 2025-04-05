@@ -114,6 +114,12 @@ export const saveUseCases = (useCases: UseCase[]): void => {
 
 // Ajouter un cas d'usage
 export const addUseCase = (useCase: UseCase): UseCase => {
+  // S'assurer que le folderId est défini
+  if (!useCase.folderId) {
+    const currentFolderId = getCurrentFolderId();
+    useCase.folderId = currentFolderId || '';
+  }
+  
   const useCases = getUseCases();
   const updatedUseCases = [...useCases, useCase];
   saveUseCases(updatedUseCases);
