@@ -15,6 +15,48 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
   const valueThresholds = matrixConfig.valueThresholds || [];
   const complexityThresholds = matrixConfig.complexityThresholds || [];
   
+  // Determine value level based on score and thresholds
+  const getValueLevel = (score: number | undefined) => {
+    if (score === undefined) return 0;
+    
+    // Define value thresholds
+    const thresholds = [0, 40, 100, 400, 2000];
+    
+    let level = 1;
+    
+    // Find highest threshold that score exceeds
+    for (let i = 0; i < thresholds.length; i++) {
+      if (score > thresholds[i]) {
+        level = i + 1;
+      } else {
+        break;
+      }
+    }
+    
+    return level;
+  };
+  
+  // Determine complexity level based on score and thresholds
+  const getComplexityLevel = (score: number | undefined) => {
+    if (score === undefined) return 0;
+    
+    // Define complexity thresholds
+    const thresholds = [0, 50, 100, 250, 1000];
+    
+    let level = 1;
+    
+    // Find highest threshold that score exceeds
+    for (let i = 0; i < thresholds.length; i++) {
+      if (score > thresholds[i]) {
+        level = i + 1;
+      } else {
+        break;
+      }
+    }
+    
+    return level;
+  };
+  
   // Categorize use cases based on value and complexity scores
   const categorizeUseCases = () => {
     const grid: UseCase[][] = Array(5).fill(0).map(() => Array(5).fill(0).map(() => [] as unknown as UseCase));
@@ -23,26 +65,16 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
       // Skip if scores aren't defined
       if (useCase.totalValueScore === undefined || useCase.totalComplexityScore === undefined) return;
       
-      let valueCategory = 0;
-      for (let i = 0; i < valueThresholds.length; i++) {
-        if (useCase.totalValueScore >= valueThresholds[i].min && 
-            useCase.totalValueScore <= valueThresholds[i].max) {
-          valueCategory = i;
-          break;
-        }
-      }
+      // Calculate value level (1-5) and adjust to grid index (0-4)
+      const valueLevel = getValueLevel(useCase.totalValueScore);
+      const valueCategory = 5 - valueLevel;
       
-      let complexityCategory = 0;
-      for (let i = 0; i < complexityThresholds.length; i++) {
-        if (useCase.totalComplexityScore >= complexityThresholds[i].min && 
-            useCase.totalComplexityScore <= complexityThresholds[i].max) {
-          complexityCategory = i;
-          break;
-        }
-      }
+      // Calculate complexity level (1-5) and adjust to grid index (0-4)
+      const complexityLevel = getComplexityLevel(useCase.totalComplexityScore);
+      const complexityCategory = complexityLevel - 1;
       
       // Add to appropriate grid cell
-      const cellArray = grid[4 - valueCategory][complexityCategory] as unknown as UseCase[];
+      const cellArray = grid[valueCategory][complexityCategory] as unknown as UseCase[];
       cellArray.push(useCase);
     });
     
