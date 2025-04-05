@@ -1,6 +1,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { UseCase, MatrixConfig, ValueAxis, ComplexityAxis } from "../types";
+import { UseCase, MatrixConfig } from "../types";
+
+// Define the ValueRating and ComplexityRating types that were previously referenced but not imported
+type ValueRating = 1 | 2 | 3 | 4 | 5;
+type ComplexityRating = 1 | 2 | 3 | 4 | 5;
 
 // Default matrix configuration
 const defaultMatrixConfig: MatrixConfig = {
@@ -18,6 +22,32 @@ const defaultMatrixConfig: MatrixConfig = {
     { name: "Disponibilité, Qualité & Accès Données", weight: 1, description: "Accessibilité des données nécessaires" },
     { name: "Gestion du Changement & Impact Métier", weight: 1, description: "Adaptation organisationnelle requise" },
   ],
+};
+
+// Calculate scores for a use case
+const calcInitialScore = (useCase: UseCase, config: MatrixConfig) => {
+  let totalValue = 0;
+  let totalComplexity = 0;
+  
+  useCase.valueScores.forEach(score => {
+    const axis = config.valueAxes.find(a => a.name === score.axisId);
+    if (axis) {
+      totalValue += score.rating * axis.weight;
+    }
+  });
+  
+  useCase.complexityScores.forEach(score => {
+    const axis = config.complexityAxes.find(a => a.name === score.axisId);
+    if (axis) {
+      totalComplexity += score.rating * axis.weight;
+    }
+  });
+  
+  return {
+    ...useCase,
+    totalValueScore: totalValue,
+    totalComplexityScore: totalComplexity
+  };
 };
 
 // Provide example use case for demonstration
@@ -75,34 +105,9 @@ const exampleUseCase: UseCase = {
   totalComplexityScore: 0,
 };
 
-// Initialize with calculated scores
-const calcInitialScore = (useCase: UseCase, config: MatrixConfig) => {
-  let totalValue = 0;
-  let totalComplexity = 0;
-  
-  useCase.valueScores.forEach(score => {
-    const axis = config.valueAxes.find(a => a.name === score.axisId);
-    if (axis) {
-      totalValue += score.rating * axis.weight;
-    }
-  });
-  
-  useCase.complexityScores.forEach(score => {
-    const axis = config.complexityAxes.find(a => a.name === score.axisId);
-    if (axis) {
-      totalComplexity += score.rating * axis.weight;
-    }
-  });
-  
-  return {
-    ...useCase,
-    totalValueScore: totalValue,
-    totalComplexityScore: totalComplexity
-  };
-};
-
-// Initial use cases array with the example
-const initialUseCases = [calcInitialScore(exampleUseCase, defaultMatrixConfig)];
+// Initialize with calculated scores and create initial use cases
+const initialCalculatedExample = calcInitialScore(exampleUseCase, defaultMatrixConfig);
+const initialUseCases = [initialCalculatedExample];
 
 // Context type
 type AppContextType = {
@@ -120,10 +125,11 @@ type AppContextType = {
 };
 
 // Create context
-export const AppContext = createContext<AppContextType | undefined>(undefined);
+const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Move useState hooks to the top level of the function component
   const [useCases, setUseCases] = useState<UseCase[]>(initialUseCases);
   const [matrixConfig, setMatrixConfig] = useState<MatrixConfig>(defaultMatrixConfig);
   const [activeUseCase, setActiveUseCase] = useState<UseCase | null>(null);
@@ -238,3 +244,6 @@ export const useAppContext = () => {
   }
   return context;
 };
+
+// Export the context directly
+export { AppContext };
