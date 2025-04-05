@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, ListTodo, Database } from "lucide-react";
+import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, ListTodo, Database, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { UseCase, ValueRating, ComplexityRating } from "@/types";
 import {
@@ -39,7 +39,7 @@ const UseCaseDetail: React.FC = () => {
   const handleInputChange = (field: keyof UseCase, value: string | string[]) => {
     if (!useCase) return;
     
-    if (field === 'benefits' || field === 'metrics' || field === 'risks' || field === 'nextSteps' || field === 'sources') {
+    if (field === 'benefits' || field === 'metrics' || field === 'risks' || field === 'nextSteps' || field === 'sources' || field === 'relatedData') {
       // Handle array fields
       let arrayValue: string[];
       if (typeof value === 'string') {
@@ -424,6 +424,38 @@ const UseCaseDetail: React.FC = () => {
                       {source}
                     </span>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-md">
+            <CardHeader className="bg-blue-100">
+              <CardTitle className="flex items-center">
+                <FileText className="mr-2 h-5 w-5 text-blue-600" />
+                Données associées
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <Textarea
+                  value={useCase.relatedData ? useCase.relatedData.join('\n') : ''}
+                  onChange={(e) => handleInputChange('relatedData', e.target.value)}
+                  className="min-h-[80px]"
+                  placeholder="Identité client, factures, historique d'appels... (un élément par ligne)"
+                />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {useCase.relatedData && useCase.relatedData.length > 0 ? (
+                    useCase.relatedData.map((data, index) => (
+                      <span key={index} className="bg-blue-50 px-3 py-1 rounded-full text-sm flex items-center border border-blue-200">
+                        <FileText className="h-3 w-3 mr-1 text-blue-500" />
+                        {data}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 italic">Aucune donnée associée</p>
+                  )}
                 </div>
               )}
             </CardContent>

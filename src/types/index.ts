@@ -1,5 +1,4 @@
 
-
 // Value rating types (stars)
 export type ValueRating = 1 | 2 | 3 | 4 | 5;
 
@@ -55,6 +54,7 @@ export type UseCase = {
   risks: string[];
   nextSteps: string[];
   sources: string[];
+  relatedData: string[]; // New field for related data (client identity, invoices, call history)
   valueScores: ValueAxisScore[];
   complexityScores: ComplexityAxisScore[];
   totalValueScore?: number;
@@ -66,4 +66,3 @@ export type MatrixConfig = {
   valueAxes: ValueAxis[];
   complexityAxes: ComplexityAxis[];
 };
-
