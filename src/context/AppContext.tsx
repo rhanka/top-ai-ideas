@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
 
@@ -159,32 +158,17 @@ const calcInitialScore = (useCase: UseCase, config: MatrixConfig) => {
   let totalValue = 0;
   let totalComplexity = 0;
   
-  // Get the points for each rating based on thresholds
-  const getValuePoints = (rating: number) => {
-    const threshold = config.valueThresholds?.find(t => t.level === rating);
-    return threshold ? threshold.points : 0;
-  };
-  
-  const getComplexityPoints = (rating: number) => {
-    const threshold = config.complexityThresholds?.find(t => t.level === rating);
-    return threshold ? threshold.points : 0;
-  };
-  
   useCase.valueScores.forEach(score => {
     const axis = config.valueAxes.find(a => a.name === score.axisId);
     if (axis) {
-      // Use points associated with the rating level, not the rating itself
-      const points = getValuePoints(score.rating);
-      totalValue += points * axis.weight;
+      totalValue += score.rating * axis.weight;
     }
   });
   
   useCase.complexityScores.forEach(score => {
     const axis = config.complexityAxes.find(a => a.name === score.axisId);
     if (axis) {
-      // Use points associated with the rating level, not the rating itself
-      const points = getComplexityPoints(score.rating);
-      totalComplexity += points * axis.weight;
+      totalComplexity += score.rating * axis.weight;
     }
   });
   

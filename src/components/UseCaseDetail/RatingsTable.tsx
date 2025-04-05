@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Table, TableBody, TableCell, TableRow, TableFooter } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAppContext } from "@/context/AppContext";
 
 interface RatingsTableProps {
   title: string;
@@ -34,35 +34,6 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
   totalScore,
   level
 }) => {
-  const { matrixConfig } = useAppContext();
-  
-  const getPointsForRating = (rating: number): number => {
-    if (isValue && matrixConfig.valueThresholds) {
-      const threshold = matrixConfig.valueThresholds.find(t => t.level === rating);
-      return threshold ? threshold.points : 0;
-    } else if (!isValue && matrixConfig.complexityThresholds) {
-      const threshold = matrixConfig.complexityThresholds.find(t => t.level === rating);
-      return threshold ? threshold.points : 0;
-    }
-    return 0;
-  };
-
-  const getWeightForAxis = (axisId: string): number => {
-    if (isValue) {
-      const axis = matrixConfig.valueAxes.find(a => a.name === axisId);
-      return axis ? axis.weight : 1;
-    } else {
-      const axis = matrixConfig.complexityAxes.find(a => a.name === axisId);
-      return axis ? axis.weight : 1;
-    }
-  };
-
-  const getWeightedPoints = (axisId: string, rating: number): number => {
-    const points = getPointsForRating(rating);
-    const weight = getWeightForAxis(axisId);
-    return points * weight;
-  };
-
   const renderRatingSymbols = (axisId: string, rating: number) => {
     return (
       <div className="flex">
@@ -81,11 +52,6 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
             {isValue ? "★" : "X"}
           </button>
         ))}
-        {!isEditing && (
-          <span className="ml-2 text-sm text-gray-500">
-            ({getPointsForRating(rating)} pts × {getWeightForAxis(axisId)} = {getWeightedPoints(axisId, rating)} pts)
-          </span>
-        )}
       </div>
     );
   };
@@ -93,6 +59,7 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
   const renderRatingDropdown = (axisId: string, currentRating: number) => {
     if (!isEditing) return null;
     
+    // Get descriptions for this axis if available
     const axisLevelDescriptions = levelDescriptions?.[axisId];
     
     return (
@@ -106,6 +73,7 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
           </SelectTrigger>
           <SelectContent>
             {[1, 2, 3, 4, 5].map((rating) => {
+              // Find description for this rating
               let ratingDescription = "";
               if (axisLevelDescriptions) {
                 const levelDesc = axisLevelDescriptions.find(level => level.level === rating);
@@ -179,7 +147,7 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
                   {renderLevelSymbols()}
                 </TableCell>
                 <TableCell>
-                  <span className="font-medium">{Math.round(totalScore)} points</span>
+                  <span className="font-medium">{totalScore} points</span>
                   {level && <span className="text-sm ml-2">({level} {isValue ? "étoiles" : "X"})</span>}
                 </TableCell>
               </TableRow>
