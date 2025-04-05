@@ -141,11 +141,7 @@ const UseCaseList: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {useCases.map((useCase) => (
-            <Card 
-              key={useCase.id} 
-              className="shadow-md hover:shadow-lg transition-shadow cursor-pointer" 
-              onClick={() => handleViewDetails(useCase)}
-            >
+            <Card key={useCase.id} className="shadow-md hover:shadow-lg transition-shadow">
               <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 border-b">
                 <CardTitle className="text-navy text-xl flex items-center justify-between">
                   <span className="truncate">{useCase.name}</span>
@@ -190,10 +186,7 @@ const UseCaseList: React.FC = () => {
                 
                 <div className="mt-6 flex justify-between">
                   <Button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewDetails(useCase);
-                    }} 
+                    onClick={() => handleViewDetails(useCase)} 
                     variant="outline" 
                     className="flex-1 mr-2"
                   >
