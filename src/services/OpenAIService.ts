@@ -170,10 +170,10 @@ export class OpenAIService {
           Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: "o3-mini",
           messages: [{ role: "user", content: formattedPrompt }],
           temperature: 0.7,
-          max_tokens: 2000,
+          max_tokens: 4000,
           response_format: { type: "json_object" },
         }),
       });
