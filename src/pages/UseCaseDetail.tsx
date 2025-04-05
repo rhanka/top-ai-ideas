@@ -19,11 +19,15 @@ const UseCaseDetail: React.FC = () => {
   const [useCase, setUseCase] = useState<UseCase | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [levelDescriptions, setLevelDescriptions] = useState<Record<string, LevelDescription[]>>({});
+  const [totalValueScore, setTotalValueScore] = useState<number>(0);
+  const [totalComplexityScore, setTotalComplexityScore] = useState<number>(0);
   
   useEffect(() => {
     const foundUseCase = useCases.find(uc => uc.id === id);
     if (foundUseCase) {
       setUseCase({ ...foundUseCase });
+      setTotalValueScore(foundUseCase.totalValueScore || 0);
+      setTotalComplexityScore(foundUseCase.totalComplexityScore || 0);
     } else {
       navigate('/cas-usage');
       toast.error("Cas d'usage non trouvé");
@@ -63,6 +67,40 @@ const UseCaseDetail: React.FC = () => {
     }
   };
   
+  // Calculate scores based on current ratings
+  const calculateScores = (updatedUseCase: UseCase) => {
+    let valueScore = 0;
+    let complexityScore = 0;
+    
+    // Calculate value score
+    updatedUseCase.valueScores.forEach(score => {
+      const axis = matrixConfig.valueAxes.find(a => a.name === score.axisId);
+      if (axis) {
+        let points = 0;
+        if (matrixConfig.valueThresholds) {
+          const threshold = matrixConfig.valueThresholds.find(t => t.level === score.rating);
+          points = threshold ? threshold.points : 0;
+        }
+        valueScore += points * axis.weight;
+      }
+    });
+    
+    // Calculate complexity score
+    updatedUseCase.complexityScores.forEach(score => {
+      const axis = matrixConfig.complexityAxes.find(a => a.name === score.axisId);
+      if (axis) {
+        let points = 0;
+        if (matrixConfig.complexityThresholds) {
+          const threshold = matrixConfig.complexityThresholds.find(t => t.level === score.rating);
+          points = threshold ? threshold.points : 0;
+        }
+        complexityScore += points * axis.weight;
+      }
+    });
+    
+    return { valueScore, complexityScore };
+  };
+  
   const handleRatingChange = (
     isValue: boolean,
     axisId: string,
@@ -71,6 +109,8 @@ const UseCaseDetail: React.FC = () => {
     if (!useCase) return;
     
     let description = "";
+    let updatedUseCase = { ...useCase };
+    
     if (isValue) {
       const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
       if (axis && axis.levelDescriptions) {
@@ -83,7 +123,9 @@ const UseCaseDetail: React.FC = () => {
           ? { ...score, rating: rating as ValueRating, description } 
           : score
       );
-      setUseCase({ ...useCase, valueScores: newValueScores });
+      
+      updatedUseCase = { ...useCase, valueScores: newValueScores };
+      setUseCase(updatedUseCase);
     } else {
       const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
       if (axis && axis.levelDescriptions) {
@@ -96,14 +138,31 @@ const UseCaseDetail: React.FC = () => {
           ? { ...score, rating: rating as ComplexityRating, description } 
           : score
       );
-      setUseCase({ ...useCase, complexityScores: newComplexityScores });
+      
+      updatedUseCase = { ...useCase, complexityScores: newComplexityScores };
+      setUseCase(updatedUseCase);
     }
+    
+    // Calculate and update scores immediately
+    const { valueScore, complexityScore } = calculateScores(updatedUseCase);
+    setTotalValueScore(valueScore);
+    setTotalComplexityScore(complexityScore);
   };
   
   const handleSave = () => {
     if (!useCase) return;
     
-    updateUseCase(useCase);
+    // Calculate final scores before saving
+    const { valueScore, complexityScore } = calculateScores(useCase);
+    
+    // Update use case with calculated scores
+    const finalUseCase = {
+      ...useCase,
+      totalValueScore: valueScore,
+      totalComplexityScore: complexityScore
+    };
+    
+    updateUseCase(finalUseCase);
     setIsEditing(false);
     toast.success("Cas d'usage mis à jour");
   };
@@ -236,7 +295,7 @@ const UseCaseDetail: React.FC = () => {
             <CardTitle className="text-sm">Valeur calculée</CardTitle>
           </CardHeader>
           <CardContent className="pt-3">
-            {renderValueStars(useCase.totalValueScore)}
+            {renderValueStars(isEditing ? totalValueScore : useCase.totalValueScore)}
           </CardContent>
         </Card>
         
@@ -245,7 +304,7 @@ const UseCaseDetail: React.FC = () => {
             <CardTitle className="text-sm">Complexité calculée</CardTitle>
           </CardHeader>
           <CardContent className="pt-3">
-            {renderComplexityX(useCase.totalComplexityScore)}
+            {renderComplexityX(isEditing ? totalComplexityScore : useCase.totalComplexityScore)}
           </CardContent>
         </Card>
       </div>
@@ -509,8 +568,8 @@ const UseCaseDetail: React.FC = () => {
           backgroundColor="bg-yellow-50"
           levelDescriptions={levelDescriptions}
           onRatingChange={handleRatingChange}
-          totalScore={useCase.totalValueScore}
-          level={getValueLevel(useCase.totalValueScore)}
+          totalScore={isEditing ? totalValueScore : useCase.totalValueScore}
+          level={getValueLevel(isEditing ? totalValueScore : useCase.totalValueScore)}
         />
         
         <RatingsTable 
@@ -521,8 +580,8 @@ const UseCaseDetail: React.FC = () => {
           backgroundColor="bg-gray-100"
           levelDescriptions={levelDescriptions}
           onRatingChange={handleRatingChange}
-          totalScore={useCase.totalComplexityScore}
-          level={getComplexityLevel(useCase.totalComplexityScore)}
+          totalScore={isEditing ? totalComplexityScore : useCase.totalComplexityScore}
+          level={getComplexityLevel(isEditing ? totalComplexityScore : useCase.totalComplexityScore)}
         />
       </div>
     </div>
