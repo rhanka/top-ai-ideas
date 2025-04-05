@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UseCase, LevelThreshold } from "@/types";
@@ -54,10 +55,9 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
       
       if (valueLevel === 0 || complexityLevel === 0) return;
       
-      // Add to appropriate grid cell (5★ at top, 5X at left after inversion)
+      // Add to appropriate grid cell (5★ at top, 5X at right)
       const valueIndex = 5 - valueLevel;
-      // Invert the complexity order (5X at left, 1X at right)
-      const complexityIndex = 5 - complexityLevel;
+      const complexityIndex = complexityLevel - 1;
       
       const cellArray = grid[valueIndex][complexityIndex] as unknown as UseCase[];
       cellArray.push(useCase);
@@ -70,23 +70,20 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
   
   // Color schemes based on position (strategic value)
   const getBackgroundColor = (valueIndex: number, complexityIndex: number) => {
-    // Invert the complexity index for the color scheme
-    const invertedComplexityIndex = 4 - complexityIndex;
-    
     // High value (5★), low complexity (X) - best scenario
-    if (valueIndex === 0 && invertedComplexityIndex === 0) return "bg-green-200";
+    if (valueIndex === 0 && complexityIndex === 0) return "bg-green-200";
     
     // High value zones (4-5★)
-    if ((valueIndex === 0 || valueIndex === 1) && invertedComplexityIndex <= 2) return "bg-green-100";
+    if ((valueIndex === 0 || valueIndex === 1) && complexityIndex <= 2) return "bg-green-100";
     
     // Medium value, low complexity - good options
-    if ((valueIndex === 2) && invertedComplexityIndex <= 1) return "bg-green-50";
+    if ((valueIndex === 2) && complexityIndex <= 1) return "bg-green-50";
     
     // Low value (1-2★), high complexity (4-5X) - worst scenario
-    if ((valueIndex >= 3) && invertedComplexityIndex >= 3) return "bg-red-100";
+    if ((valueIndex >= 3) && complexityIndex >= 3) return "bg-red-100";
     
     // Medium cases with higher complexity - caution
-    if (invertedComplexityIndex >= 3) return "bg-orange-50";
+    if (complexityIndex >= 3) return "bg-orange-50";
     
     // Other cases - neutral
     return "bg-gray-50";
@@ -108,8 +105,7 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
   
   // Render X's for complexity level
   const renderComplexityX = (complexityIndex: number) => {
-    // Invert the order of X's to show 5X on the left and 1X on the right
-    const crosses = 5 - complexityIndex;
+    const crosses = complexityIndex + 1;
     return (
       <div className="flex">
         {[1, 2, 3, 4, 5].map((level) => (
@@ -123,55 +119,51 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
   
   // Strategic advice based on position
   const getAdvice = (valueIndex: number, complexityIndex: number) => {
-    // Invert the complexity index for the advice
-    const invertedComplexityIndex = 4 - complexityIndex;
-    
     // Value 5★ (highest)
     if (valueIndex === 0) {
-      if (invertedComplexityIndex === 0) return "Priorité maximale";
-      if (invertedComplexityIndex === 1) return "Haute priorité";
-      if (invertedComplexityIndex === 2) return "Planifier rapidement";
-      if (invertedComplexityIndex === 3) return "Étudier simplification";
+      if (complexityIndex === 0) return "Priorité maximale";
+      if (complexityIndex === 1) return "Haute priorité";
+      if (complexityIndex === 2) return "Planifier rapidement";
+      if (complexityIndex === 3) return "Étudier simplification";
       return "Rechercher alternatives";
     }
     
     // Value 4★
     if (valueIndex === 1) {
-      if (invertedComplexityIndex === 0) return "Haute priorité";
-      if (invertedComplexityIndex === 1) return "Priorité élevée";
-      if (invertedComplexityIndex === 2) return "Planifier à moyen terme";
-      if (invertedComplexityIndex === 3) return "Évaluer options";
+      if (complexityIndex === 0) return "Haute priorité";
+      if (complexityIndex === 1) return "Priorité élevée";
+      if (complexityIndex === 2) return "Planifier à moyen terme";
+      if (complexityIndex === 3) return "Évaluer options";
       return "Simplifier ou reporter";
     }
     
     // Value 3★
     if (valueIndex === 2) {
-      if (invertedComplexityIndex === 0) return "Implémenter rapidement";
-      if (invertedComplexityIndex === 1) return "Bonne initiative";
-      if (invertedComplexityIndex === 2) return "Évaluer l'effort/valeur";
-      if (invertedComplexityIndex === 3) return "Simplification nécessaire";
+      if (complexityIndex === 0) return "Implémenter rapidement";
+      if (complexityIndex === 1) return "Bonne initiative";
+      if (complexityIndex === 2) return "Évaluer l'effort/valeur";
+      if (complexityIndex === 3) return "Simplification nécessaire";
       return "Probablement à éviter";
     }
     
     // Value 2★
     if (valueIndex === 3) {
-      if (invertedComplexityIndex === 0) return "Quick-win secondaire";
-      if (invertedComplexityIndex === 1) return "Considérer si ressources";
-      if (invertedComplexityIndex === 2) return "Faible priorité";
-      if (invertedComplexityIndex === 3) return "Très faible priorité";
+      if (complexityIndex === 0) return "Quick-win secondaire";
+      if (complexityIndex === 1) return "Considérer si ressources";
+      if (complexityIndex === 2) return "Faible priorité";
+      if (complexityIndex === 3) return "Très faible priorité";
       return "Ne pas poursuivre";
     }
     
     // Value 1★ (lowest)
-    if (invertedComplexityIndex === 0) return "Effort minime si ressources";
-    if (invertedComplexityIndex === 1) return "Très faible priorité";
+    if (complexityIndex === 0) return "Effort minime si ressources";
+    if (complexityIndex === 1) return "Très faible priorité";
     return "Ne pas poursuivre";
   };
   
   // Get the threshold information for cell
   const getThresholdInfo = (valueIndex: number, complexityIndex: number) => {
     const valueLevel = 5 - valueIndex;
-    // Invert complexity level to match the new order
     const complexityLevel = complexityIndex + 1;
     
     const valueData = valueThresholds.find(t => t.level === valueLevel);
@@ -198,11 +190,11 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Matrix header - Complexity levels (inverted: 5X to 1X) */}
+        {/* Matrix header - Complexity levels */}
         <div className="flex mb-2">
           <div className="w-32"></div>
           <div className="grid grid-cols-5 flex-1 gap-2">
-            {[4, 3, 2, 1, 0].map((complexityIndex) => (
+            {[0, 1, 2, 3, 4].map((complexityIndex) => (
               <div key={`header-${complexityIndex}`} className="text-center">
                 <div className="font-medium text-gray-700">Complexité</div>
                 {renderComplexityX(complexityIndex)}
@@ -220,9 +212,9 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
               {renderValueStars(valueIndex)}
             </div>
             
-            {/* Matrix cells (inverted complexity order) */}
+            {/* Matrix cells */}
             <div className="grid grid-cols-5 flex-1 gap-2">
-              {[4, 3, 2, 1, 0].map((complexityIndex) => {
+              {[0, 1, 2, 3, 4].map((complexityIndex) => {
                 const useCasesInCell = grid[valueIndex][complexityIndex] as unknown as UseCase[];
                 const thresholdInfo = getThresholdInfo(valueIndex, complexityIndex);
                 

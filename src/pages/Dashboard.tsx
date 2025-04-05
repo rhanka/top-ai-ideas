@@ -18,7 +18,7 @@ const Dashboard: React.FC = () => {
       name: useCase.name,
       id: useCase.id,
       value: useCase.totalValueScore || 0,
-      complexity: useCase.totalComplexityScore || 0, // Add complexity directly
+      ease: easeOfImplementation,
       domain: useCase.domain,
     };
   });
@@ -86,7 +86,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-8 mb-8">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Projection Valeur / Complexité</CardTitle>
+            <CardTitle>Projection Valeur / Facilité d&apos;implémentation</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="h-[600px]">
@@ -97,10 +97,10 @@ const Dashboard: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis 
                     type="number" 
-                    dataKey="complexity" 
-                    name="Complexité" 
+                    dataKey="ease" 
+                    name="Facilité d'implémentation" 
                     domain={[0, 30]}
-                    label={{ value: "Complexité", position: "insideBottom", offset: -10 }}
+                    label={{ value: "Facilité d'implémentation", position: "insideBottom", offset: -10 }}
                   />
                   <YAxis 
                     type="number" 
@@ -114,7 +114,7 @@ const Dashboard: React.FC = () => {
                     cursor={{ strokeDasharray: "3 3" }}
                     formatter={(value, name, props) => {
                       if (name === "value") return [`${value}`, "Valeur"];
-                      if (name === "complexity") return [`${value}`, "Complexité"];
+                      if (name === "ease") return [`${value}`, "Facilité"];
                       return [value, name];
                     }}
                     labelFormatter={(label) => label}
@@ -145,4 +145,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
