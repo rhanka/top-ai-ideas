@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -172,6 +173,7 @@ const UseCaseDetail: React.FC = () => {
                   value={useCase.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   className="min-h-[150px]"
+                  withMargin={true}
                 />
               ) : (
                 <p className="whitespace-pre-line">{useCase.description}</p>
@@ -194,6 +196,7 @@ const UseCaseDetail: React.FC = () => {
                     onChange={(e) => handleInputChange('benefits', e.target.value)}
                     className="min-h-[120px]"
                     placeholder="Un élément par ligne"
+                    withMargin={true}
                   />
                 ) : (
                   <ul className="list-disc pl-5 space-y-1">
@@ -219,6 +222,7 @@ const UseCaseDetail: React.FC = () => {
                     onChange={(e) => handleInputChange('metrics', e.target.value)}
                     className="min-h-[120px]"
                     placeholder="Un élément par ligne"
+                    withMargin={true}
                   />
                 ) : (
                   <ul className="list-disc pl-5 space-y-1">
@@ -244,6 +248,7 @@ const UseCaseDetail: React.FC = () => {
                     onChange={(e) => handleInputChange('risks', e.target.value)}
                     className="min-h-[120px]"
                     placeholder="Un élément par ligne"
+                    withMargin={true}
                   />
                 ) : (
                   <ul className="list-disc pl-5 space-y-1">
@@ -269,6 +274,7 @@ const UseCaseDetail: React.FC = () => {
                     onChange={(e) => handleInputChange('nextSteps', e.target.value)}
                     className="min-h-[120px]"
                     placeholder="Un élément par ligne"
+                    withMargin={true}
                   />
                 ) : (
                   <ul className="list-disc pl-5 space-y-1">
@@ -292,6 +298,7 @@ const UseCaseDetail: React.FC = () => {
                   onChange={(e) => handleInputChange('sources', e.target.value)}
                   className="min-h-[80px]"
                   placeholder="Un élément par ligne"
+                  withMargin={true}
                 />
               ) : (
                 <div className="flex flex-wrap gap-2">
@@ -320,6 +327,7 @@ const UseCaseDetail: React.FC = () => {
                   onChange={(e) => handleInputChange('relatedData', e.target.value)}
                   className="min-h-[80px]"
                   placeholder="Identité client, factures, historique d'appels... (un élément par ligne)"
+                  withMargin={true}
                 />
               ) : (
                 <div className="flex flex-wrap gap-2">
