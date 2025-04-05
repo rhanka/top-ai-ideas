@@ -83,6 +83,8 @@ export const useOpenAI = (
         const newFolder = await generateFolderNameAndDescription(currentInput, openai);
         if (newFolder) {
           folderId = newFolder.id;
+          // Ensure the currentFolder is set properly
+          setCurrentFolder(folderId);
         }
       }
       
