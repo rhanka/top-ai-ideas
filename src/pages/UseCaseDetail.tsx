@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, ListTodo, Database, FileText } from "lucide-react";
+import { ArrowLeft, Save, Calendar, User, Lightbulb, LineChart, AlertTriangle, ListTodo, Database, FileText, Star, X } from "lucide-react";
 import { toast } from "sonner";
 import { UseCase, ValueRating, ComplexityRating, LevelDescription } from "@/types";
 import { RatingsTable } from "@/components/UseCaseDetail/RatingsTable";
@@ -57,9 +56,15 @@ const UseCaseDetail: React.FC = () => {
         arrayValue = value;
       }
       
-      setUseCase(prev => prev ? { ...prev, [field]: arrayValue } : null);
+      setUseCase(prev => {
+        if (!prev) return null;
+        return { ...prev, [field]: arrayValue };
+      });
     } else {
-      setUseCase(prev => prev ? { ...prev, [field]: value } : null);
+      setUseCase(prev => {
+        if (!prev) return null;
+        return { ...prev, [field]: value };
+      });
     }
   };
   
@@ -70,8 +75,8 @@ const UseCaseDetail: React.FC = () => {
   ) => {
     if (!useCase) return;
     
-    setUseCase(prevCase => {
-      if (!prevCase) return null;
+    setUseCase(prevUseCase => {
+      if (!prevUseCase) return null;
       
       let description = "";
       if (isValue) {
@@ -81,12 +86,12 @@ const UseCaseDetail: React.FC = () => {
           description = levelDescription?.description || "";
         }
         
-        const newValueScores = prevCase.valueScores.map(score => 
+        const newValueScores = prevUseCase.valueScores.map(score => 
           score.axisId === axisId 
             ? { ...score, rating: rating as ValueRating, description } 
             : score
         );
-        return { ...prevCase, valueScores: newValueScores };
+        return { ...prevUseCase, valueScores: newValueScores };
       } else {
         const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
         if (axis && axis.levelDescriptions) {
@@ -94,12 +99,12 @@ const UseCaseDetail: React.FC = () => {
           description = levelDescription?.description || "";
         }
         
-        const newComplexityScores = prevCase.complexityScores.map(score => 
+        const newComplexityScores = prevUseCase.complexityScores.map(score => 
           score.axisId === axisId 
             ? { ...score, rating: rating as ComplexityRating, description } 
             : score
         );
-        return { ...prevCase, complexityScores: newComplexityScores };
+        return { ...prevUseCase, complexityScores: newComplexityScores };
       }
     });
   }, [useCase, matrixConfig]);
@@ -110,6 +115,68 @@ const UseCaseDetail: React.FC = () => {
     updateUseCase(useCase);
     setIsEditing(false);
     toast.success("Cas d'usage mis à jour");
+  };
+
+  const getValueLevel = (score: number | undefined) => {
+    if (score === undefined || !matrixConfig.valueThresholds) return 0;
+    
+    for (let i = matrixConfig.valueThresholds.length - 1; i >= 0; i--) {
+      const threshold = matrixConfig.valueThresholds[i];
+      if (score >= threshold.threshold) {
+        return threshold.level;
+      }
+    }
+    return 1;
+  };
+  
+  const getComplexityLevel = (score: number | undefined) => {
+    if (score === undefined || !matrixConfig.complexityThresholds) return 0;
+    
+    for (let i = matrixConfig.complexityThresholds.length - 1; i >= 0; i--) {
+      const threshold = matrixConfig.complexityThresholds[i];
+      if (score >= threshold.threshold) {
+        return threshold.level;
+      }
+    }
+    return 1;
+  };
+  
+  const renderValueStars = (score: number | undefined) => {
+    if (score === undefined) return "N/A";
+    
+    const level = getValueLevel(score);
+    
+    return (
+      <div className="flex items-center">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star 
+            key={star} 
+            className={`h-5 w-5 ${star <= level ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`}
+          />
+        ))}
+        <span className="ml-2 text-sm font-medium">({score} points)</span>
+      </div>
+    );
+  };
+  
+  const renderComplexityX = (score: number | undefined) => {
+    if (score === undefined) return "N/A";
+    
+    const level = getComplexityLevel(score);
+    
+    return (
+      <div className="flex items-center">
+        {[1, 2, 3, 4, 5].map((x) => (
+          <span 
+            key={x} 
+            className={`font-bold text-lg mr-1 ${x <= level ? "text-gray-800" : "text-gray-300"}`}
+          >
+            X
+          </span>
+        ))}
+        <span className="ml-2 text-sm font-medium">({score} points)</span>
+      </div>
+    );
   };
   
   if (!useCase) {
@@ -163,6 +230,26 @@ const UseCaseDetail: React.FC = () => {
             </Button>
           )}
         </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Card className="shadow-md">
+          <CardHeader className="bg-yellow-50 pb-3">
+            <CardTitle className="text-sm">Valeur calculée</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-3">
+            {renderValueStars(useCase.totalValueScore)}
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-md">
+          <CardHeader className="bg-gray-100 pb-3">
+            <CardTitle className="text-sm">Complexité calculée</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-3">
+            {renderComplexityX(useCase.totalComplexityScore)}
+          </CardContent>
+        </Card>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -425,6 +512,7 @@ const UseCaseDetail: React.FC = () => {
           levelDescriptions={levelDescriptions}
           onRatingChange={handleRatingChange}
           totalScore={useCase.totalValueScore}
+          level={getValueLevel(useCase.totalValueScore)}
         />
         
         <RatingsTable 
@@ -436,6 +524,7 @@ const UseCaseDetail: React.FC = () => {
           levelDescriptions={levelDescriptions}
           onRatingChange={handleRatingChange}
           totalScore={useCase.totalComplexityScore}
+          level={getComplexityLevel(useCase.totalComplexityScore)}
         />
       </div>
     </div>

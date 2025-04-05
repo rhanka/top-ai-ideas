@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UseCase, LevelThreshold } from "@/types";
@@ -9,55 +10,39 @@ interface ChessboardProps {
 }
 
 export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
-  const { matrixConfig, countUseCasesInLevel } = useAppContext();
+  const { matrixConfig } = useAppContext();
   
   // Get thresholds from context
   const valueThresholds = matrixConfig.valueThresholds || [];
   const complexityThresholds = matrixConfig.complexityThresholds || [];
   
-  // Determine value level based on score and thresholds
+  // Helper function to determine value level based on thresholds
   const getValueLevel = (score: number | undefined) => {
-    if (score === undefined) return 0;
+    if (score === undefined || !valueThresholds) return 0;
     
-    // Define value thresholds - these are the threshold values, not points
-    const thresholds = [300, 700, 1000, 1500, 4000];
-    
-    let level = 1;
-    
-    // For each threshold, if score is less than it, return current level
-    for (let i = 0; i < thresholds.length; i++) {
-      if (score < thresholds[i]) {
-        return level;
+    for (let i = valueThresholds.length - 1; i >= 0; i--) {
+      const threshold = valueThresholds[i];
+      if (score >= threshold.threshold) {
+        return threshold.level;
       }
-      level++;
     }
-    
-    // If we reach here, score is above all thresholds
-    return 5;
+    return 1; // Default minimum level
   };
   
-  // Determine complexity level based on score and thresholds
+  // Helper function to determine complexity level based on thresholds
   const getComplexityLevel = (score: number | undefined) => {
-    if (score === undefined) return 0;
+    if (score === undefined || !complexityThresholds) return 0;
     
-    // Define complexity thresholds - these are the threshold values, not points
-    const thresholds = [100, 250, 500, 1000, 2000];
-    
-    let level = 1;
-    
-    // For each threshold, if score is less than it, return current level
-    for (let i = 0; i < thresholds.length; i++) {
-      if (score < thresholds[i]) {
-        return level;
+    for (let i = complexityThresholds.length - 1; i >= 0; i--) {
+      const threshold = complexityThresholds[i];
+      if (score >= threshold.threshold) {
+        return threshold.level;
       }
-      level++;
     }
-    
-    // If we reach here, score is above all thresholds
-    return 5;
+    return 1; // Default minimum level
   };
   
-  // Categorize use cases based on value and complexity scores
+  // Categorize use cases based on value and complexity levels
   const categorizeUseCases = () => {
     const grid: UseCase[][] = Array(5).fill(0).map(() => Array(5).fill(0).map(() => [] as unknown as UseCase));
     
@@ -65,16 +50,16 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
       // Skip if scores aren't defined
       if (useCase.totalValueScore === undefined || useCase.totalComplexityScore === undefined) return;
       
-      // Calculate value level (1-5) and adjust to grid index (0-4)
       const valueLevel = getValueLevel(useCase.totalValueScore);
-      const valueCategory = 5 - valueLevel;
-      
-      // Calculate complexity level (1-5) and adjust to grid index (0-4)
       const complexityLevel = getComplexityLevel(useCase.totalComplexityScore);
-      const complexityCategory = complexityLevel - 1;
       
-      // Add to appropriate grid cell
-      const cellArray = grid[valueCategory][complexityCategory] as unknown as UseCase[];
+      if (valueLevel === 0 || complexityLevel === 0) return;
+      
+      // Add to appropriate grid cell (5★ at top, 5X at right)
+      const valueIndex = 5 - valueLevel;
+      const complexityIndex = complexityLevel - 1;
+      
+      const cellArray = grid[valueIndex][complexityIndex] as unknown as UseCase[];
       cellArray.push(useCase);
     });
     
@@ -187,10 +172,10 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
     return {
       valuePoints: valueData?.points || "N/A",
       valueThreshold: valueData?.threshold || "N/A",
-      valueCases: countUseCasesInLevel(true, valueLevel),
+      valueCases: valueData?.cases || 0,
       complexityPoints: complexityData?.points || "N/A",
       complexityThreshold: complexityData?.threshold || "N/A",
-      complexityCases: countUseCasesInLevel(false, complexityLevel)
+      complexityCases: complexityData?.cases || 0
     };
   };
   
@@ -268,7 +253,7 @@ export const Chessboard: React.FC<ChessboardProps> = ({ useCases }) => {
         ))}
         
         <div className="mt-4 text-xs text-gray-500">
-          <p>Note: Les axes ont 5 niveaux avec des poids différents selon la criticité et la difficulté.</p>
+          <p>Note: L'attribution des étoiles/X est basée sur les seuils de points configurés dans la page Matrice.</p>
         </div>
       </CardContent>
     </Card>

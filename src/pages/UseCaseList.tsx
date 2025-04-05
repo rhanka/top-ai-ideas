@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { UseCase } from "@/types";
 
 const UseCaseList: React.FC = () => {
-  const { useCases, setActiveUseCase, deleteUseCase } = useAppContext();
+  const { useCases, setActiveUseCase, deleteUseCase, matrixConfig } = useAppContext();
   const navigate = useNavigate();
   
   const handleCreateNew = () => {
@@ -22,53 +22,39 @@ const UseCaseList: React.FC = () => {
     navigate(`/cas-usage/${useCase.id}`);
   };
   
-  // Function to determine value level based on score and thresholds
+  // Function to determine value level based on thresholds
   const getValueLevel = (score: number | undefined) => {
-    if (!score) return 0;
+    if (score === undefined || !matrixConfig.valueThresholds) return 0;
     
-    // Define value thresholds
-    const thresholds = [0, 40, 100, 400, 2000];
-    
-    let level = 1;
-    
-    // Find highest threshold that score exceeds
-    for (let i = 0; i < thresholds.length; i++) {
-      if (score > thresholds[i]) {
-        level = i + 1;
-      } else {
-        break;
+    // Find the level corresponding to the score
+    for (let i = matrixConfig.valueThresholds.length - 1; i >= 0; i--) {
+      const threshold = matrixConfig.valueThresholds[i];
+      if (score >= threshold.threshold) {
+        return threshold.level;
       }
     }
-    
-    return level;
+    return 1; // Default minimum level
   };
   
-  // Function to determine complexity level based on score and thresholds
+  // Function to determine complexity level based on thresholds
   const getComplexityLevel = (score: number | undefined) => {
-    if (!score) return 0;
+    if (score === undefined || !matrixConfig.complexityThresholds) return 0;
     
-    // Define complexity thresholds
-    const thresholds = [0, 50, 100, 250, 1000];
-    
-    let level = 1;
-    
-    // Find highest threshold that score exceeds
-    for (let i = 0; i < thresholds.length; i++) {
-      if (score > thresholds[i]) {
-        level = i + 1;
-      } else {
-        break;
+    // Find the level corresponding to the score
+    for (let i = matrixConfig.complexityThresholds.length - 1; i >= 0; i--) {
+      const threshold = matrixConfig.complexityThresholds[i];
+      if (score >= threshold.threshold) {
+        return threshold.level;
       }
     }
-    
-    return level;
+    return 1; // Default minimum level
   };
   
   // Function to render value rating as stars
-  const renderValueRating = (rating: number | undefined) => {
-    if (!rating) return "N/A";
+  const renderValueRating = (score: number | undefined) => {
+    if (score === undefined) return "N/A";
     
-    const level = getValueLevel(rating);
+    const level = getValueLevel(score);
     
     return (
       <div className="flex">
@@ -82,15 +68,15 @@ const UseCaseList: React.FC = () => {
   };
   
   // Function to render complexity rating as X's
-  const renderComplexityRating = (rating: number | undefined) => {
-    if (!rating) return "N/A";
+  const renderComplexityRating = (score: number | undefined) => {
+    if (score === undefined) return "N/A";
     
-    const level = getComplexityLevel(rating);
+    const level = getComplexityLevel(score);
     
     return (
       <div className="flex">
-        {[1, 2, 3, 4, 5].map((level) => (
-          <span key={level} className={`font-bold ${level <= getComplexityLevel(rating) ? "text-gray-800" : "text-gray-300"}`}>
+        {[1, 2, 3, 4, 5].map((x) => (
+          <span key={x} className={`font-bold ${x <= level ? "text-gray-800" : "text-gray-300"}`}>
             X
           </span>
         ))}
@@ -147,11 +133,25 @@ const UseCaseList: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Valeur:</p>
-                    {renderValueRating(useCase.totalValueScore)}
+                    <div className="flex items-center">
+                      {renderValueRating(useCase.totalValueScore)}
+                      {useCase.totalValueScore !== undefined && (
+                        <span className="ml-2 text-xs text-gray-500">
+                          ({useCase.totalValueScore} pts)
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Complexité:</p>
-                    {renderComplexityRating(useCase.totalComplexityScore)}
+                    <div className="flex items-center">
+                      {renderComplexityRating(useCase.totalComplexityScore)}
+                      {useCase.totalComplexityScore !== undefined && (
+                        <span className="ml-2 text-xs text-gray-500">
+                          ({useCase.totalComplexityScore} pts)
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
