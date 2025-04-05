@@ -14,7 +14,6 @@ import UseCaseList from "@/pages/UseCaseList";
 import UseCaseDetail from "@/pages/UseCaseDetail";
 import Dashboard from "@/pages/Dashboard";
 import DataTable from "@/pages/DataTable";
-import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,7 +35,6 @@ const App = () => (
                 <Route path="/cas-usage/:id" element={<UseCaseDetail />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/donnees" element={<DataTable />} />
-                <Route path="/parametres" element={<Settings />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
