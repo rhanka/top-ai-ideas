@@ -5,10 +5,9 @@ import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Sparkles, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Home: React.FC = () => {
-  const { currentInput, setCurrentInput, generateUseCases, isGenerating, generationStatus, currentTitle } = useAppContext();
+  const { currentInput, setCurrentInput, generateUseCases, isGenerating } = useAppContext();
   const navigate = useNavigate();
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,34 +98,6 @@ const Home: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {/* Dialog pour afficher l'état de la génération */}
-      <Dialog open={isGenerating} onOpenChange={(open) => {
-        // Ne peut pas être fermé pendant la génération
-        if (isGenerating && !open) return;
-      }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center">Génération en cours</DialogTitle>
-          </DialogHeader>
-          <div className="py-6">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin text-navy" />
-              <div>
-                <p className="text-center font-medium">{generationStatus}</p>
-                {currentTitle && (
-                  <p className="text-center text-sm text-gray-500 mt-1">
-                    Cas d'usage: <span className="font-medium">{currentTitle}</span>
-                  </p>
-                )}
-              </div>
-              <p className="text-center text-sm text-gray-500 mt-2">
-                Les cas d'usage apparaissent dans la liste au fur et à mesure de leur génération.
-              </p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

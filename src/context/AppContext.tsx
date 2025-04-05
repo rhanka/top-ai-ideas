@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelDescription, LevelThreshold } from "../types";
 import { toast } from "sonner";
@@ -356,8 +357,6 @@ type AppContextType = {
   updateThresholds: (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => void;
   countUseCasesInLevel: (isValue: boolean, level: number) => number;
   isGenerating: boolean;
-  generationStatus: string;
-  currentTitle: string;
 };
 
 // Create context
@@ -371,8 +370,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeUseCase, setActiveUseCase] = useState<UseCase | null>(null);
   const [currentInput, setCurrentInput] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [generationStatus, setGenerationStatus] = useState<string>("");
-  const [currentTitle, setCurrentTitle] = useState<string>("");
   
   // Effect to update cases count in thresholds whenever useCases changes
   useEffect(() => {
@@ -538,34 +535,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const openai = new OpenAIService(apiKey);
     setIsGenerating(true);
     
-    // Create a reference for the toast to update it
-    const toastId = toast.loading("Initialisation de la génération des cas d'usage...");
-    
     try {
       // Step 1: Generate list of use case titles
-      setGenerationStatus("Génération de la liste des cas d'usage...");
-      toast.loading("Génération de la liste des cas d'usage...", { id: toastId });
-      
+      toast.info("Génération des cas d'usage en cours...");
       const useCaseTitles = await openai.generateUseCaseList(currentInput, listPrompt);
       
       if (useCaseTitles.length === 0) {
-        toast.error("Aucun cas d'usage généré. Veuillez reformuler votre demande.", { id: toastId });
+        toast.error("Aucun cas d'usage généré. Veuillez reformuler votre demande.");
         setIsGenerating(false);
-        setGenerationStatus("");
         return;
       }
-      
-      toast.loading(`${useCaseTitles.length} cas d'usage identifiés. Génération des détails...`, { id: toastId });
 
       // Step 2: For each use case title, generate detailed use case
-      let processedCount = 0;
+      const newUseCases: UseCase[] = [];
       
       for (const title of useCaseTitles) {
-        processedCount++;
-        setCurrentTitle(title);
-        setGenerationStatus(`Génération des détails pour "${title}" (${processedCount}/${useCaseTitles.length})...`);
-        toast.loading(`Génération des détails pour "${title}" (${processedCount}/${useCaseTitles.length})...`, { id: toastId });
-        
+        toast.info(`Génération des détails pour "${title}"...`);
         try {
           const useCaseDetail = await openai.generateUseCaseDetail(
             title,
@@ -576,31 +561,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           
           // Calculate scores for the use case
           const scoredUseCase = calcInitialScore(useCaseDetail, matrixConfig);
-          
-          // Add this use case immediately to the state
-          setUseCases(prevUseCases => [...prevUseCases, scoredUseCase]);
-          
+          newUseCases.push(scoredUseCase);
         } catch (error) {
           console.error(`Error generating details for "${title}":`, error);
-          // Continue with next use case, but log the error
-          toast.loading(`Erreur avec "${title}". Poursuite avec le suivant (${processedCount}/${useCaseTitles.length})...`, { id: toastId });
+          toast.error(`Erreur lors de la génération des détails pour "${title}"`);
         }
       }
 
-      // Success message when all are completed
-      toast.success(`${processedCount} cas d'usage générés avec succès!`, { id: toastId });
-      setCurrentInput("");
-      
+      // Add all successfully generated use cases
+      if (newUseCases.length > 0) {
+        setUseCases([...useCases, ...newUseCases]);
+        toast.success(`${newUseCases.length} cas d'usage générés avec succès!`);
+        setCurrentInput("");
+      } else {
+        toast.error("Échec de la génération des cas d'usage");
+      }
     } catch (error) {
       console.error("Error in use case generation:", error);
       toast.error("Erreur lors de la génération des cas d'usage", {
-        id: toastId,
         description: (error as Error).message,
       });
     } finally {
       setIsGenerating(false);
-      setGenerationStatus("");
-      setCurrentTitle("");
     }
   };
   
@@ -618,9 +600,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     generateUseCases,
     updateThresholds,
     countUseCasesInLevel,
-    isGenerating,
-    generationStatus,
-    currentTitle
+    isGenerating
   };
   
   return (
