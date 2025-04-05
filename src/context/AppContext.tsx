@@ -1,219 +1,96 @@
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { UseCase, MatrixConfig, LevelThreshold, Folder } from "../types";
+import React, { createContext, useContext, useState, useCallback } from "react";
+import { UseCase, MatrixConfig, LevelThreshold, Folder } from "@/types";
 import { toast } from "sonner";
-import initialUseCasesData from "../data/useCasesData.json";
-import { defaultMatrixConfig } from "./defaultMatrixConfig";
-import { calcInitialScore, getValueLevel, getComplexityLevel, countUseCasesInLevel } from "./useCaseUtils";
+import { useFolderOperations } from "./hooks/useFolderOperations";
+import { useUseCaseOperations } from "./hooks/useUseCaseOperations";
+import { useMatrixConfig } from "./hooks/useMatrixConfig";
 import { useOpenAI } from "./useOpenAI";
-import { 
-  getFolders, 
-  saveFolders, 
-  getCurrentFolderId, 
-  setCurrentFolderId as setCurrentFolderIdUtil,
-  createFolder,
-  updateFolder as updateFolderUtil,
-  deleteFolder as deleteFolderUtil,
-  getFolderById,
-  getUseCases,
-  saveUseCases,
-  addUseCase as addUseCaseUtil,
-  updateUseCase as updateUseCaseUtil,
-  deleteUseCase as deleteUseCaseUtil,
-  getUseCasesForFolder
-} from "./folderUtils";
-
-// Context type with folders
-type AppContextType = {
-  useCases: UseCase[];
-  matrixConfig: MatrixConfig;
-  activeUseCase: UseCase | null;
-  currentInput: string;
-  folders: Folder[];
-  currentFolderId: string | null;
-  addUseCase: (useCase: UseCase) => void;
-  updateUseCase: (useCase: UseCase) => void;
-  deleteUseCase: (id: string) => void;
-  setActiveUseCase: (useCase: UseCase | null) => void;
-  updateMatrixConfig: (config: MatrixConfig) => void;
-  setCurrentInput: (input: string) => void;
-  generateUseCases: (input?: string, createNewFolder?: boolean) => Promise<boolean>;
-  updateThresholds: (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => void;
-  countUseCasesInLevel: (isValue: boolean, level: number) => number;
-  isGenerating: boolean;
-  // Fonctions pour gérer les dossiers
-  addFolder: (name: string, description: string) => Folder;
-  updateFolder: (folder: Folder) => void;
-  deleteFolder: (id: string) => void;
-  setCurrentFolder: (folderId: string) => void;
-  getCurrentFolder: () => Folder | undefined;
-};
+import { AppContextType } from "./types/AppContextTypes";
+import { getUseCasesForFolder } from "./folderUtils";
 
 // Create context
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // État pour les dossiers et le dossier actif
-  const [folders, setFolders] = useState<Folder[]>([]);
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  
-  // État pour les cas d'usage
-  const [useCases, setUseCases] = useState<UseCase[]>([]);
-  const [activeUseCase, setActiveUseCase] = useState<UseCase | null>(null);
   const [currentInput, setCurrentInput] = useState<string>("");
   
-  // Obtenir la configuration de matrice actuelle
-  const getCurrentMatrixConfig = (): MatrixConfig => {
-    if (!currentFolderId) return defaultMatrixConfig;
-    const currentFolder = folders.find(folder => folder.id === currentFolderId);
-    return currentFolder ? currentFolder.matrixConfig : defaultMatrixConfig;
-  };
-  
-  const [matrixConfig, setMatrixConfig] = useState<MatrixConfig>(getCurrentMatrixConfig());
-  
-  // Initialiser les dossiers et cas d'usage au démarrage
-  useEffect(() => {
-    // Charger les dossiers existants
-    const storedFolders = getFolders();
-    
-    // S'il n'y a pas de dossiers, en créer un par défaut
-    if (storedFolders.length === 0) {
-      const defaultFolder = createFolder("Centre d'appel", "Cas d'usage pour centre d'appel", defaultMatrixConfig);
-      setFolders([defaultFolder]);
-      
-      // Ajouter les cas d'usage initiaux au dossier par défaut
-      const initialUseCases = initialUseCasesData.map(useCase => ({
-        ...useCase as UseCase,
-        folderId: defaultFolder.id
-      }));
-      
-      const scoredUseCases = initialUseCases.map(useCase => 
-        calcInitialScore(useCase as UseCase, defaultFolder.matrixConfig)
-      );
-      
-      setUseCases(scoredUseCases);
-      saveUseCases(scoredUseCases); // Sauvegarder dans le localStorage
-      
-      // Définir le dossier par défaut comme dossier actif
-      setCurrentFolderId(defaultFolder.id);
-      setCurrentFolderIdUtil(defaultFolder.id);
-    } else {
-      setFolders(storedFolders);
-      
-      // Charger le dossier actif depuis le localStorage
-      const storedFolderId = getCurrentFolderId();
-      if (storedFolderId && storedFolders.some(f => f.id === storedFolderId)) {
-        setCurrentFolderId(storedFolderId);
-      } else {
-        // Si pas de dossier actif ou invalide, utiliser le premier dossier
-        setCurrentFolderId(storedFolders[0].id);
-        setCurrentFolderIdUtil(storedFolders[0].id);
-      }
-      
-      // Charger les cas d'usage depuis le localStorage
-      const storedUseCases = getUseCases();
-      
-      if (storedUseCases.length === 0) {
-        // Si pas de cas d'usage enregistrés, utiliser les données initiales
-        // et les attribuer au premier dossier
-        const initialUseCases = initialUseCasesData.map(useCase => ({
-          ...useCase as UseCase,
-          folderId: storedFolders[0].id
-        }));
-        
-        const scoredUseCases = initialUseCases.map(useCase => {
-          const folder = storedFolders.find(f => f.id === useCase.folderId);
-          return calcInitialScore(useCase, folder ? folder.matrixConfig : defaultMatrixConfig);
-        });
-        
-        setUseCases(scoredUseCases);
-        saveUseCases(scoredUseCases); // Sauvegarder dans le localStorage
-      } else {
-        setUseCases(storedUseCases);
-      }
-    }
+  // Callback for folder changes
+  const handleFolderChange = useCallback((folderId: string | null) => {
+    // Nothing to do here - the state is managed by useFolderOperations
   }, []);
   
-  // Mettre à jour la matrixConfig lorsque le dossier actif change
-  useEffect(() => {
-    if (currentFolderId) {
-      const currentFolder = folders.find(folder => folder.id === currentFolderId);
-      if (currentFolder) {
-        setMatrixConfig(currentFolder.matrixConfig);
-      }
-    }
-  }, [currentFolderId, folders]);
+  // Callback for matrix config changes
+  const handleMatrixConfigChange = useCallback((config: MatrixConfig) => {
+    // Nothing to do here - the state is managed by useMatrixConfig
+  }, []);
+  
+  // Initialize folder operations
+  const {
+    folders,
+    currentFolderId,
+    addFolder,
+    updateFolder,
+    deleteFolder,
+    setCurrentFolder,
+    getCurrentFolder
+  } = useFolderOperations({
+    onFolderChange: handleFolderChange,
+    onMatrixConfigChange: handleMatrixConfigChange
+  });
+  
+  // Callback for folders update
+  const handleFoldersUpdated = useCallback((updatedFolders: Folder[]) => {
+    // This function is passed to useMatrixConfig to update folders
+    // No need to do anything here as folders are managed by useFolderOperations
+  }, []);
+  
+  // Initialize matrix config
+  const {
+    matrixConfig,
+    updateMatrixConfig,
+    updateThresholds
+  } = useMatrixConfig({
+    folders,
+    currentFolderId,
+    onFoldersUpdated: handleFoldersUpdated
+  });
+  
+  // Callback for thresholds update
+  const handleThresholdsUpdated = useCallback((
+    valueThresholds: LevelThreshold[], 
+    complexityThresholds: LevelThreshold[]
+  ) => {
+    updateThresholds(valueThresholds, complexityThresholds);
+  }, [updateThresholds]);
+  
+  // Initialize use case operations
+  const {
+    useCases,
+    activeUseCase,
+    setActiveUseCase,
+    addUseCase,
+    updateUseCase,
+    deleteUseCase,
+    countUseCasesInLevel: countUseCasesInLevelWrapper,
+    recalculateScores
+  } = useUseCaseOperations({
+    currentFolderId,
+    matrixConfig,
+    onThresholdsUpdated: handleThresholdsUpdated
+  });
   
   // Add use case handler for OpenAI service
-  const handleAddUseCase = (useCase: UseCase) => {
-    // Assigner le cas d'usage au dossier actif
+  const handleAddUseCase = useCallback((useCase: UseCase) => {
+    // Assign use case to current folder
     const useCaseWithFolder = {
       ...useCase,
       folderId: currentFolderId || ''
     };
     
-    const currentConfig = getCurrentMatrixConfig();
-    const newUseCase = calcInitialScore(useCaseWithFolder, currentConfig);
-    
-    setUseCases(prev => [...prev, newUseCase]);
-    addUseCaseUtil(newUseCase); // Ajouter au localStorage
-  };
-
-  // Fonctions pour gérer les dossiers
-  const addFolder = (name: string, description: string): Folder => {
-    const newFolder = createFolder(name, description, defaultMatrixConfig);
-    setFolders(prev => [...prev, newFolder]);
-    return newFolder;
-  };
-  
-  const handleUpdateFolder = (updatedFolder: Folder) => {
-    const updatedFolderResult = updateFolderUtil(updatedFolder);
-    setFolders(prev => prev.map(f => f.id === updatedFolderResult.id ? updatedFolderResult : f));
-    
-    // Mise à jour de la matrixConfig si c'est le dossier actif
-    if (updatedFolderResult.id === currentFolderId) {
-      setMatrixConfig(updatedFolderResult.matrixConfig);
-    }
-  };
-  
-  const handleDeleteFolder = (id: string) => {
-    // Vérifier qu'il reste au moins un dossier
-    if (folders.length <= 1) {
-      toast.error("Impossible de supprimer le dernier dossier");
-      return;
-    }
-    
-    // Supprimer les cas d'usage associés (folderUtils.deleteFolder gère déjà cela)
-    deleteFolderUtil(id);
-    
-    // Mettre à jour l'état local
-    setUseCases(prev => prev.filter(useCase => useCase.folderId !== id));
-    setFolders(prev => prev.filter(folder => folder.id !== id));
-    
-    // Si c'était le dossier actif, passer au premier dossier disponible
-    if (currentFolderId === id) {
-      const remainingFolders = folders.filter(folder => folder.id !== id);
-      if (remainingFolders.length > 0) {
-        setCurrentFolder(remainingFolders[0].id);
-      }
-    }
-  };
-  
-  const setCurrentFolder = (folderId: string) => {
-    setCurrentFolderId(folderId);
-    setCurrentFolderIdUtil(folderId);
-    
-    // Mettre à jour la configuration de la matrice
-    const folder = folders.find(f => f.id === folderId);
-    if (folder) {
-      setMatrixConfig(folder.matrixConfig);
-    }
-  };
-  
-  const getCurrentFolder = (): Folder | undefined => {
-    return currentFolderId ? folders.find(folder => folder.id === currentFolderId) : undefined;
-  };
+    addUseCase(useCaseWithFolder);
+  }, [addUseCase, currentFolderId]);
   
   // Initialize OpenAI hooks
   const { isGenerating, generateUseCases: generateUseCasesService } = useOpenAI(
@@ -224,167 +101,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
   
   // Effect to update cases count in thresholds whenever useCases changes
-  useEffect(() => {
-    updateCasesCounts();
+  React.useEffect(() => {
+    // This is handled in useUseCaseOperations
   }, [useCases, currentFolderId]);
   
-  // Add new use case
-  const addUseCase = (useCase: UseCase) => {
-    // Assign to current folder
-    const updatedUseCase = {
-      ...useCase,
-      folderId: currentFolderId || ''
-    };
-    
-    const newUseCase = calcInitialScore(updatedUseCase, matrixConfig);
-    setUseCases(prev => [...prev, newUseCase]);
-    addUseCaseUtil(newUseCase); // Ajouter au localStorage
-  };
-  
-  // Update existing use case
-  const updateUseCase = (updatedUseCase: UseCase) => {
-    const updated = calcInitialScore(updatedUseCase, matrixConfig);
-    
-    setUseCases(useCases.map(useCase => 
-      useCase.id === updated.id ? updated : useCase
-    ));
-    
-    updateUseCaseUtil(updated); // Mettre à jour dans le localStorage
-    
-    if (activeUseCase?.id === updated.id) {
-      setActiveUseCase(updated);
-    }
-  };
-  
-  // Delete use case
-  const deleteUseCase = (id: string) => {
-    setUseCases(useCases.filter(useCase => useCase.id !== id));
-    deleteUseCaseUtil(id); // Supprimer du localStorage
-    
-    if (activeUseCase?.id === id) {
-      setActiveUseCase(null);
-    }
-  };
-  
-  // Update matrix configuration
-  const updateMatrixConfig = (config: MatrixConfig) => {
-    // Mise à jour de la configuration de la matrice pour le dossier actif
-    if (currentFolderId) {
-      const updatedFolders = folders.map(folder => {
-        if (folder.id === currentFolderId) {
-          return {
-            ...folder,
-            matrixConfig: config
-          };
-        }
-        return folder;
-      });
-      
-      setFolders(updatedFolders);
-      saveFolders(updatedFolders);
-    }
-    
-    setMatrixConfig(config);
-    
-    // Recalculate all use case scores with new configuration
-    // but only for the current folder
-    const currentFolderUseCases = useCases.filter(
-      useCase => useCase.folderId === currentFolderId
-    );
-    
-    const otherFolderUseCases = useCases.filter(
-      useCase => useCase.folderId !== currentFolderId
-    );
-    
-    const updatedUseCases = currentFolderUseCases.map(useCase => calcInitialScore(useCase, config));
-    const allUpdatedUseCases = [...otherFolderUseCases, ...updatedUseCases];
-    
-    setUseCases(allUpdatedUseCases);
-    saveUseCases(allUpdatedUseCases); // Sauvegarder les cas d'usage mis à jour
-    
-    // Update active use case if any
-    if (activeUseCase && activeUseCase.folderId === currentFolderId) {
-      const updatedActive = updatedUseCases.find(u => u.id === activeUseCase.id);
-      if (updatedActive) {
-        setActiveUseCase(updatedActive);
-      }
-    }
-  };
-  
-  // Update cases counts in thresholds
-  const updateCasesCounts = () => {
-    if (!matrixConfig.valueThresholds || !matrixConfig.complexityThresholds) return;
-    
-    // Filtrer les cas d'usage pour ne compter que ceux du dossier actif
-    const currentFolderUseCases = currentFolderId 
-      ? useCases.filter(useCase => useCase.folderId === currentFolderId)
-      : [];
-    
-    // Create new arrays to avoid mutating state directly
-    const updatedValueThresholds = [...matrixConfig.valueThresholds].map(threshold => ({
-      ...threshold,
-      cases: 0
-    }));
-    
-    const updatedComplexityThresholds = [...matrixConfig.complexityThresholds].map(threshold => ({
-      ...threshold,
-      cases: 0
-    }));
-    
-    // Count use cases for each level
-    currentFolderUseCases.forEach(useCase => {
-      const valueLevel = getValueLevel(useCase.totalValueScore, updatedValueThresholds);
-      const complexityLevel = getComplexityLevel(useCase.totalComplexityScore, updatedComplexityThresholds);
-      
-      const valueThreshold = updatedValueThresholds.find(t => t.level === valueLevel);
-      if (valueThreshold) {
-        valueThreshold.cases = (valueThreshold.cases || 0) + 1;
-      }
-      
-      const complexityThreshold = updatedComplexityThresholds.find(t => t.level === complexityLevel);
-      if (complexityThreshold) {
-        complexityThreshold.cases = (complexityThreshold.cases || 0) + 1;
-      }
-    });
-    
-    // Update matrix configuration with new counts but avoid a re-render if values are the same
-    if (JSON.stringify(updatedValueThresholds) !== JSON.stringify(matrixConfig.valueThresholds) || 
-        JSON.stringify(updatedComplexityThresholds) !== JSON.stringify(matrixConfig.complexityThresholds)) {
-      setMatrixConfig(prevConfig => ({
-        ...prevConfig,
-        valueThresholds: updatedValueThresholds,
-        complexityThresholds: updatedComplexityThresholds
-      }));
-    }
-  };
-
-  // Update thresholds
-  const updateThresholds = (valueThresholds?: LevelThreshold[], complexityThresholds?: LevelThreshold[]) => {
-    const updatedMatrixConfig = { 
-      ...matrixConfig,
-      valueThresholds: valueThresholds || matrixConfig.valueThresholds,
-      complexityThresholds: complexityThresholds || matrixConfig.complexityThresholds
-    };
-    
-    // Mettre à jour la configuration de la matrice du dossier actif
-    updateMatrixConfig(updatedMatrixConfig);
-  };
-  
-  // Wrapper for the count function from useCaseUtils
-  const countUseCasesInLevelWrapper = (isValue: boolean, level: number): number => {
-    // Filtrer les cas d'usage pour ne compter que ceux du dossier actif
-    const currentFolderUseCases = currentFolderId 
-      ? useCases.filter(useCase => useCase.folderId === currentFolderId)
-      : [];
-    
-    return countUseCasesInLevel(
-      currentFolderUseCases, 
-      matrixConfig.valueThresholds || [], 
-      matrixConfig.complexityThresholds || [], 
-      isValue, 
-      level
-    );
-  };
+  // Effect to update matrix config when current folder changes
+  React.useEffect(() => {
+    // This is handled in useMatrixConfig
+  }, [currentFolderId, folders]);
   
   // Wrapper for generateUseCases to update currentInput
   const generateUseCases = async (input?: string, createNewFolder: boolean = true): Promise<boolean> => {
@@ -420,8 +144,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     countUseCasesInLevel: countUseCasesInLevelWrapper,
     isGenerating,
     addFolder,
-    updateFolder: handleUpdateFolder,
-    deleteFolder: handleDeleteFolder,
+    updateFolder,
+    deleteFolder,
     setCurrentFolder,
     getCurrentFolder
   };
