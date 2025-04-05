@@ -68,7 +68,7 @@ export class OpenAIService {
   ): Promise<UseCase> {
     try {
       if (toastId && index !== undefined && total !== undefined) {
-        toast.loading(`Génération du cas d'usage ${index + 1}/${total}: "${useCase}"...`, { id: toastId });
+        toast.loading(`Génération du cas d'usage ${index + 1}/${total}: "${useCase}"`, { id: toastId });
       }
       
       // Create a simplified matrix representation for the prompt
