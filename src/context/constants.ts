@@ -7,6 +7,23 @@ export const FOLDER_NAME_PROMPT = "folder_name_prompt";
 export const FOLDERS_STORAGE_KEY = "ai_folders";
 export const CURRENT_FOLDER_ID = "current_folder_id";
 
+// Model selection localStorage keys
+export const USE_CASE_LIST_MODEL = "use_case_list_model";
+export const USE_CASE_DETAIL_MODEL = "use_case_detail_model";
+export const FOLDER_NAME_MODEL = "folder_name_model";
+
+// Default models
+export const DEFAULT_LIST_MODEL = "gpt-4o-mini";
+export const DEFAULT_DETAIL_MODEL = "gpt-4o-mini";
+export const DEFAULT_FOLDER_MODEL = "gpt-4o-mini";
+
+// Available models
+export const OPENAI_MODELS = [
+  { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+  { value: "gpt-4o", label: "GPT-4o" },
+  { value: "gpt-4.5-preview", label: "GPT-4.5 Preview" },
+];
+
 // Default prompts with placeholders
 export const DEFAULT_USE_CASE_LIST_PROMPT = 
 `Génère une liste de 5 cas d'usage d'IA innovants pour le domaine suivant: {{user_input}}.

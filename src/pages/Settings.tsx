@@ -6,107 +6,41 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-
-const OPENAI_API_KEY = "openai_api_key";
-const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
-const USE_CASE_DETAIL_PROMPT = "use_case_detail_prompt";
-const FOLDER_NAME_PROMPT = "folder_name_prompt";
-
-// Default prompts with placeholders
-const DEFAULT_USE_CASE_LIST_PROMPT = 
-`Génère une liste de 5 cas d'usage d'IA innovants pour le domaine suivant: {{user_input}}.
-Pour chaque cas d'usage, propose un titre court et explicite.
-Format: liste numérotée sans description.`;
-
-const DEFAULT_USE_CASE_DETAIL_PROMPT = 
-`Génère un cas d'usage détaillé pour "{{use_case}}" dans le contexte suivant: {{user_input}}. Utilise la matrice valeur/complexité fournie: {{matrix}} pour évaluer chaque axe de valeur et complexité.
-
-La réponse doit impérativement contenir tous les éléments suivants au format JSON:
-
-{
-  "name": "{{use_case}}",
-  "description": "Description détaillée du cas d'usage sur 5-10 lignes",
-  "domain": "Le domaine d'application principal",
-  "technology": "Technologies d'IA à utiliser (NLP, Computer Vision, etc.)",
-  "deadline": "Estimation du délai de mise en œuvre (ex: Q3 2025)",
-  "contact": "Nom du responsable suggéré",
-  "benefits": [
-    "Bénéfice 1",
-    "Bénéfice 2",
-    "Bénéfice 3",
-    "Bénéfice 4",
-    "Bénéfice 5"
-  ],
-  "metrics": [
-    "KPI ou mesure de succès 1",
-    "KPI ou mesure de succès 2",
-    "KPI ou mesure de succès 3"
-  ],
-  "risks": [
-    "Risque 1",
-    "Risque 2",
-    "Risque 3"
-  ],
-  "nextSteps": [
-    "Étape 1",
-    "Étape 2",
-    "Étape 3",
-    "Étape 4"
-  ],
-  "sources": [
-    "Source de données 1",
-    "Source de données 2"
-  ],
-  "relatedData": [
-    "Donnée associée 1",
-    "Donnée associée 2",
-    "Donnée associée 3"
-  ],
-  "valueScores": [
-    {
-      "axisId": "Nom du 1er axe de valeur",
-      "rating": 4,
-      "description": "Justification du score"
-    },
-    {
-      "axisId": "Nom du 2ème axe de valeur",
-      "rating": 3,
-      "description": "Justification du score"
-    }
-    // Complète pour les autres axes de valeur présents dans la matrice
-  ],
-  "complexityScores": [
-    {
-      "axisId": "Nom du 1er axe de complexité",
-      "rating": 2,
-      "description": "Justification du score"
-    },
-    {
-      "axisId": "Nom du 2ème axe de complexité",
-      "rating": 4,
-      "description": "Justification du score"
-    }
-    // Complète pour les autres axes de complexité présents dans la matrice
-  ]
-}
-
-IMPORTANT: Réponds UNIQUEMENT avec le JSON, sans texte avant ou après. Veille à ce que chaque axe de la matrice fournie ait bien son score correspondant dans les sections valueScores et complexityScores.`;
-
-const DEFAULT_FOLDER_NAME_PROMPT = 
-`Génère un nom et une brève description pour un dossier qui contiendra des cas d'usage d'IA pour le contexte suivant: {{user_input}}.
-Le nom doit être court et représentatif du domaine ou secteur d'activité principal.
-La description doit expliquer en 1-2 phrases le contenu du dossier.
-Format de réponse en JSON:
-{
-  "name": "Nom du dossier (4-6 mots max)",
-  "description": "Description concise du dossier (20-30 mots max)"
-}`;
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  OPENAI_API_KEY, 
+  USE_CASE_LIST_PROMPT, 
+  USE_CASE_DETAIL_PROMPT, 
+  FOLDER_NAME_PROMPT,
+  USE_CASE_LIST_MODEL,
+  USE_CASE_DETAIL_MODEL,
+  FOLDER_NAME_MODEL,
+  DEFAULT_LIST_MODEL,
+  DEFAULT_DETAIL_MODEL,
+  DEFAULT_FOLDER_MODEL,
+  DEFAULT_USE_CASE_LIST_PROMPT,
+  DEFAULT_USE_CASE_DETAIL_PROMPT,
+  DEFAULT_FOLDER_NAME_PROMPT,
+  OPENAI_MODELS
+} from "@/context/constants";
 
 const Settings: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>("");
   const [useCaseListPrompt, setUseCaseListPrompt] = useState<string>(DEFAULT_USE_CASE_LIST_PROMPT);
   const [useCaseDetailPrompt, setUseCaseDetailPrompt] = useState<string>(DEFAULT_USE_CASE_DETAIL_PROMPT);
   const [folderNamePrompt, setFolderNamePrompt] = useState<string>(DEFAULT_FOLDER_NAME_PROMPT);
+  
+  // Model selection states
+  const [useCaseListModel, setUseCaseListModel] = useState<string>(DEFAULT_LIST_MODEL);
+  const [useCaseDetailModel, setUseCaseDetailModel] = useState<string>(DEFAULT_DETAIL_MODEL);
+  const [folderNameModel, setFolderNameModel] = useState<string>(DEFAULT_FOLDER_MODEL);
+  
   const [saved, setSaved] = useState<boolean>(false);
   const { toast } = useToast();
 
@@ -116,6 +50,11 @@ const Settings: React.FC = () => {
     const savedListPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT);
     const savedDetailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT);
     const savedFolderNamePrompt = localStorage.getItem(FOLDER_NAME_PROMPT);
+    
+    // Load saved model selections
+    const savedListModel = localStorage.getItem(USE_CASE_LIST_MODEL);
+    const savedDetailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL);
+    const savedFolderModel = localStorage.getItem(FOLDER_NAME_MODEL);
     
     if (savedKey) {
       setApiKey(savedKey);
@@ -132,6 +71,19 @@ const Settings: React.FC = () => {
     
     if (savedFolderNamePrompt) {
       setFolderNamePrompt(savedFolderNamePrompt);
+    }
+    
+    // Set model selections from localStorage or use defaults
+    if (savedListModel) {
+      setUseCaseListModel(savedListModel);
+    }
+    
+    if (savedDetailModel) {
+      setUseCaseDetailModel(savedDetailModel);
+    }
+    
+    if (savedFolderModel) {
+      setFolderNameModel(savedFolderModel);
     }
   }, []);
 
@@ -160,6 +112,11 @@ const Settings: React.FC = () => {
     localStorage.setItem(USE_CASE_DETAIL_PROMPT, useCaseDetailPrompt);
     localStorage.setItem(FOLDER_NAME_PROMPT, folderNamePrompt);
     
+    // Save model selections
+    localStorage.setItem(USE_CASE_LIST_MODEL, useCaseListModel);
+    localStorage.setItem(USE_CASE_DETAIL_MODEL, useCaseDetailModel);
+    localStorage.setItem(FOLDER_NAME_MODEL, folderNameModel);
+    
     setSaved(true);
     
     toast({
@@ -186,12 +143,44 @@ const Settings: React.FC = () => {
     setUseCaseDetailPrompt(DEFAULT_USE_CASE_DETAIL_PROMPT);
     setFolderNamePrompt(DEFAULT_FOLDER_NAME_PROMPT);
     
+    // Reset models to defaults
+    setUseCaseListModel(DEFAULT_LIST_MODEL);
+    setUseCaseDetailModel(DEFAULT_DETAIL_MODEL);
+    setFolderNameModel(DEFAULT_FOLDER_MODEL);
+    
     toast({
       title: "Prompts réinitialisés",
-      description: "Les prompts ont été réinitialisés aux valeurs par défaut",
+      description: "Les prompts et modèles ont été réinitialisés aux valeurs par défaut",
       variant: "default",
     });
   };
+
+  // Helper component for model selection
+  const ModelSelector = ({ 
+    value, 
+    onChange, 
+    label 
+  }: { 
+    value: string; 
+    onChange: (value: string) => void;
+    label: string;
+  }) => (
+    <div className="space-y-2">
+      <label className="text-sm font-medium">{label}</label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Sélectionnez un modèle" />
+        </SelectTrigger>
+        <SelectContent>
+          {OPENAI_MODELS.map((model) => (
+            <SelectItem key={model.value} value={model.value}>
+              {model.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
   return (
     <div className="container mx-auto p-6">
@@ -258,12 +247,20 @@ const Settings: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Textarea 
-            value={useCaseListPrompt}
-            onChange={(e) => setUseCaseListPrompt(e.target.value)}
-            placeholder="Entrez votre prompt personnalisé..."
-            className="min-h-[150px]"
-          />
+          <div className="space-y-4">
+            <Textarea 
+              value={useCaseListPrompt}
+              onChange={(e) => setUseCaseListPrompt(e.target.value)}
+              placeholder="Entrez votre prompt personnalisé..."
+              className="min-h-[150px]"
+            />
+            
+            <ModelSelector
+              value={useCaseListModel}
+              onChange={setUseCaseListModel}
+              label="Modèle pour la génération de liste"
+            />
+          </div>
         </CardContent>
       </Card>
       
@@ -277,12 +274,20 @@ const Settings: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Textarea 
-            value={useCaseDetailPrompt}
-            onChange={(e) => setUseCaseDetailPrompt(e.target.value)}
-            placeholder="Entrez votre prompt personnalisé..."
-            className="min-h-[200px]"
-          />
+          <div className="space-y-4">
+            <Textarea 
+              value={useCaseDetailPrompt}
+              onChange={(e) => setUseCaseDetailPrompt(e.target.value)}
+              placeholder="Entrez votre prompt personnalisé..."
+              className="min-h-[200px]"
+            />
+            
+            <ModelSelector
+              value={useCaseDetailModel}
+              onChange={setUseCaseDetailModel}
+              label="Modèle pour les détails de cas d'usage"
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -295,26 +300,34 @@ const Settings: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Textarea 
-            value={folderNamePrompt}
-            onChange={(e) => setFolderNamePrompt(e.target.value)}
-            placeholder="Entrez votre prompt personnalisé..."
-            className="min-h-[150px]"
-          />
-          
-          <div className="mt-4 flex gap-2 justify-end">
-            <Button 
-              variant="outline" 
-              onClick={resetPrompts}
-              className="flex gap-1"
-            >
-              <Trash2 size={16} />
-              <span>Réinitialiser les prompts</span>
-            </Button>
-            <Button onClick={handleSave} className="flex gap-1">
-              <Save size={16} />
-              <span>Enregistrer tous les paramètres</span>
-            </Button>
+          <div className="space-y-4">
+            <Textarea 
+              value={folderNamePrompt}
+              onChange={(e) => setFolderNamePrompt(e.target.value)}
+              placeholder="Entrez votre prompt personnalisé..."
+              className="min-h-[150px]"
+            />
+            
+            <ModelSelector
+              value={folderNameModel}
+              onChange={setFolderNameModel}
+              label="Modèle pour les noms de dossiers"
+            />
+            
+            <div className="mt-4 flex gap-2 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={resetPrompts}
+                className="flex gap-1"
+              >
+                <Trash2 size={16} />
+                <span>Réinitialiser les prompts</span>
+              </Button>
+              <Button onClick={handleSave} className="flex gap-1">
+                <Save size={16} />
+                <span>Enregistrer tous les paramètres</span>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

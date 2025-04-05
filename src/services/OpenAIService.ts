@@ -1,6 +1,14 @@
 
 import { toast } from "sonner";
 import { UseCase, MatrixConfig } from "../types";
+import {
+  USE_CASE_LIST_MODEL,
+  USE_CASE_DETAIL_MODEL,
+  FOLDER_NAME_MODEL,
+  DEFAULT_LIST_MODEL,
+  DEFAULT_DETAIL_MODEL,
+  DEFAULT_FOLDER_MODEL
+} from "../context/constants";
 
 export class OpenAIService {
   private apiKey: string;
@@ -13,6 +21,9 @@ export class OpenAIService {
   async generateFolderNameAndDescription(userInput: string, prompt: string): Promise<{ name: string; description: string }> {
     try {
       const formattedPrompt = prompt.replace("{{user_input}}", userInput);
+      
+      // Get the model from localStorage or use default
+      const model = localStorage.getItem(FOLDER_NAME_MODEL) || DEFAULT_FOLDER_MODEL;
 
       // Show toast for folder generation
       this.toastId = toast.loading("Génération en cours...", {
@@ -28,7 +39,7 @@ export class OpenAIService {
           Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: model,
           messages: [{ role: "user", content: formattedPrompt }],
           temperature: 0.7,
           max_tokens: 300,
@@ -75,6 +86,9 @@ export class OpenAIService {
   async generateUseCaseList(userInput: string, prompt: string): Promise<string[]> {
     try {
       const formattedPrompt = prompt.replace("{{user_input}}", userInput);
+      
+      // Get the model from localStorage or use default
+      const model = localStorage.getItem(USE_CASE_LIST_MODEL) || DEFAULT_LIST_MODEL;
 
       // Update the existing toast instead of creating a new one
       this.toastId = toast.loading("Génération en cours...", {
@@ -90,7 +104,7 @@ export class OpenAIService {
           Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: model,
           messages: [{ role: "user", content: formattedPrompt }],
           temperature: 0.7,
           max_tokens: 1000,
@@ -140,6 +154,9 @@ export class OpenAIService {
     prompt: string
   ): Promise<UseCase> {
     try {
+      // Get the model from localStorage or use default
+      const model = localStorage.getItem(USE_CASE_DETAIL_MODEL) || DEFAULT_DETAIL_MODEL;
+      
       // Create a simplified matrix representation for the prompt
       const matrixSummary = {
         valueAxes: matrixConfig.valueAxes.map((axis) => ({
@@ -170,7 +187,7 @@ export class OpenAIService {
           Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: "o3-mini",
+          model: model,
           messages: [{ role: "user", content: formattedPrompt }],
           temperature: 0.7,
           max_tokens: 4000,
