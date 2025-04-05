@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
@@ -57,48 +56,58 @@ const UseCaseDetail: React.FC = () => {
         arrayValue = value;
       }
       
-      setUseCase({ ...useCase, [field]: arrayValue });
+      setUseCase(prev => {
+        if (!prev) return null;
+        return { ...prev, [field]: arrayValue };
+      });
     } else {
-      setUseCase({ ...useCase, [field]: value });
+      setUseCase(prev => {
+        if (!prev) return null;
+        return { ...prev, [field]: value };
+      });
     }
   };
   
-  const handleRatingChange = (
+  const handleRatingChange = useCallback((
     isValue: boolean,
     axisId: string,
     rating: number
   ) => {
     if (!useCase) return;
     
-    let description = "";
-    if (isValue) {
-      const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
-      if (axis && axis.levelDescriptions) {
-        const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
-        description = levelDescription?.description || "";
-      }
+    setUseCase(prevUseCase => {
+      if (!prevUseCase) return null;
       
-      const newValueScores = useCase.valueScores.map(score => 
-        score.axisId === axisId 
-          ? { ...score, rating: rating as ValueRating, description } 
-          : score
-      );
-      setUseCase({ ...useCase, valueScores: newValueScores });
-    } else {
-      const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
-      if (axis && axis.levelDescriptions) {
-        const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
-        description = levelDescription?.description || "";
+      let description = "";
+      if (isValue) {
+        const axis = matrixConfig.valueAxes.find(axis => axis.name === axisId);
+        if (axis && axis.levelDescriptions) {
+          const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
+          description = levelDescription?.description || "";
+        }
+        
+        const newValueScores = prevUseCase.valueScores.map(score => 
+          score.axisId === axisId 
+            ? { ...score, rating: rating as ValueRating, description } 
+            : score
+        );
+        return { ...prevUseCase, valueScores: newValueScores };
+      } else {
+        const axis = matrixConfig.complexityAxes.find(axis => axis.name === axisId);
+        if (axis && axis.levelDescriptions) {
+          const levelDescription = axis.levelDescriptions.find(level => level.level === rating);
+          description = levelDescription?.description || "";
+        }
+        
+        const newComplexityScores = prevUseCase.complexityScores.map(score => 
+          score.axisId === axisId 
+            ? { ...score, rating: rating as ComplexityRating, description } 
+            : score
+        );
+        return { ...prevUseCase, complexityScores: newComplexityScores };
       }
-      
-      const newComplexityScores = useCase.complexityScores.map(score => 
-        score.axisId === axisId 
-          ? { ...score, rating: rating as ComplexityRating, description } 
-          : score
-      );
-      setUseCase({ ...useCase, complexityScores: newComplexityScores });
-    }
-  };
+    });
+  }, [useCase, matrixConfig]);
   
   const handleSave = () => {
     if (!useCase) return;
@@ -108,35 +117,30 @@ const UseCaseDetail: React.FC = () => {
     toast.success("Cas d'usage mis à jour");
   };
 
-  // Fonction pour déterminer le niveau de valeur basé sur les seuils
   const getValueLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.valueThresholds) return 0;
     
-    // Trouver le niveau correspondant au score
     for (let i = matrixConfig.valueThresholds.length - 1; i >= 0; i--) {
       const threshold = matrixConfig.valueThresholds[i];
       if (score >= threshold.threshold) {
         return threshold.level;
       }
     }
-    return 1; // Niveau minimum par défaut
+    return 1;
   };
   
-  // Fonction pour déterminer le niveau de complexité basé sur les seuils
   const getComplexityLevel = (score: number | undefined) => {
     if (score === undefined || !matrixConfig.complexityThresholds) return 0;
     
-    // Trouver le niveau correspondant au score
     for (let i = matrixConfig.complexityThresholds.length - 1; i >= 0; i--) {
       const threshold = matrixConfig.complexityThresholds[i];
       if (score >= threshold.threshold) {
         return threshold.level;
       }
     }
-    return 1; // Niveau minimum par défaut
+    return 1;
   };
   
-  // Rendu des étoiles pour la valeur
   const renderValueStars = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -155,7 +159,6 @@ const UseCaseDetail: React.FC = () => {
     );
   };
   
-  // Rendu des X pour la complexité
   const renderComplexityX = (score: number | undefined) => {
     if (score === undefined) return "N/A";
     
@@ -229,7 +232,6 @@ const UseCaseDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* Nouveau: Affichage de la valeur et complexité calculées en haut */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card className="shadow-md">
           <CardHeader className="bg-yellow-50 pb-3">

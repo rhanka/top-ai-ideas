@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Table, TableBody, TableCell, TableRow, TableFooter } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,6 +64,12 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
     return points * weight;
   };
 
+  const handleRatingChange = (axisId: string, rating: number) => {
+    if (isEditing) {
+      onRatingChange(isValue, axisId, rating);
+    }
+  };
+
   const renderRatingSymbols = (axisId: string, rating: number) => {
     return (
       <div className="flex">
@@ -70,7 +77,7 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
           <button
             key={level}
             type="button"
-            onClick={() => isEditing && onRatingChange(isValue, axisId, level)}
+            onClick={() => handleRatingChange(axisId, level)}
             disabled={!isEditing}
             className={`text-xl ${isValue ? "text-2xl" : "font-bold mx-1"} ${
               level <= rating 
@@ -99,7 +106,7 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
       <div className="mt-1 mb-2">
         <Select
           value={currentRating.toString()}
-          onValueChange={(value) => onRatingChange(isValue, axisId, parseInt(value))}
+          onValueChange={(value) => handleRatingChange(axisId, parseInt(value))}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder={isValue ? "Sélectionner une note" : "Sélectionner un niveau"} />
@@ -150,7 +157,15 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
   return (
     <Card className="shadow-md">
       <CardHeader className={backgroundColor}>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="flex justify-between items-center">
+          <span>{title}</span>
+          {totalScore !== undefined && (
+            <span className="text-sm font-normal">
+              Score total: {Math.round(totalScore)} points 
+              {level && <span className="ml-1">({level} {isValue ? "étoiles" : "X"})</span>}
+            </span>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
