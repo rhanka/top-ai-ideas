@@ -64,12 +64,6 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
     return points * weight;
   };
 
-  const handleRatingChange = (axisId: string, rating: number) => {
-    if (isEditing) {
-      onRatingChange(isValue, axisId, rating);
-    }
-  };
-
   const renderRatingSymbols = (axisId: string, rating: number) => {
     return (
       <div className="flex">
@@ -77,7 +71,7 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
           <button
             key={level}
             type="button"
-            onClick={() => handleRatingChange(axisId, level)}
+            onClick={() => isEditing && onRatingChange(isValue, axisId, level)}
             disabled={!isEditing}
             className={`text-xl ${isValue ? "text-2xl" : "font-bold mx-1"} ${
               level <= rating 
@@ -106,7 +100,7 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
       <div className="mt-1 mb-2">
         <Select
           value={currentRating.toString()}
-          onValueChange={(value) => handleRatingChange(axisId, parseInt(value))}
+          onValueChange={(value) => onRatingChange(isValue, axisId, parseInt(value))}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder={isValue ? "Sélectionner une note" : "Sélectionner un niveau"} />
@@ -157,15 +151,19 @@ export const RatingsTable: React.FC<RatingsTableProps> = ({
   return (
     <Card className="shadow-md">
       <CardHeader className={backgroundColor}>
-        <CardTitle className="flex justify-between items-center">
-          <span>{title}</span>
-          {totalScore !== undefined && (
-            <span className="text-sm font-normal">
-              Score total: {Math.round(totalScore)} points 
-              {level && <span className="ml-1">({level} {isValue ? "étoiles" : "X"})</span>}
-            </span>
+        <div className="flex justify-between items-center">
+          <CardTitle>{title}</CardTitle>
+          {totalScore !== undefined && level !== undefined && (
+            <div className="flex items-center">
+              <div className="mr-2">
+                {renderLevelSymbols()}
+              </div>
+              <span className="text-sm font-medium">
+                {Math.round(totalScore)} points
+              </span>
+            </div>
           )}
-        </CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
