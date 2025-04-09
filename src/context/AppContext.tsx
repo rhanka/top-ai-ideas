@@ -83,10 +83,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   // Add use case handler for OpenAI service
   const handleAddUseCase = useCallback((useCase: UseCase) => {
-    // Assign use case to current folder
+    // Respecte le folderId fourni par le cas d'usage généré
+    // Si pas de folderId, utiliser le currentFolderId (cas par défaut)
     const useCaseWithFolder = {
       ...useCase,
-      folderId: currentFolderId || ''
+      folderId: useCase.folderId || currentFolderId || ''
     };
     
     addUseCase(useCaseWithFolder);
