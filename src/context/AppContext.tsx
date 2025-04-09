@@ -18,6 +18,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   // Callback for folder changes
   const handleFolderChange = useCallback((folderId: string | null) => {
+    console.log("Folder changed to:", folderId);
     // Nothing to do here - the state is managed by useFolderOperations
   }, []);
   
@@ -83,8 +84,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   // Add use case handler for OpenAI service
   const handleAddUseCase = useCallback((useCase: UseCase) => {
-    // Respecte le folderId fourni par le cas d'usage généré
+    // Respecter le folderId fourni par le cas d'usage généré
     // Si pas de folderId, utiliser le currentFolderId (cas par défaut)
+    console.log("Adding use case with folder:", useCase.folderId || currentFolderId);
+    
     const useCaseWithFolder = {
       ...useCase,
       folderId: useCase.folderId || currentFolderId || ''
@@ -113,6 +116,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   // Wrapper for generateUseCases to update currentInput
   const generateUseCases = async (input?: string, createNewFolder: boolean = true): Promise<boolean> => {
+    console.log("Generating use cases with currentFolderId:", currentFolderId);
+    console.log("Create new folder:", createNewFolder);
+    
     if (!currentFolderId && !createNewFolder) {
       toast.error("Aucun dossier actif");
       return false;

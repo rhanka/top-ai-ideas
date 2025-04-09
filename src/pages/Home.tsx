@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const Home: React.FC = () => {
-  const { currentInput, setCurrentInput, generateUseCases, isGenerating, currentFolderId } = useAppContext();
+  const { currentInput, setCurrentInput, generateUseCases, isGenerating, currentFolderId, folders } = useAppContext();
   const navigate = useNavigate();
   
   const [createNewFolder, setCreateNewFolder] = useState(true);
@@ -18,8 +18,16 @@ const Home: React.FC = () => {
     e.preventDefault();
     
     if (!currentFolderId && !createNewFolder) {
-      toast.error("Aucun dossier sélectionné. Veuillez créer un nouveau dossier.");
+      toast.error("Aucun dossier sélectionné. Veuillez créer un nouveau dossier ou en sélectionner un existant.");
       return;
+    }
+    
+    // Afficher un toast d'information sur le dossier cible
+    if (createNewFolder) {
+      toast.info("Génération dans un nouveau dossier en cours...");
+    } else if (currentFolderId) {
+      const currentFolder = folders.find(f => f.id === currentFolderId);
+      toast.info(`Génération dans le dossier "${currentFolder?.name || 'Actuel'}" en cours...`);
     }
     
     const success = await generateUseCases(currentInput, createNewFolder);

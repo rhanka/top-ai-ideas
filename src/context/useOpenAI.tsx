@@ -95,6 +95,8 @@ export const useOpenAI = (
         const newFolder = await generateFolderNameAndDescription(currentInput, openai);
         if (newFolder) {
           newFolderId = newFolder.id;
+          // Assurons-nous que le dossier est bien défini comme courant
+          setCurrentFolder(newFolder.id);
         }
       }
       
@@ -126,6 +128,7 @@ export const useOpenAI = (
             ...useCaseDetail,
             id: uuidv4(),
             // Important: Utiliser le nouveau dossier ID si disponible
+            // Si pas de nouveau dossier créé, ce champ sera vide et sera géré par handleAddUseCase
             folderId: newFolderId || ''
           };
           

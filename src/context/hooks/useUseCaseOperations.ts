@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelThreshold } from "@/types";
 import {
@@ -55,11 +54,14 @@ export const useUseCaseOperations = ({
   
   // Add a new use case
   const addUseCase = (useCase: UseCase) => {
-    // Assign to current folder
+    // IMPORTANT: Ne pas modifier le folderId si déjà présent
+    // Seulement assigner au dossier courant si aucun dossier n'est spécifié
     const updatedUseCase = {
       ...useCase,
-      folderId: currentFolderId || ''
+      folderId: useCase.folderId || (currentFolderId || '')
     };
+    
+    console.log("Adding use case with folderId:", updatedUseCase.folderId);
     
     const newUseCase = calcInitialScore(updatedUseCase, matrixConfig);
     setUseCases(prev => [...prev, newUseCase]);
