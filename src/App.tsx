@@ -19,36 +19,40 @@ import NotFound from "@/pages/NotFound";
 import Folders from "@/pages/Folders";
 import Companies from "@/pages/Companies";
 
+// Create the client outside of the component
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AppProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen flex flex-col bg-gray-50">
-            <MainNavigation />
-            <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/matrice" element={<Matrix />} />
-                <Route path="/cas-usage" element={<UseCaseList />} />
-                <Route path="/cas-usage/:id" element={<UseCaseDetail />} />
-                <Route path="/dossiers" element={<Folders />} />
-                <Route path="/entreprises" element={<Companies />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/donnees" element={<DataTable />} />
-                <Route path="/parametres" element={<Settings />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-          </div>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AppProvider>
-  </QueryClientProvider>
-);
+// Make App a proper React functional component
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="min-h-screen flex flex-col bg-gray-50">
+              <MainNavigation />
+              <main className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/matrice" element={<Matrix />} />
+                  <Route path="/cas-usage" element={<UseCaseList />} />
+                  <Route path="/cas-usage/:id" element={<UseCaseDetail />} />
+                  <Route path="/dossiers" element={<Folders />} />
+                  <Route path="/entreprises" element={<Companies />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/donnees" element={<DataTable />} />
+                  <Route path="/parametres" element={<Settings />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+            </div>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AppProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
