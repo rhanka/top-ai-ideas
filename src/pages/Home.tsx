@@ -4,12 +4,31 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Sparkles, Loader2 } from "lucide-react";
+import { Send, Sparkles, Loader2, Building2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Home: React.FC = () => {
-  const { currentInput, setCurrentInput, generateUseCases, isGenerating, currentFolderId, folders } = useAppContext();
+  const { 
+    currentInput, 
+    setCurrentInput, 
+    generateUseCases, 
+    isGenerating, 
+    currentFolderId, 
+    folders,
+    companies,
+    currentCompanyId,
+    setCurrentCompany
+  } = useAppContext();
   const navigate = useNavigate();
   
   const [createNewFolder, setCreateNewFolder] = useState(true);
@@ -38,6 +57,20 @@ const Home: React.FC = () => {
     }
   };
   
+  // Gestionnaire pour la création d'une nouvelle entreprise
+  const handleNewCompany = () => {
+    navigate('/entreprises');
+  };
+  
+  // Gestionnaire pour la sélection d'une entreprise
+  const handleCompanyChange = (companyId: string) => {
+    if (companyId === "none") {
+      setCurrentCompany(null);
+    } else {
+      setCurrentCompany(companyId);
+    }
+  };
+  
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl animate-fade-in">
       <div className="text-center mb-12">
@@ -51,6 +84,43 @@ const Home: React.FC = () => {
       
       <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Sélection d'entreprise */}
+          <div className="space-y-2 mb-4">
+            <label htmlFor="company" className="block text-lg font-medium text-gray-700 flex items-center justify-between">
+              <span>Entreprise</span>
+              <Button type="button" variant="outline" size="sm" onClick={handleNewCompany} className="text-xs">
+                <Plus className="w-3 h-3 mr-1" />
+                Nouvelle entreprise
+              </Button>
+            </label>
+            <Select 
+              onValueChange={handleCompanyChange} 
+              value={currentCompanyId || "none"}
+              disabled={isGenerating}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sélectionner une entreprise (optionnel)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Aucune entreprise sélectionnée</SelectItem>
+                <SelectGroup>
+                  <SelectLabel>Entreprises</SelectLabel>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {currentCompanyId && (
+              <div className="text-sm text-gray-500 flex items-center mt-1">
+                <Building2 className="w-4 h-4 mr-1" />
+                Les informations de l'entreprise seront utilisées pour la génération
+              </div>
+            )}
+          </div>
+          
           <div className="space-y-2">
             <label htmlFor="activity" className="block text-lg font-medium text-gray-700">
               Votre activité et vos besoins en IA

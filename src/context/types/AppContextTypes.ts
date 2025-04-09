@@ -1,7 +1,7 @@
 
-import { UseCase, MatrixConfig, LevelThreshold, Folder } from "@/types";
+import { UseCase, MatrixConfig, LevelThreshold, Folder, Company } from "@/types";
 
-// Context type with folders
+// Context type with folders and companies
 export type AppContextType = {
   useCases: UseCase[];
   matrixConfig: MatrixConfig;
@@ -9,6 +9,8 @@ export type AppContextType = {
   currentInput: string;
   folders: Folder[];
   currentFolderId: string | null;
+  companies: Company[];
+  currentCompanyId: string | null;
   addUseCase: (useCase: UseCase) => void;
   updateUseCase: (useCase: UseCase) => void;
   deleteUseCase: (id: string) => void;
@@ -25,4 +27,10 @@ export type AppContextType = {
   deleteFolder: (id: string) => void;
   setCurrentFolder: (folderId: string) => void;
   getCurrentFolder: () => Folder | undefined;
+  // Fonctions pour gérer les entreprises
+  addCompany: (companyData: Omit<Company, 'id' | 'createdAt' | 'updatedAt'>) => Company;
+  updateCompany: (company: Company) => void;
+  deleteCompany: (id: string) => void;
+  setCurrentCompany: (companyId: string | null) => void;
+  getCurrentCompany: () => Company | undefined;
 };

@@ -50,6 +50,21 @@ export type ComplexityAxisScore = {
   description: string;
 };
 
+// Company profile type
+export type Company = {
+  id: string;
+  name: string;
+  industry: string;
+  size: string;
+  products: string;
+  processes: string;
+  challenges: string;
+  objectives: string;
+  technologies: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 // UseCase type
 export type UseCase = {
   id: string;
@@ -70,6 +85,7 @@ export type UseCase = {
   totalValueScore?: number;
   totalComplexityScore?: number;
   folderId: string; // ID du dossier associé
+  companyId?: string; // ID de l'entreprise associée (optionnel)
 };
 
 // Matrix configuration
@@ -87,4 +103,5 @@ export type Folder = {
   description: string;
   createdAt: Date;
   matrixConfig: MatrixConfig;
+  companyId?: string; // ID de l'entreprise associée (optionnel)
 };

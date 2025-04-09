@@ -1,5 +1,5 @@
 
-import { UseCase, MatrixConfig } from "../types";
+import { UseCase, MatrixConfig, Company } from "../types";
 import { FolderGenerationService } from "./generation/FolderGenerationService";
 import { UseCaseListGenerationService } from "./generation/UseCaseListGenerationService";
 import { UseCaseDetailGenerationService } from "./generation/UseCaseDetailGenerationService";
@@ -18,12 +18,22 @@ export class OpenAIService extends BaseApiService {
     this.detailService = new UseCaseDetailGenerationService(apiKey);
   }
 
-  async generateFolderNameAndDescription(userInput: string, prompt: string, model: string): Promise<{ name: string; description: string }> {
-    return this.folderService.generateFolderNameAndDescription(userInput, prompt, model);
+  async generateFolderNameAndDescription(
+    userInput: string, 
+    prompt: string, 
+    model: string,
+    company?: Company
+  ): Promise<{ name: string; description: string }> {
+    return this.folderService.generateFolderNameAndDescription(userInput, prompt, model, company);
   }
 
-  async generateUseCaseList(userInput: string, prompt: string, model: string): Promise<string[]> {
-    return this.listService.generateUseCaseList(userInput, prompt, model);
+  async generateUseCaseList(
+    userInput: string, 
+    prompt: string, 
+    model: string,
+    company?: Company
+  ): Promise<string[]> {
+    return this.listService.generateUseCaseList(userInput, prompt, model, company);
   }
 
   async generateUseCaseDetail(
@@ -31,9 +41,10 @@ export class OpenAIService extends BaseApiService {
     userInput: string,
     matrixConfig: MatrixConfig,
     prompt: string,
-    model: string
+    model: string,
+    company?: Company
   ): Promise<UseCase> {
-    return this.detailService.generateUseCaseDetail(useCase, userInput, matrixConfig, prompt, model);
+    return this.detailService.generateUseCaseDetail(useCase, userInput, matrixConfig, prompt, model, company);
   }
 
   // Method to finalize the generation process

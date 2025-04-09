@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { UseCase, MatrixConfig, Folder } from '../types';
+import { UseCase, MatrixConfig, Folder, Company } from '../types';
 import { toast } from 'sonner';
 import { OpenAIService } from '../services/OpenAIService';
 import { 
@@ -25,7 +25,8 @@ export const useOpenAI = (
   matrixConfig: MatrixConfig, 
   addUseCase: (useCase: UseCase) => void, 
   addFolder: (name: string, description: string) => Folder,
-  setCurrentFolder: (folderId: string) => void
+  setCurrentFolder: (folderId: string) => void,
+  getCurrentCompany: () => Company | undefined
 ) => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
@@ -40,8 +41,16 @@ export const useOpenAI = (
       // Get the model from localStorage or use default
       const model = localStorage.getItem(FOLDER_NAME_MODEL) || DEFAULT_FOLDER_MODEL;
       
+      // Get current company if available
+      const currentCompany = getCurrentCompany();
+      
       // Generate folder name and description
-      const { name, description } = await openai.generateFolderNameAndDescription(currentInput, folderPrompt, model);
+      const { name, description } = await openai.generateFolderNameAndDescription(
+        currentInput, 
+        folderPrompt, 
+        model,
+        currentCompany
+      );
       
       // Create the new folder
       const newFolder = addFolder(name, description);
@@ -84,6 +93,9 @@ export const useOpenAI = (
     const listModel = localStorage.getItem(USE_CASE_LIST_MODEL) || DEFAULT_LIST_MODEL;
     const detailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL) || DEFAULT_DETAIL_MODEL;
 
+    // Récupérer l'entreprise actuelle si elle existe
+    const currentCompany = getCurrentCompany();
+    
     const openai = new OpenAIService(apiKey);
     setIsGenerating(true);
     
@@ -102,7 +114,12 @@ export const useOpenAI = (
       
       // Step 1: Generate list of use case titles
       toast.info("Génération des cas d'usage en cours...");
-      const useCaseTitles = await openai.generateUseCaseList(currentInput, listPrompt, listModel);
+      const useCaseTitles = await openai.generateUseCaseList(
+        currentInput, 
+        listPrompt, 
+        listModel, 
+        currentCompany
+      );
       
       if (useCaseTitles.length === 0) {
         toast.error("Aucun cas d'usage généré. Veuillez reformuler votre demande.");
@@ -120,7 +137,8 @@ export const useOpenAI = (
             currentInput,
             matrixConfig,
             detailPrompt,
-            detailModel
+            detailModel,
+            currentCompany
           );
           
           // Ajouter un id unique en plus de celui généré par OpenAI

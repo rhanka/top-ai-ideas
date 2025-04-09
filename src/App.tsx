@@ -17,6 +17,7 @@ import DataTable from "@/pages/DataTable";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
 import Folders from "@/pages/Folders";
+import Companies from "@/pages/Companies";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
                 <Route path="/cas-usage" element={<UseCaseList />} />
                 <Route path="/cas-usage/:id" element={<UseCaseDetail />} />
                 <Route path="/dossiers" element={<Folders />} />
+                <Route path="/entreprises" element={<Companies />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/donnees" element={<DataTable />} />
                 <Route path="/parametres" element={<Settings />} />

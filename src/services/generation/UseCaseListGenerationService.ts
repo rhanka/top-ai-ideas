@@ -1,10 +1,37 @@
 
 import { BaseApiService } from "../api/BaseApiService";
+import { Company } from "@/types";
 
 export class UseCaseListGenerationService extends BaseApiService {
-  async generateUseCaseList(userInput: string, prompt: string, model: string): Promise<string[]> {
+  async generateUseCaseList(
+    userInput: string, 
+    prompt: string, 
+    model: string,
+    company?: Company
+  ): Promise<string[]> {
     try {
-      const formattedPrompt = prompt.replace("{{user_input}}", userInput);
+      // Construct company information if available
+      let companyInfo = "";
+      if (company) {
+        companyInfo = `
+Informations sur l'entreprise:
+- Nom: ${company.name}
+- Secteur d'activité: ${company.industry}
+- Taille: ${company.size}
+- Produits/Services: ${company.products}
+- Processus clés: ${company.processes}
+- Défis majeurs: ${company.challenges}
+- Objectifs stratégiques: ${company.objectives}
+- Technologies utilisées: ${company.technologies}
+`;
+      }
+
+      // Combine user input with company info
+      const enrichedInput = company 
+        ? `${userInput}\n\n${companyInfo}`
+        : userInput;
+      
+      const formattedPrompt = prompt.replace("{{user_input}}", enrichedInput);
       
       // Update the existing toast
       this.showToast("loading", "Génération en cours...", "Création de la liste des cas d'usage");

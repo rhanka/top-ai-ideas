@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { UseCase, MatrixConfig, LevelThreshold, Folder } from "@/types";
+import { UseCase, MatrixConfig, LevelThreshold, Folder, Company } from "@/types";
 import { toast } from "sonner";
 import { useFolderOperations } from "./hooks/useFolderOperations";
 import { useUseCaseOperations } from "./hooks/useUseCaseOperations";
@@ -8,6 +8,7 @@ import { useMatrixConfig } from "./hooks/useMatrixConfig";
 import { useOpenAI } from "./useOpenAI";
 import { AppContextType } from "./types/AppContextTypes";
 import { getUseCasesForFolder } from "./folderUtils";
+import { useCompanyOperations } from "./hooks/useCompanyOperations";
 
 // Create context
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -15,6 +16,24 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 // Provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentInput, setCurrentInput] = useState<string>("");
+  
+  // Callback for company changes
+  const handleCompanyChange = useCallback((companyId: string | null) => {
+    console.log("Company changed to:", companyId);
+  }, []);
+  
+  // Initialize company operations
+  const {
+    companies,
+    currentCompanyId,
+    addCompany,
+    updateCompany,
+    deleteCompany,
+    setCurrentCompany,
+    getCurrentCompany
+  } = useCompanyOperations({
+    onCompanyChange: handleCompanyChange
+  });
   
   // Callback for folder changes
   const handleFolderChange = useCallback((folderId: string | null) => {
@@ -90,18 +109,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     const useCaseWithFolder = {
       ...useCase,
-      folderId: useCase.folderId || currentFolderId || ''
+      folderId: useCase.folderId || currentFolderId || '',
+      companyId: currentCompanyId || undefined
     };
     
     addUseCase(useCaseWithFolder);
-  }, [addUseCase, currentFolderId]);
+  }, [addUseCase, currentFolderId, currentCompanyId]);
   
   // Initialize OpenAI hooks
   const { isGenerating, generateUseCases: generateUseCasesService } = useOpenAI(
     matrixConfig, 
     handleAddUseCase, 
     addFolder, 
-    setCurrentFolder
+    setCurrentFolder,
+    getCurrentCompany
   );
   
   // Effect to update cases count in thresholds whenever useCases changes
@@ -118,6 +139,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const generateUseCases = async (input?: string, createNewFolder: boolean = true): Promise<boolean> => {
     console.log("Generating use cases with currentFolderId:", currentFolderId);
     console.log("Create new folder:", createNewFolder);
+    console.log("Current company:", currentCompanyId);
     
     if (!currentFolderId && !createNewFolder) {
       toast.error("Aucun dossier actif");
@@ -140,6 +162,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     currentInput,
     folders,
     currentFolderId,
+    companies,
+    currentCompanyId,
     addUseCase,
     updateUseCase,
     deleteUseCase,
@@ -154,7 +178,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateFolder,
     deleteFolder,
     setCurrentFolder,
-    getCurrentFolder
+    getCurrentFolder,
+    addCompany,
+    updateCompany,
+    deleteCompany,
+    setCurrentCompany,
+    getCurrentCompany
   };
   
   return (

@@ -1,6 +1,6 @@
 
 import { BaseApiService } from "../api/BaseApiService";
-import { MatrixConfig, UseCase } from "@/types";
+import { MatrixConfig, UseCase, Company } from "@/types";
 
 export class UseCaseDetailGenerationService extends BaseApiService {
   async generateUseCaseDetail(
@@ -8,7 +8,8 @@ export class UseCaseDetailGenerationService extends BaseApiService {
     userInput: string,
     matrixConfig: MatrixConfig,
     prompt: string,
-    model: string
+    model: string,
+    company?: Company
   ): Promise<UseCase> {
     try {
       // Create a simplified matrix representation for the prompt
@@ -23,12 +24,33 @@ export class UseCaseDetailGenerationService extends BaseApiService {
         })),
       };
 
+      // Construct company information if available
+      let companyInfo = "";
+      if (company) {
+        companyInfo = `
+Informations sur l'entreprise:
+- Nom: ${company.name}
+- Secteur d'activité: ${company.industry}
+- Taille: ${company.size}
+- Produits/Services: ${company.products}
+- Processus clés: ${company.processes}
+- Défis majeurs: ${company.challenges}
+- Objectifs stratégiques: ${company.objectives}
+- Technologies utilisées: ${company.technologies}
+`;
+      }
+
+      // Combine user input with company info
+      const enrichedInput = company 
+        ? `${userInput}\n\n${companyInfo}`
+        : userInput;
+
       // Update the loading toast for this specific use case
       this.showToast("loading", "Génération en cours...", `Création des détails pour "${useCase}"`);
 
       const formattedPrompt = prompt
         .replace("{{use_case}}", useCase)
-        .replace("{{user_input}}", userInput)
+        .replace("{{user_input}}", enrichedInput)
         .replace("{{matrix}}", JSON.stringify(matrixSummary, null, 2));
 
       const data = await this.callOpenAI(
