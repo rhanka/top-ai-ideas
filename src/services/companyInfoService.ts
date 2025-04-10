@@ -33,7 +33,7 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
     // Formater le prompt avec le nom de l'entreprise
     const formattedPrompt = prompt.replace('{{company_name}}', companyName);
 
-    // Appeler l'API OpenAI avec la recherche web activée
+    // Appeler l'API OpenAI avec la recherche web activée - format corrigé
     const response = await openai.makeApiRequest({
       model: model,
       messages: [
@@ -42,7 +42,13 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
           content: formattedPrompt
         }
       ],
-      tools: [{ type: 'web_search' }],
+      tools: [{
+        type: "web_search",
+        function: {
+          name: "search",
+          description: "Search the web for information about the company"
+        }
+      }],
       tool_choice: "auto"
     });
 
