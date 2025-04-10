@@ -33,18 +33,15 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
     // Formater le prompt avec le nom de l'entreprise
     const formattedPrompt = prompt.replace('{{company_name}}', companyName);
 
-    // Appeler l'API OpenAI avec la recherche web activée - API conforme
-    const response = await openai.makeApiRequest({
-      model: model,
-      messages: [
-        {
-          role: "user",
-          content: formattedPrompt
-        }
-      ],
-      tools: [{ type: "web_search_preview" }],
-      tool_choice: { type: "web_search_preview" }
-    });
+    // Appeler l'API OpenAI directement avec le service de base
+    const response = await openai.callOpenAI(
+      model,
+      [{ role: "user", content: formattedPrompt }],
+      { 
+        temperature: 0.7,
+        max_tokens: 2000
+      }
+    );
 
     // Analyser la réponse
     if (response && response.choices && response.choices[0]?.message?.content) {

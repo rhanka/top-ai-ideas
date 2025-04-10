@@ -1,4 +1,3 @@
-
 import { UseCase, MatrixConfig, Company } from "../types";
 import { FolderGenerationService } from "./generation/FolderGenerationService";
 import { UseCaseListGenerationService } from "./generation/UseCaseListGenerationService";
@@ -46,39 +45,23 @@ export class OpenAIService extends BaseApiService {
   ): Promise<UseCase> {
     return this.detailService.generateUseCaseDetail(useCase, userInput, matrixConfig, prompt, model, company);
   }
-  
-  // Méthode pour faire des requêtes API directes avec des options avancées
+
   async makeApiRequest(options: {
     model: string;
     messages: { role: string; content: string }[];
     tools?: { type: string }[];
     tool_choice?: string | { type: string };
   }) {
-    const endpoint = "https://api.openai.com/v1/chat/completions";
-
-    try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.apiKey}`
-        },
-        body: JSON.stringify(options)
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`OpenAI API error (${response.status}): ${errorBody}`);
+    return this.callOpenAI(
+      options.model, 
+      options.messages, 
+      {
+        ...(options.tools && { tools: options.tools }),
+        ...(options.tool_choice && { tool_choice: options.tool_choice })
       }
-
-      return await response.json();
-    } catch (error) {
-      console.error("OpenAI API request failed:", error);
-      throw error;
-    }
+    );
   }
 
-  // Method to finalize the generation process
   finalizeGeneration(success: boolean, count: number) {
     if (success) {
       toast.success(`Génération terminée`, { 
