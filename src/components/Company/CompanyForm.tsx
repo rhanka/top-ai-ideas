@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -7,6 +7,8 @@ import { Company } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Search, Loader2 } from 'lucide-react';
+import { toast } from "sonner";
 import {
   Form,
   FormControl,
@@ -16,6 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { fetchCompanyInfoByName } from '@/services/companyInfoService';
 
 // Schéma de validation pour le formulaire
 const companySchema = z.object({
@@ -44,6 +47,8 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
   onCancel,
   isSubmitting
 }) => {
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  
   // Initialiser le formulaire avec les données existantes ou des valeurs par défaut
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
@@ -59,24 +64,76 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     },
   });
 
+  // Fonction pour auto-remplir les détails de l'entreprise
+  const handleAutoFill = async () => {
+    const companyName = form.getValues("name");
+    
+    if (!companyName || companyName.length < 2) {
+      toast.error("Veuillez d'abord saisir un nom d'entreprise valide");
+      return;
+    }
+    
+    setIsAutoFilling(true);
+    
+    try {
+      const companyInfo = await fetchCompanyInfoByName(companyName);
+      
+      // Mettre à jour tous les champs du formulaire avec les données récupérées
+      form.setValue("industry", companyInfo.industry);
+      form.setValue("size", companyInfo.size);
+      form.setValue("products", companyInfo.products);
+      form.setValue("processes", companyInfo.processes);
+      form.setValue("challenges", companyInfo.challenges);
+      form.setValue("objectives", companyInfo.objectives);
+      form.setValue("technologies", companyInfo.technologies);
+      
+      toast.success("Informations sur l'entreprise récupérées avec succès");
+    } catch (error) {
+      console.error("Erreur lors de la récupération des informations:", error);
+      toast.error("Impossible de récupérer les informations de l'entreprise", { 
+        description: "Veuillez vérifier le nom et réessayer ou remplir manuellement."
+      });
+    } finally {
+      setIsAutoFilling(false);
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Nom de l'entreprise */}
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nom de l'entreprise</FormLabel>
-                <FormControl>
-                  <Input placeholder="ex: Acme Inc." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Nom de l'entreprise avec bouton auto-remplissage */}
+          <div className="relative">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nom de l'entreprise</FormLabel>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <FormControl>
+                        <Input placeholder="ex: Acme Inc." {...field} />
+                      </FormControl>
+                    </div>
+                    <Button 
+                      type="button" 
+                      size="icon" 
+                      variant="outline" 
+                      onClick={handleAutoFill}
+                      disabled={isAutoFilling || !field.value || field.value.length < 2}
+                    >
+                      {isAutoFilling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <FormDescription>
+                    Saisissez un nom et utilisez le bouton pour auto-remplir les informations
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           {/* Secteur d'activité */}
           <FormField
@@ -206,10 +263,10 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
 
         {/* Boutons d'action */}
         <div className="flex justify-end space-x-4 pt-4 sticky bottom-0 bg-white pb-2">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting || isAutoFilling}>
             Annuler
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || isAutoFilling}>
             {isSubmitting ? 'Enregistrement...' : initialData ? 'Mettre à jour' : 'Créer'}
           </Button>
         </div>

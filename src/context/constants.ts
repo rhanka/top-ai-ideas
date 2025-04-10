@@ -4,6 +4,7 @@ export const OPENAI_API_KEY = "openai_api_key";
 export const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
 export const USE_CASE_DETAIL_PROMPT = "use_case_detail_prompt";
 export const FOLDER_NAME_PROMPT = "folder_name_prompt";
+export const COMPANY_INFO_PROMPT = "company_info_prompt"; // Nouveau prompt pour les infos entreprises
 export const FOLDERS_STORAGE_KEY = "ai_folders";
 export const CURRENT_FOLDER_ID = "current_folder_id";
 
@@ -11,11 +12,13 @@ export const CURRENT_FOLDER_ID = "current_folder_id";
 export const USE_CASE_LIST_MODEL = "use_case_list_model";
 export const USE_CASE_DETAIL_MODEL = "use_case_detail_model";
 export const FOLDER_NAME_MODEL = "folder_name_model";
+export const COMPANY_INFO_MODEL = "company_info_model"; // Nouveau modèle pour les infos entreprises
 
 // Default models
 export const DEFAULT_LIST_MODEL = "gpt-4o-mini";
 export const DEFAULT_DETAIL_MODEL = "gpt-4o-mini";
 export const DEFAULT_FOLDER_MODEL = "gpt-4o-mini";
+export const DEFAULT_COMPANY_INFO_MODEL = "gpt-4o"; // Modèle par défaut pour infos entreprises
 
 // Available models
 export const OPENAI_MODELS = [
@@ -114,4 +117,18 @@ Format de réponse en JSON:
 {
   "name": "Nom du dossier (4-6 mots max)",
   "description": "Description concise du dossier (20-30 mots max)"
+}`;
+
+// Default prompt for company info generation
+export const DEFAULT_COMPANY_INFO_PROMPT = 
+`Recherchez et fournissez des informations complètes sur l'entreprise {{company_name}}. 
+Retournez les informations UNIQUEMENT au format JSON suivant:
+{
+  "industry": "Secteur d'activité principal",
+  "size": "Taille en nombre d'employés et chiffre d'affaires si disponible",
+  "products": "Description détaillée des principaux produits ou services",
+  "processes": "Description des processus métier clés",
+  "challenges": "Défis principaux auxquels l'entreprise est confrontée actuellement",
+  "objectives": "Objectifs stratégiques connus de l'entreprise",
+  "technologies": "Technologies ou systèmes d'information déjà utilisés"
 }`;

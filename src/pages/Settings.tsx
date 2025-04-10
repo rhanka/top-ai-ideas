@@ -9,15 +9,19 @@ import {
   USE_CASE_LIST_PROMPT, 
   USE_CASE_DETAIL_PROMPT, 
   FOLDER_NAME_PROMPT,
+  COMPANY_INFO_PROMPT,
   USE_CASE_LIST_MODEL,
   USE_CASE_DETAIL_MODEL,
   FOLDER_NAME_MODEL,
+  COMPANY_INFO_MODEL,
   DEFAULT_LIST_MODEL,
   DEFAULT_DETAIL_MODEL,
   DEFAULT_FOLDER_MODEL,
+  DEFAULT_COMPANY_INFO_MODEL,
   DEFAULT_USE_CASE_LIST_PROMPT,
   DEFAULT_USE_CASE_DETAIL_PROMPT,
   DEFAULT_FOLDER_NAME_PROMPT,
+  DEFAULT_COMPANY_INFO_PROMPT,
 } from "@/context/constants";
 
 const Settings: React.FC = () => {
@@ -25,11 +29,13 @@ const Settings: React.FC = () => {
   const [useCaseListPrompt, setUseCaseListPrompt] = useState<string>(DEFAULT_USE_CASE_LIST_PROMPT);
   const [useCaseDetailPrompt, setUseCaseDetailPrompt] = useState<string>(DEFAULT_USE_CASE_DETAIL_PROMPT);
   const [folderNamePrompt, setFolderNamePrompt] = useState<string>(DEFAULT_FOLDER_NAME_PROMPT);
+  const [companyInfoPrompt, setCompanyInfoPrompt] = useState<string>(DEFAULT_COMPANY_INFO_PROMPT);
   
   // Model selection states
   const [useCaseListModel, setUseCaseListModel] = useState<string>(DEFAULT_LIST_MODEL);
   const [useCaseDetailModel, setUseCaseDetailModel] = useState<string>(DEFAULT_DETAIL_MODEL);
   const [folderNameModel, setFolderNameModel] = useState<string>(DEFAULT_FOLDER_MODEL);
+  const [companyInfoModel, setCompanyInfoModel] = useState<string>(DEFAULT_COMPANY_INFO_MODEL);
   
   const [saved, setSaved] = useState<boolean>(false);
   const { toast } = useToast();
@@ -40,11 +46,13 @@ const Settings: React.FC = () => {
     const savedListPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT);
     const savedDetailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT);
     const savedFolderNamePrompt = localStorage.getItem(FOLDER_NAME_PROMPT);
+    const savedCompanyInfoPrompt = localStorage.getItem(COMPANY_INFO_PROMPT);
     
     // Load saved model selections
     const savedListModel = localStorage.getItem(USE_CASE_LIST_MODEL);
     const savedDetailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL);
     const savedFolderModel = localStorage.getItem(FOLDER_NAME_MODEL);
+    const savedCompanyInfoModel = localStorage.getItem(COMPANY_INFO_MODEL);
     
     if (savedKey) {
       setApiKey(savedKey);
@@ -63,6 +71,10 @@ const Settings: React.FC = () => {
       setFolderNamePrompt(savedFolderNamePrompt);
     }
     
+    if (savedCompanyInfoPrompt) {
+      setCompanyInfoPrompt(savedCompanyInfoPrompt);
+    }
+    
     // Set model selections from localStorage or use defaults
     if (savedListModel) {
       setUseCaseListModel(savedListModel);
@@ -74,6 +86,10 @@ const Settings: React.FC = () => {
     
     if (savedFolderModel) {
       setFolderNameModel(savedFolderModel);
+    }
+    
+    if (savedCompanyInfoModel) {
+      setCompanyInfoModel(savedCompanyInfoModel);
     }
   }, []);
 
@@ -101,11 +117,13 @@ const Settings: React.FC = () => {
     localStorage.setItem(USE_CASE_LIST_PROMPT, useCaseListPrompt);
     localStorage.setItem(USE_CASE_DETAIL_PROMPT, useCaseDetailPrompt);
     localStorage.setItem(FOLDER_NAME_PROMPT, folderNamePrompt);
+    localStorage.setItem(COMPANY_INFO_PROMPT, companyInfoPrompt);
     
     // Save model selections
     localStorage.setItem(USE_CASE_LIST_MODEL, useCaseListModel);
     localStorage.setItem(USE_CASE_DETAIL_MODEL, useCaseDetailModel);
     localStorage.setItem(FOLDER_NAME_MODEL, folderNameModel);
+    localStorage.setItem(COMPANY_INFO_MODEL, companyInfoModel);
     
     setSaved(true);
     
@@ -120,11 +138,13 @@ const Settings: React.FC = () => {
     setUseCaseListPrompt(DEFAULT_USE_CASE_LIST_PROMPT);
     setUseCaseDetailPrompt(DEFAULT_USE_CASE_DETAIL_PROMPT);
     setFolderNamePrompt(DEFAULT_FOLDER_NAME_PROMPT);
+    setCompanyInfoPrompt(DEFAULT_COMPANY_INFO_PROMPT);
     
     // Reset models to defaults
     setUseCaseListModel(DEFAULT_LIST_MODEL);
     setUseCaseDetailModel(DEFAULT_DETAIL_MODEL);
     setFolderNameModel(DEFAULT_FOLDER_MODEL);
+    setCompanyInfoModel(DEFAULT_COMPANY_INFO_MODEL);
     
     toast({
       title: "Prompts réinitialisés",
@@ -173,6 +193,16 @@ const Settings: React.FC = () => {
         setPromptValue={setFolderNamePrompt}
         setModelValue={setFolderNameModel}
         modelLabel="Modèle pour les noms de dossiers"
+      />
+
+      <PromptCard
+        title="Prompt pour l'auto-remplissage d'entreprise"
+        description="Ce prompt sera utilisé pour rechercher et compléter automatiquement les informations d'une entreprise. Utilisez {{company_name}} comme placeholder pour le nom de l'entreprise."
+        promptValue={companyInfoPrompt}
+        modelValue={companyInfoModel}
+        setPromptValue={setCompanyInfoPrompt}
+        setModelValue={setCompanyInfoModel}
+        modelLabel="Modèle pour l'auto-remplissage d'entreprise"
       />
       
       <ActionButtons
