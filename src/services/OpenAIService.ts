@@ -1,3 +1,4 @@
+
 import { UseCase, MatrixConfig, Company } from "../types";
 import { FolderGenerationService } from "./generation/FolderGenerationService";
 import { UseCaseListGenerationService } from "./generation/UseCaseListGenerationService";
@@ -49,17 +50,33 @@ export class OpenAIService extends BaseApiService {
   async makeApiRequest(options: {
     model: string;
     messages: { role: string; content: string }[];
-    tools?: { type: string }[];
-    tool_choice?: string | { type: string };
+    tools?: any[];
+    tool_choice?: any;
+    temperature?: number;
+    max_tokens?: number;
   }) {
-    return this.callOpenAI(
-      options.model, 
-      options.messages, 
-      {
-        ...(options.tools && { tools: options.tools }),
-        ...(options.tool_choice && { tool_choice: options.tool_choice })
+    const endpoint = "https://api.openai.com/v1/chat/completions";
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify(options)
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`OpenAI API error (${response.status}): ${errorBody}`);
       }
-    );
+
+      return await response.json();
+    } catch (error) {
+      console.error("OpenAI API request failed:", error);
+      throw error;
+    }
   }
 
   finalizeGeneration(success: boolean, count: number) {

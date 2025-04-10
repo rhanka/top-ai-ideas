@@ -33,15 +33,22 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
     // Formater le prompt avec le nom de l'entreprise
     const formattedPrompt = prompt.replace('{{company_name}}', companyName);
 
-    // Appeler l'API OpenAI directement avec le service de base
-    const response = await openai.callOpenAI(
-      model,
-      [{ role: "user", content: formattedPrompt }],
-      { 
-        temperature: 0.7,
-        max_tokens: 2000
-      }
-    );
+    // Appeler l'API OpenAI avec la recherche web activée
+    const response = await openai.makeApiRequest({
+      model: model,
+      messages: [
+        {
+          role: "user",
+          content: formattedPrompt
+        }
+      ],
+      tools: [{ 
+        type: "web_search" 
+      }],
+      tool_choice: "auto",
+      temperature: 0.7,
+      max_tokens: 2000
+    });
 
     // Analyser la réponse
     if (response && response.choices && response.choices[0]?.message?.content) {
@@ -53,10 +60,19 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
         const jsonStr = jsonMatch ? jsonMatch[0] : content;
         const companyInfo = JSON.parse(jsonStr);
         
+        // Traitement spécial pour le champ "size" s'il est un objet
+        let sizeValue = companyInfo.size;
+        if (typeof sizeValue === 'object' && sizeValue !== null) {
+          // Si size est un objet, le formater en chaîne de caractères
+          const employees = sizeValue.employees || 'Non spécifié';
+          const revenue = sizeValue.revenue || '';
+          sizeValue = employees + (revenue ? ` - ${revenue}` : '');
+        }
+        
         // Valider que tous les champs requis existent
         return {
           industry: companyInfo.industry || "",
-          size: companyInfo.size || "",
+          size: typeof sizeValue === 'string' ? sizeValue : String(sizeValue || ""),
           products: companyInfo.products || "",
           processes: companyInfo.processes || "",
           challenges: companyInfo.challenges || "",
