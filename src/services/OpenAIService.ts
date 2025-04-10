@@ -52,7 +52,7 @@ export class OpenAIService extends BaseApiService {
     model: string;
     messages: { role: string; content: string }[];
     tools?: { type: string }[];
-    tool_choice?: string;
+    tool_choice?: string | { type: string };
   }) {
     const endpoint = "https://api.openai.com/v1/chat/completions";
 
