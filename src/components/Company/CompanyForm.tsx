@@ -61,8 +61,8 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Nom de l'entreprise */}
           <FormField
             control={form.control}
@@ -119,7 +119,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
               <FormControl>
                 <Textarea 
                   placeholder="Décrivez les principaux produits ou services de l'entreprise" 
-                  className="min-h-[100px]" 
+                  className="min-h-[80px]" 
                   {...field} 
                 />
               </FormControl>
@@ -138,7 +138,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
               <FormControl>
                 <Textarea 
                   placeholder="Décrivez les processus métier clés de l'entreprise" 
-                  className="min-h-[100px]" 
+                  className="min-h-[80px]" 
                   {...field} 
                 />
               </FormControl>
@@ -157,7 +157,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
               <FormControl>
                 <Textarea 
                   placeholder="Quels sont les principaux défis auxquels l'entreprise est confrontée" 
-                  className="min-h-[100px]" 
+                  className="min-h-[80px]" 
                   {...field} 
                 />
               </FormControl>
@@ -176,7 +176,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
               <FormControl>
                 <Textarea 
                   placeholder="Quels sont les objectifs stratégiques de l'entreprise" 
-                  className="min-h-[100px]" 
+                  className="min-h-[80px]" 
                   {...field} 
                 />
               </FormControl>
@@ -195,7 +195,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
               <FormControl>
                 <Textarea 
                   placeholder="Quelles technologies ou systèmes d'information sont déjà en place" 
-                  className="min-h-[100px]" 
+                  className="min-h-[80px]" 
                   {...field} 
                 />
               </FormControl>
@@ -205,7 +205,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
         />
 
         {/* Boutons d'action */}
-        <div className="flex justify-end space-x-4 pt-4">
+        <div className="flex justify-end space-x-4 pt-4 sticky bottom-0 bg-white pb-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Annuler
           </Button>

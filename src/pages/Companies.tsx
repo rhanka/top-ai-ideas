@@ -13,12 +13,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,11 +29,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import CompanyForm from '@/components/Company/CompanyForm';
 
 const Companies: React.FC = () => {
   const { companies, addCompany, updateCompany, deleteCompany, currentCompanyId, setCurrentCompany } = useAppContext();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
@@ -41,13 +42,13 @@ const Companies: React.FC = () => {
   // Gestionnaire pour l'ouverture du formulaire de création
   const handleCreateClick = () => {
     setEditingCompany(null);
-    setIsDialogOpen(true);
+    setIsSheetOpen(true);
   };
   
   // Gestionnaire pour l'ouverture du formulaire d'édition
   const handleEditClick = (company: Company) => {
     setEditingCompany(company);
-    setIsDialogOpen(true);
+    setIsSheetOpen(true);
   };
   
   // Gestionnaire pour la confirmation de suppression
@@ -72,7 +73,7 @@ const Companies: React.FC = () => {
       }
       
       // Fermeture du dialogue après traitement
-      setIsDialogOpen(false);
+      setIsSheetOpen(false);
     } catch (error) {
       console.error('Erreur lors de la sauvegarde de l\'entreprise:', error);
     } finally {
@@ -115,22 +116,24 @@ const Companies: React.FC = () => {
           </Button>
         </div>
         
-        {/* Dialogue de création/édition */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Nouvelle entreprise</DialogTitle>
-              <DialogDescription>
+        {/* Sheet pour création/édition (remplace Dialog) */}
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetContent side="right" className="w-full sm:max-w-xl md:max-w-2xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Nouvelle entreprise</SheetTitle>
+              <SheetDescription>
                 Créez une nouvelle fiche entreprise pour personnaliser vos cas d'usage.
-              </DialogDescription>
-            </DialogHeader>
-            <CompanyForm
-              onSubmit={handleFormSubmit}
-              onCancel={() => setIsDialogOpen(false)}
-              isSubmitting={isSubmitting}
-            />
-          </DialogContent>
-        </Dialog>
+              </SheetDescription>
+            </SheetHeader>
+            <ScrollArea className="h-[calc(100vh-120px)] pr-4">
+              <CompanyForm
+                onSubmit={handleFormSubmit}
+                onCancel={() => setIsSheetOpen(false)}
+                isSubmitting={isSubmitting}
+              />
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
       </div>
     );
   }
@@ -193,25 +196,27 @@ const Companies: React.FC = () => {
         ))}
       </div>
       
-      {/* Dialogue de création/édition */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingCompany ? "Modifier l'entreprise" : "Nouvelle entreprise"}</DialogTitle>
-            <DialogDescription>
+      {/* Sheet pour création/édition (remplace Dialog) */}
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-xl md:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{editingCompany ? "Modifier l'entreprise" : "Nouvelle entreprise"}</SheetTitle>
+            <SheetDescription>
               {editingCompany 
                 ? "Modifiez les informations de cette entreprise."
                 : "Créez une nouvelle fiche entreprise pour personnaliser vos cas d'usage."}
-            </DialogDescription>
-          </DialogHeader>
-          <CompanyForm
-            initialData={editingCompany || undefined}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setIsDialogOpen(false)}
-            isSubmitting={isSubmitting}
-          />
-        </DialogContent>
-      </Dialog>
+            </SheetDescription>
+          </SheetHeader>
+          <ScrollArea className="h-[calc(100vh-120px)] pr-4">
+            <CompanyForm
+              initialData={editingCompany || undefined}
+              onSubmit={handleFormSubmit}
+              onCancel={() => setIsSheetOpen(false)}
+              isSubmitting={isSubmitting}
+            />
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
       
       {/* Dialogue de confirmation de suppression */}
       <AlertDialog open={!!companyToDelete} onOpenChange={(open) => !open && setCompanyToDelete(null)}>
