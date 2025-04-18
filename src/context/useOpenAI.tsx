@@ -18,9 +18,7 @@ import {
   DEFAULT_DETAIL_MODEL,
   DEFAULT_FOLDER_MODEL,
   PARALLEL_REQUESTS_LIMIT,
-  DEFAULT_PARALLEL_REQUESTS,
-  RETRY_ATTEMPTS_LIMIT,
-  DEFAULT_RETRY_ATTEMPTS
+  DEFAULT_PARALLEL_REQUESTS
 } from './constants';
 import { calcInitialScore } from './useCaseUtils';
 import { v4 as uuidv4 } from 'uuid';
@@ -97,20 +95,16 @@ export const useOpenAI = (
     const listModel = localStorage.getItem(USE_CASE_LIST_MODEL) || DEFAULT_LIST_MODEL;
     const detailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL) || DEFAULT_DETAIL_MODEL;
 
-    // Get concurrency and retry limits from localStorage or use defaults
+    // Get concurrency limit from localStorage or use default
     const concurrencyLimit = parseInt(localStorage.getItem(PARALLEL_REQUESTS_LIMIT) || String(DEFAULT_PARALLEL_REQUESTS));
-    const retryAttemptsLimit = parseInt(localStorage.getItem(RETRY_ATTEMPTS_LIMIT) || String(DEFAULT_RETRY_ATTEMPTS));
 
     // Récupérer l'entreprise actuelle si elle existe
     const currentCompany = getCurrentCompany();
     
-    const openai = new OpenAIService(apiKey, concurrencyLimit, retryAttemptsLimit);
+    const openai = new OpenAIService(apiKey, concurrencyLimit);
     setIsGenerating(true);
     
     try {
-      // Reset success and failure counters before starting a new generation
-      openai.resetUseCaseCounters();
-      
       // Si createNewFolder est true, générer un nouveau dossier d'abord
       let newFolderId: string | null = null;
       
@@ -176,8 +170,13 @@ export const useOpenAI = (
       await Promise.all(detailPromises);
 
       // Finalize the generation process
-      openai.finalizeGeneration(successCount > 0, successCount);
-      return successCount > 0;
+      if (successCount > 0) {
+        openai.finalizeGeneration(true, successCount);
+        return true;
+      } else {
+        openai.finalizeGeneration(false, 0);
+        return false;
+      }
     } catch (error) {
       console.error("Error in use case generation:", error);
       toast.error("Erreur lors de la génération des cas d'usage", {
