@@ -1,128 +1,115 @@
 
-import { UseCase, MatrixConfig, Company } from "../types";
-import { FolderGenerationService } from "./generation/FolderGenerationService";
-import { UseCaseListGenerationService } from "./generation/UseCaseListGenerationService";
-import { UseCaseDetailGenerationService } from "./generation/UseCaseDetailGenerationService";
-import { BaseApiService } from "./api/BaseApiService";
-import { toast } from "sonner";
+import axios, { AxiosRequestConfig } from 'axios';
+import { toast } from 'sonner';
+import { USE_CASE_LIST_MODEL, USE_CASE_DETAIL_MODEL, FOLDER_NAME_MODEL, COMPANY_INFO_MODEL } from '@/context/constants';
 
-export class OpenAIService extends BaseApiService {
-  private folderService: FolderGenerationService;
-  private listService: UseCaseListGenerationService;
-  private detailService: UseCaseDetailGenerationService;
-  // We remove the redundant toastId declaration since it's already in BaseApiService
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_API_IMAGE_URL = 'https://api.openai.com/v1/images/generations';
+
+class OpenAIService {
+  private apiKey: string;
 
   constructor(apiKey: string) {
-    super(apiKey);
-    this.folderService = new FolderGenerationService(apiKey);
-    this.listService = new UseCaseListGenerationService(apiKey);
-    this.detailService = new UseCaseDetailGenerationService(apiKey);
+    this.apiKey = apiKey;
   }
 
-  async generateFolderNameAndDescription(
-    userInput: string, 
-    prompt: string, 
-    model: string,
-    company?: Company
-  ): Promise<{ name: string; description: string }> {
-    return this.folderService.generateFolderNameAndDescription(userInput, prompt, model, company);
-  }
-
-  async generateUseCaseList(
-    userInput: string, 
-    prompt: string, 
-    model: string,
-    company?: Company
-  ): Promise<string[]> {
-    return this.listService.generateUseCaseList(userInput, prompt, model, company);
-  }
-
-  async generateUseCaseDetail(
-    useCase: string,
-    userInput: string,
-    matrixConfig: MatrixConfig,
-    prompt: string,
-    model: string,
-    company?: Company
-  ): Promise<UseCase> {
-    return this.detailService.generateUseCaseDetail(useCase, userInput, matrixConfig, prompt, model, company);
-  }
-
-  async makeApiRequest(options: {
-    model: string;
-    messages?: { role: string; content: string }[];
-    input?: { role?: string; content: string } | { messages: { role: string; content: string }[] } | string;
-    functions?: any[];
-    function_call?: any;
-    tools?: any[];
-    tool_choice?: any;
-    temperature?: number;
-    max_tokens?: number;
-  }) {
-    // Using responses endpoint for newer API
-    const endpoint = "https://api.openai.com/v1/responses";
-    
-    // Convert messages to input format if needed
-    if (options.messages && !options.input) {
-      // When assigning messages to input, ensure it remains an array or convert to string
-      options.input = Array.isArray(options.messages) ? options.messages : JSON.stringify(options.messages);
-      delete options.messages;
-    }
-    
-    // Convert functions to tools if needed (for compatibility)
-    if (options.functions && !options.tools) {
-      options.tools = options.functions;
-      delete options.functions;
-      
-      if (options.function_call && !options.tool_choice) {
-        options.tool_choice = options.function_call;
-        delete options.function_call;
-      }
-    }
-
-    // Remove max_tokens parameter as it's not supported in the Responses API
-    if (options.max_tokens) {
-      delete options.max_tokens;
-    }
-
+  private async makeRequest(url: string, data: any, config: AxiosRequestConfig = {}) {
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
+      const response = await axios.post(url, data, {
+        ...config,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${this.apiKey}`,
+          ...config.headers,
         },
-        body: JSON.stringify(options),
       });
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`OpenAI API error (${response.status}): ${errorBody}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('OpenAI API error:', error?.response?.data || error.message);
+      if (error?.response?.data?.error?.message) {
+        toast.error(`Erreur OpenAI: ${error.response.data.error.message.slice(0, 100)}...`);
+      } else {
+        toast.error(`Erreur de requête: ${error.message}`);
       }
-
-      return await response.json();
-    } catch (error) {
-      console.error("OpenAI API request failed:", error);
       throw error;
     }
   }
 
-  finalizeGeneration(success: boolean, count: number) {
-    if (success) {
-      toast.success(`Génération terminée`, { 
-        description: `${count} cas d'usage générés avec succès !`,
-        id: this.toastId,
-        duration: 5000 // Close after 5 seconds
-      });
-    } else {
-      toast.error("Échec de la génération", { 
-        description: "Une erreur est survenue lors de la génération",
-        id: this.toastId,
-        duration: 5000 // Close after 5 seconds
-      });
-    }
+  async generateUseCaseList(prompt: string, model?: string) {
+    const selectedModel = model || localStorage.getItem(USE_CASE_LIST_MODEL) || 'gpt-4o-mini';
+    console.log(`Generating use case list with model: ${selectedModel}`);
     
-    // Reset the toastId to ensure new toasts can be created
-    this.toastId = undefined;
+    const data = {
+      model: selectedModel,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+    };
+    
+    const response = await this.makeRequest(OPENAI_API_URL, data);
+    return response.choices[0].message.content;
+  }
+
+  async generateUseCaseDetail(prompt: string, model?: string) {
+    const selectedModel = model || localStorage.getItem(USE_CASE_DETAIL_MODEL) || 'gpt-4o-mini';
+    console.log(`Generating use case detail with model: ${selectedModel}`);
+    
+    const data = {
+      model: selectedModel,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+    };
+    
+    const response = await this.makeRequest(OPENAI_API_URL, data);
+    return response.choices[0].message.content;
+  }
+
+  async generateFolderName(prompt: string, model?: string) {
+    const selectedModel = model || localStorage.getItem(FOLDER_NAME_MODEL) || 'gpt-4o-mini';
+    console.log(`Generating folder name with model: ${selectedModel}`);
+    
+    const data = {
+      model: selectedModel,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+    };
+    
+    const response = await this.makeRequest(OPENAI_API_URL, data);
+    return response.choices[0].message.content;
+  }
+
+  async generateCompanyInfo(prompt: string, model?: string) {
+    const selectedModel = model || localStorage.getItem(COMPANY_INFO_MODEL) || 'gpt-4o';
+    console.log(`Generating company info with model: ${selectedModel}`);
+    
+    const data = {
+      model: selectedModel,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+    };
+    
+    const response = await this.makeRequest(OPENAI_API_URL, data);
+    return response.choices[0].message.content;
   }
 }
+
+export default OpenAIService;
