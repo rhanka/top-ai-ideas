@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -16,7 +15,7 @@ import {
   DialogDescription,
   DialogClose 
 } from "@/components/ui/dialog";
-import { PlusCircle, Edit, Folder, Trash2, Calendar, File } from "lucide-react";
+import { PlusCircle, Edit, Folder, Trash2, Calendar, File, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { Folder as FolderType } from "@/types";
 import {
@@ -31,8 +30,17 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Folders: React.FC = () => {
-  const { folders, addFolder, updateFolder, deleteFolder, setCurrentFolder, currentFolderId, useCases } = useAppContext();
-  const navigate = useNavigate();
+  const { 
+    folders, 
+    addFolder, 
+    updateFolder, 
+    deleteFolder, 
+    setCurrentFolder, 
+    currentFolderId, 
+    useCases,
+    companies,
+    currentCompanyId
+  } = useAppContext();
   
   const [newFolderName, setNewFolderName] = useState<string>("");
   const [newFolderDescription, setNewFolderDescription] = useState<string>("");
@@ -49,11 +57,9 @@ const Folders: React.FC = () => {
     const newFolder = addFolder(newFolderName, newFolderDescription);
     toast.success(`Dossier "${newFolderName}" créé`);
     
-    // Réinitialiser les champs
     setNewFolderName("");
     setNewFolderDescription("");
     
-    // Définir le nouveau dossier comme dossier actif et naviguer vers la page d'accueil
     setCurrentFolder(newFolder.id);
     navigate('/');
   };
@@ -85,12 +91,10 @@ const Folders: React.FC = () => {
     navigate('/cas-usage');
   };
   
-  // Compter le nombre de cas d'usage par dossier
   const countUseCasesInFolder = (folderId: string): number => {
     return useCases.filter(useCase => useCase.folderId === folderId).length;
   };
   
-  // Formater la date
   const formatDate = (date: Date): string => {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -101,10 +105,24 @@ const Folders: React.FC = () => {
     });
   };
   
+  const getCompanyName = () => {
+    if (!currentCompanyId) return null;
+    const company = companies.find(c => c.id === currentCompanyId);
+    return company ? company.name : null;
+  };
+  
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-navy">Dossiers</h1>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-navy">Dossiers</h1>
+          {currentCompanyId && (
+            <div className="flex items-center text-gray-600">
+              <Building2 className="h-4 w-4 mr-2" />
+              <span>Entreprise active: {getCompanyName()}</span>
+            </div>
+          )}
+        </div>
         
         <Dialog>
           <DialogTrigger asChild>
@@ -173,11 +191,19 @@ const Folders: React.FC = () => {
                   <Folder className="mr-2 h-5 w-5" />
                   <span className="truncate">{folder.name}</span>
                 </CardTitle>
-                <CardDescription className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" /> 
-                  {folder.createdAt instanceof Date 
-                    ? formatDate(folder.createdAt)
-                    : formatDate(new Date(folder.createdAt))}
+                <CardDescription className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {folder.createdAt instanceof Date 
+                      ? formatDate(folder.createdAt)
+                      : formatDate(new Date(folder.createdAt))}
+                  </div>
+                  {currentCompanyId && (
+                    <div className="flex items-center text-xs">
+                      <Building2 className="h-3 w-3 mr-1" />
+                      {getCompanyName()}
+                    </div>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
@@ -220,7 +246,6 @@ const Folders: React.FC = () => {
         </div>
       )}
       
-      {/* Dialog d'édition */}
       <Dialog open={!!editingFolder} onOpenChange={(open) => !open && setEditingFolder(null)}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -258,7 +283,6 @@ const Folders: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Confirmation de suppression */}
       <AlertDialog open={!!folderToDelete} onOpenChange={(open) => !open && setFolderToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
