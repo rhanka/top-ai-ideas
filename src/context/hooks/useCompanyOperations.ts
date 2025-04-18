@@ -31,15 +31,10 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
           updatedAt: new Date(company.updatedAt),
         }));
         setCompanies(companiesWithDates);
-        console.log('Companies loaded from localStorage:', companiesWithDates);
       } catch (error) {
         console.error('Error parsing companies from localStorage:', error);
         setCompanies([]);
       }
-    } else {
-      // Initialize with empty array in localStorage if it doesn't exist
-      localStorage.setItem(COMPANIES_STORAGE_KEY, JSON.stringify([]));
-      console.log('Initialized empty companies array in localStorage');
     }
 
     if (loadedCurrentCompanyId) {
@@ -49,17 +44,9 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
 
   // Save to localStorage when companies change
   useEffect(() => {
-    // Only save to localStorage if companies state has been initialized
-    // and is different from the current localStorage value
     if (companies) {
-      const currentStoredCompanies = localStorage.getItem(COMPANIES_STORAGE_KEY);
-      const currentCompaniesJson = JSON.stringify(companies);
-      
-      // Only update localStorage if the values are different
-      if (currentStoredCompanies !== currentCompaniesJson) {
-        localStorage.setItem(COMPANIES_STORAGE_KEY, currentCompaniesJson);
-        console.log('Companies saved to localStorage:', companies);
-      }
+      localStorage.setItem(COMPANIES_STORAGE_KEY, JSON.stringify(companies));
+      console.log('Companies saved to localStorage:', companies);
     }
   }, [companies]);
 
