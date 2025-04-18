@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Grid, FileText, BarChart, Table, Settings, FolderOpen } from "lucide-react";
+import { Home, Grid, FileText, BarChart, Table, Settings, FolderOpen, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
 
@@ -14,6 +14,7 @@ const MainNavigation: React.FC = () => {
   const navItems = [
     { name: "Accueil", path: "/", icon: Home },
     { name: "Dossiers", path: "/dossiers", icon: FolderOpen },
+    { name: "Entreprises", path: "/entreprises", icon: Building2 },
     { name: "Matrice", path: "/matrice", icon: Grid },
     { name: "Cas d'usage", path: "/cas-usage", icon: FileText },
     { name: "Dashboard", path: "/dashboard", icon: BarChart },
