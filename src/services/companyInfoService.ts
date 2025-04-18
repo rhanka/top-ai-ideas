@@ -1,6 +1,6 @@
-
-import { COMPANY_INFO_PROMPT, COMPANY_INFO_MODEL } from "@/context/constants";
-import { OpenAIService } from "./OpenAIService";
+import { toast } from "sonner";
+import { apiKeySettings } from "@/context/constants";
+import OpenAIService from "./OpenAIService";
 
 interface CompanyInfo {
   industry: string;

@@ -6,7 +6,7 @@ import { UseCaseDetailGenerationService } from "./generation/UseCaseDetailGenera
 import { BaseApiService } from "./api/BaseApiService";
 import { toast } from "sonner";
 
-export class OpenAIService extends BaseApiService {
+export default class OpenAIService extends BaseApiService {
   private folderService: FolderGenerationService;
   private listService: UseCaseListGenerationService;
   private detailService: UseCaseDetailGenerationService;
