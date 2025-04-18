@@ -1,5 +1,4 @@
-
-import React, { useRef, useEffect } from "react";
+import React from "react";
 import { useAppContext } from "@/context/AppContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
@@ -21,17 +20,31 @@ const Dashboard: React.FC = () => {
     ? Math.max(...complexityThresholds.map(t => t.max || 0))
     : 30; // Default fallback
   
-  // Prepare data for scatter plot
+  // Find actual maximum scores from use cases
+  const actualMaxValueScore = Math.max(...useCases.map(uc => uc.totalValueScore || 0));
+  const actualMaxComplexityScore = Math.max(...useCases.map(uc => uc.totalComplexityScore || 0));
+  
+  // Prepare data for scatter plot with normalized scores
   const scatterData = useCases.map(useCase => {
-    // Invert complexity to get "ease of implementation"
-    const easeOfImplementation = Math.max(maxPossibleComplexityScore - (useCase.totalComplexityScore || 0), 0);
+    // Normalize the scores to a 0-100 scale
+    const normalizedValue = useCase.totalValueScore 
+      ? (useCase.totalValueScore / actualMaxValueScore) * 100
+      : 0;
+      
+    // Normalize complexity (inverted to get "ease of implementation")
+    const complexityScore = useCase.totalComplexityScore || 0;
+    const normalizedComplexity = (complexityScore / actualMaxComplexityScore) * 100;
+    const easeOfImplementation = 100 - normalizedComplexity; // Invert for ease
     
     return {
       name: useCase.name,
       id: useCase.id,
-      value: useCase.totalValueScore || 0,
-      ease: easeOfImplementation,
+      value: Math.round(normalizedValue),
+      ease: Math.round(easeOfImplementation),
       domain: useCase.domain,
+      // Keep original scores for tooltip
+      originalValue: useCase.totalValueScore,
+      originalEase: maxPossibleComplexityScore - (useCase.totalComplexityScore || 0),
     };
   });
   
@@ -98,7 +111,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-8 mb-8">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Projection Valeur / Facilité d&apos;implémentation</CardTitle>
+            <CardTitle>Projection Valeur / Facilité d'implémentation</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="h-[600px]">
@@ -111,22 +124,27 @@ const Dashboard: React.FC = () => {
                     type="number" 
                     dataKey="ease" 
                     name="Facilité d'implémentation" 
-                    domain={[0, maxPossibleComplexityScore]}
-                    label={{ value: "Facilité d'implémentation", position: "insideBottom", offset: -10 }}
+                    domain={[0, 100]}
+                    label={{ value: "Facilité d'implémentation (%)", position: "insideBottom", offset: -10 }}
                   />
                   <YAxis 
                     type="number" 
                     dataKey="value" 
                     name="Valeur" 
-                    domain={[0, maxPossibleValueScore]}
-                    label={{ value: "Valeur", angle: -90, position: "insideLeft" }}
+                    domain={[0, 100]}
+                    label={{ value: "Valeur (%)", angle: -90, position: "insideLeft" }}
                   />
                   <ZAxis type="category" dataKey="name" />
                   <Tooltip 
                     cursor={{ strokeDasharray: "3 3" }}
                     formatter={(value, name, props) => {
-                      if (name === "value") return [`${value}`, "Valeur"];
-                      if (name === "ease") return [`${value}`, "Facilité"];
+                      const item = props.payload;
+                      if (name === "value") {
+                        return [`${item.originalValue} (${value}%)`, "Valeur"];
+                      }
+                      if (name === "ease") {
+                        return [`${item.originalEase} (${value}%)`, "Facilité"];
+                      }
                       return [value, name];
                     }}
                     labelFormatter={(label) => label}
