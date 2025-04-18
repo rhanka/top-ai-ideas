@@ -1,9 +1,14 @@
+
 // API key storage key
 export const OPENAI_API_KEY = 'topai-openai-key';
 
 // Concurrency settings
 export const OPENAI_CONCURRENCY = 'topai-openai-concurrency';
 export const DEFAULT_CONCURRENCY = 5;
+
+// Folder storage keys
+export const FOLDERS_STORAGE_KEY = 'topai-folders';
+export const CURRENT_FOLDER_ID = 'topai-current-folder-id';
 
 // Prompt storage keys
 export const USE_CASE_LIST_PROMPT = 'topai-usecase-list-prompt';
