@@ -5,7 +5,10 @@ import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Leg
 import { Chessboard } from "@/components/Dashboard/Chessboard";
 
 const Dashboard: React.FC = () => {
-  const { useCases, matrixConfig } = useAppContext();
+  const { useCases, matrixConfig, currentFolderId } = useAppContext();
+  
+  // Filter use cases for current folder only
+  const currentFolderUseCases = useCases.filter(useCase => useCase.folderId === currentFolderId);
   
   // Get the maximum possible values for both axes
   const valueThresholds = matrixConfig.valueThresholds || [];
@@ -20,12 +23,17 @@ const Dashboard: React.FC = () => {
     ? Math.max(...complexityThresholds.map(t => t.max || 0))
     : 30; // Default fallback
   
-  // Find actual maximum scores from use cases
-  const actualMaxValueScore = Math.max(...useCases.map(uc => uc.totalValueScore || 0));
-  const actualMaxComplexityScore = Math.max(...useCases.map(uc => uc.totalComplexityScore || 0));
+  // Find actual maximum scores from current folder's use cases
+  const actualMaxValueScore = currentFolderUseCases.length > 0
+    ? Math.max(...currentFolderUseCases.map(uc => uc.totalValueScore || 0))
+    : maxPossibleValueScore;
+    
+  const actualMaxComplexityScore = currentFolderUseCases.length > 0
+    ? Math.max(...currentFolderUseCases.map(uc => uc.totalComplexityScore || 0))
+    : maxPossibleComplexityScore;
   
   // Prepare data for scatter plot with normalized scores
-  const scatterData = useCases.map(useCase => {
+  const scatterData = currentFolderUseCases.map(useCase => {
     // Normalize the scores to a 0-100 scale
     const normalizedValue = useCase.totalValueScore 
       ? (useCase.totalValueScore / actualMaxValueScore) * 100
@@ -63,7 +71,7 @@ const Dashboard: React.FC = () => {
   };
   
   // Create domain categories for legend
-  const domains = [...new Set(useCases.map(useCase => useCase.domain))];
+  const domains = [...new Set(currentFolderUseCases.map(useCase => useCase.domain))];
   
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
@@ -75,7 +83,7 @@ const Dashboard: React.FC = () => {
             <CardTitle>Nombre total de cas d&apos;usage</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-5xl font-bold text-navy">{useCases.length}</p>
+            <p className="text-5xl font-bold text-navy">{currentFolderUseCases.length}</p>
           </CardContent>
         </Card>
         
@@ -85,8 +93,8 @@ const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p className="text-5xl font-bold text-green-600">
-              {useCases.length 
-                ? Math.round((useCases.reduce((sum, useCase) => sum + (useCase.totalValueScore || 0), 0) / useCases.length) * 10) / 10
+              {currentFolderUseCases.length 
+                ? Math.round((currentFolderUseCases.reduce((sum, useCase) => sum + (useCase.totalValueScore || 0), 0) / currentFolderUseCases.length) * 10) / 10
                 : 0
               }
             </p>
@@ -99,8 +107,8 @@ const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p className="text-5xl font-bold text-red-600">
-              {useCases.length 
-                ? Math.round((useCases.reduce((sum, useCase) => sum + (useCase.totalComplexityScore || 0), 0) / useCases.length) * 10) / 10
+              {currentFolderUseCases.length 
+                ? Math.round((currentFolderUseCases.reduce((sum, useCase) => sum + (useCase.totalComplexityScore || 0), 0) / currentFolderUseCases.length) * 10) / 10
                 : 0
               }
             </p>
@@ -111,7 +119,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-8 mb-8">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Projection Valeur / Facilité d'implémentation</CardTitle>
+            <CardTitle>Projection Valeur / Facilité d&apos;implémentation</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="h-[600px]">
@@ -168,7 +176,7 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Chessboard useCases={useCases} />
+        <Chessboard useCases={currentFolderUseCases} />
       </div>
     </div>
   );
