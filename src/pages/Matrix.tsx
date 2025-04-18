@@ -97,7 +97,13 @@ const defaultComplexityDescriptions = {
 };
 
 const Matrix: React.FC = () => {
-  const { matrixConfig, updateMatrixConfig, updateThresholds, countUseCasesInLevel } = useAppContext();
+  const { 
+    matrixConfig, 
+    updateMatrixConfig, 
+    updateThresholds, 
+    countUseCasesInLevel,
+    getCurrentFolder  // Make sure to destructure this
+  } = useAppContext();
   const [editedConfig, setEditedConfig] = useState({ ...matrixConfig });
   const [selectedAxis, setSelectedAxis] = useState<ValueAxis | ComplexityAxis | null>(null);
   const [isValueAxis, setIsValueAxis] = useState(false);
@@ -318,9 +324,16 @@ const Matrix: React.FC = () => {
     return levelDesc?.description || `Niveau ${level}`;
   };
 
+  const currentFolder = getCurrentFolder();
+
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <h1 className="text-3xl font-bold mb-6 text-navy">Configuration de la Matrice Valeur/Complexité</h1>
+      {currentFolder && (
+        <p className="text-gray-600 -mt-4 mb-6">
+          Dossier: {currentFolder.name}
+        </p>
+      )}
       
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8">
         <div className="flex">
