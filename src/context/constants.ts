@@ -1,71 +1,134 @@
 
-// API key storage key
-export const OPENAI_API_KEY = 'topai-openai-key';
+// Constants for localStorage keys
+export const OPENAI_API_KEY = "openai_api_key";
+export const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
+export const USE_CASE_DETAIL_PROMPT = "use_case_detail_prompt";
+export const FOLDER_NAME_PROMPT = "folder_name_prompt";
+export const COMPANY_INFO_PROMPT = "company_info_prompt"; // Nouveau prompt pour les infos entreprises
+export const FOLDERS_STORAGE_KEY = "ai_folders";
+export const CURRENT_FOLDER_ID = "current_folder_id";
 
-// Concurrency settings
-export const OPENAI_CONCURRENCY = 'topai-openai-concurrency';
-export const DEFAULT_CONCURRENCY = 5;
-
-// Folder storage keys
-export const FOLDERS_STORAGE_KEY = 'topai-folders';
-export const CURRENT_FOLDER_ID = 'topai-current-folder-id';
-
-// Prompt storage keys
-export const USE_CASE_LIST_PROMPT = 'topai-usecase-list-prompt';
-export const USE_CASE_DETAIL_PROMPT = 'topai-usecase-detail-prompt';
-export const FOLDER_NAME_PROMPT = 'topai-folder-name-prompt';
-export const COMPANY_INFO_PROMPT = 'topai-company-info-prompt';
-
-// Default prompts
-export const DEFAULT_USE_CASE_LIST_PROMPT = `En tant qu'expert en innovation d'entreprise, génère une liste de 5 à 10 cas d'usage d'intelligence artificielle pour l'entreprise ou le secteur décrit ci-dessous. Sois spécifique, réaliste et oriente les cas d'usage vers des problèmes métiers concrets.
-
-Voici la description de l'entreprise ou du secteur:
-{{user_input}}
-
-Réponds uniquement avec une liste numérotée de cas d'usage, un par ligne, sans autre commentaire.`;
-
-export const DEFAULT_USE_CASE_DETAIL_PROMPT = `En tant qu'expert en intelligence artificielle, détaille le cas d'usage suivant pour une entreprise. Fournis une description complète, les technologies à utiliser, les bénéfices attendus, les risques potentiels et les prochaines étapes.
-
-Cas d'usage:
-{{use_case}}
-
-Contexte de l'entreprise ou du secteur:
-{{user_input}}
-
-Matrice valeur/complexité:
-{{matrix}}
-
-Réponds avec un format JSON contenant les champs suivants: name, domain, description, technology, deadline, contact, benefits (liste), metrics (liste), risks (liste), nextSteps (liste), sources (liste), relatedData (liste), valueScores (liste), complexityScores (liste).`;
-
-export const DEFAULT_FOLDER_NAME_PROMPT = `En tant qu'expert en organisation de l'information, génère un nom de dossier et une courte description pour organiser des cas d'usage liés à l'entrée utilisateur suivante.
-
-Voici l'entrée utilisateur:
-{{user_input}}
-
-Réponds avec un format JSON contenant les champs "name" et "description".`;
-
-export const DEFAULT_COMPANY_INFO_PROMPT = `En tant qu'analyste d'entreprise, récupère et structure les informations clés de l'entreprise suivante.
-
-Nom de l'entreprise:
-{{company_name}}
-
-Réponds avec un format JSON contenant les champs: name, industry, size, products, processes, challenges, objectives, technologies.`;
-
-// Model storage keys
-export const USE_CASE_LIST_MODEL = 'topai-usecase-list-model';
-export const USE_CASE_DETAIL_MODEL = 'topai-usecase-detail-model';
-export const FOLDER_NAME_MODEL = 'topai-folder-name-model';
-export const COMPANY_INFO_MODEL = 'topai-company-info-model';
+// Model selection localStorage keys
+export const USE_CASE_LIST_MODEL = "use_case_list_model";
+export const USE_CASE_DETAIL_MODEL = "use_case_detail_model";
+export const FOLDER_NAME_MODEL = "folder_name_model";
+export const COMPANY_INFO_MODEL = "company_info_model"; // Nouveau modèle pour les infos entreprises
 
 // Default models
-export const DEFAULT_LIST_MODEL = "gpt-3.5-turbo-1106";
-export const DEFAULT_DETAIL_MODEL = "gpt-3.5-turbo-1106";
-export const DEFAULT_FOLDER_MODEL = "gpt-3.5-turbo-1106";
-export const DEFAULT_COMPANY_INFO_MODEL = "gpt-3.5-turbo-1106";
+export const DEFAULT_LIST_MODEL = "gpt-4o-mini";
+export const DEFAULT_DETAIL_MODEL = "gpt-4o-mini";
+export const DEFAULT_FOLDER_MODEL = "gpt-4o-mini";
+export const DEFAULT_COMPANY_INFO_MODEL = "gpt-4o"; // Modèle par défaut pour infos entreprises
 
-// Available OpenAI models
+// Available models
 export const OPENAI_MODELS = [
-    { label: "GPT 3.5 Turbo", value: "gpt-3.5-turbo-1106" },
-    { label: "GPT 4", value: "gpt-4" },
-    { label: "GPT 4 Turbo", value: "gpt-4-turbo-preview" }
+  { value: "o3-mini", label: "O3 Mini" },
+  { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+  { value: "gpt-4o", label: "GPT-4o" },
+  { value: "gpt-4.5-preview", label: "GPT-4.5 Preview" },
 ];
+
+// Default prompts with placeholders
+export const DEFAULT_USE_CASE_LIST_PROMPT = 
+`Génère une liste de 5 cas d'usage d'IA innovants pour le domaine suivant: {{user_input}}.
+Pour chaque cas d'usage, propose un titre court et explicite.
+Format: liste numérotée sans description.`;
+
+export const DEFAULT_USE_CASE_DETAIL_PROMPT = 
+`Génère un cas d'usage détaillé pour "{{use_case}}" dans le contexte suivant: {{user_input}}. Utilise la matrice valeur/complexité fournie: {{matrix}} pour évaluer chaque axe de valeur et complexité.
+
+La réponse doit impérativement contenir tous les éléments suivants au format JSON:
+
+{
+  "name": "{{use_case}}",
+  "description": "Description détaillée du cas d'usage sur 5-10 lignes",
+  "domain": "Le domaine d'application principal",
+  "technology": "Technologies d'IA à utiliser (NLP, Computer Vision, etc.)",
+  "deadline": "Estimation du délai de mise en œuvre (ex: Q3 2025)",
+  "contact": "Nom du responsable suggéré",
+  "benefits": [
+    "Bénéfice 1",
+    "Bénéfice 2",
+    "Bénéfice 3",
+    "Bénéfice 4",
+    "Bénéfice 5"
+  ],
+  "metrics": [
+    "KPI ou mesure de succès 1",
+    "KPI ou mesure de succès 2",
+    "KPI ou mesure de succès 3"
+  ],
+  "risks": [
+    "Risque 1",
+    "Risque 2",
+    "Risque 3"
+  ],
+  "nextSteps": [
+    "Étape 1",
+    "Étape 2",
+    "Étape 3",
+    "Étape 4"
+  ],
+  "sources": [
+    "Source de données 1",
+    "Source de données 2"
+  ],
+  "relatedData": [
+    "Donnée associée 1",
+    "Donnée associée 2",
+    "Donnée associée 3"
+  ],
+  "valueScores": [
+    {
+      "axisId": "Nom du 1er axe de valeur",
+      "rating": 4,
+      "description": "Justification du score"
+    },
+    {
+      "axisId": "Nom du 2ème axe de valeur",
+      "rating": 3,
+      "description": "Justification du score"
+    }
+    // Complète pour les autres axes de valeur présents dans la matrice
+  ],
+  "complexityScores": [
+    {
+      "axisId": "Nom du 1er axe de complexité",
+      "rating": 2,
+      "description": "Justification du score"
+    },
+    {
+      "axisId": "Nom du 2ème axe de complexité",
+      "rating": 4,
+      "description": "Justification du score"
+    }
+    // Complète pour les autres axes de complexité présents dans la matrice
+  ]
+}
+
+IMPORTANT: Réponds UNIQUEMENT avec le JSON, sans texte avant ou après. Veille à ce que chaque axe de la matrice fournie ait bien son score correspondant dans les sections valueScores et complexityScores.`;
+
+// Default prompt for folder name generation
+export const DEFAULT_FOLDER_NAME_PROMPT = 
+`Génère un nom et une brève description pour un dossier qui contiendra des cas d'usage d'IA pour le contexte suivant: {{user_input}}.
+Le nom doit être court et représentatif du domaine ou secteur d'activité principal.
+La description doit expliquer en 1-2 phrases le contenu du dossier.
+Format de réponse en JSON:
+{
+  "name": "Nom du dossier (4-6 mots max)",
+  "description": "Description concise du dossier (20-30 mots max)"
+}`;
+
+// Default prompt for company info generation
+export const DEFAULT_COMPANY_INFO_PROMPT = 
+`Recherchez et fournissez des informations complètes sur l'entreprise {{company_name}}. 
+Retournez les informations UNIQUEMENT au format JSON suivant:
+{
+  "industry": "Secteur d'activité principal",
+  "size": "Taille en nombre d'employés et chiffre d'affaires si disponible",
+  "products": "Description détaillée des principaux produits ou services",
+  "processes": "Description des processus métier clés",
+  "challenges": "Défis principaux auxquels l'entreprise est confrontée actuellement",
+  "objectives": "Objectifs stratégiques connus de l'entreprise",
+  "technologies": "Technologies ou systèmes d'information déjà utilisés"
+}`;

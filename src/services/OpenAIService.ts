@@ -1,145 +1,128 @@
-import OpenAI from 'openai';
-import { UseCase, MatrixConfig, Company } from '../types';
-import { RequestQueueService } from './queue/RequestQueueService';
 
-export class OpenAIService {
-  private openai: OpenAI;
-  private queue: RequestQueueService<any>;
+import { UseCase, MatrixConfig, Company } from "../types";
+import { FolderGenerationService } from "./generation/FolderGenerationService";
+import { UseCaseListGenerationService } from "./generation/UseCaseListGenerationService";
+import { UseCaseDetailGenerationService } from "./generation/UseCaseDetailGenerationService";
+import { BaseApiService } from "./api/BaseApiService";
+import { toast } from "sonner";
 
-  constructor(apiKey: string, concurrency: number = 5) {
-    this.openai = new OpenAI({ apiKey: apiKey, dangerouslyAllowBrowser: true });
-    this.queue = new RequestQueueService<any>(concurrency);
+export class OpenAIService extends BaseApiService {
+  private folderService: FolderGenerationService;
+  private listService: UseCaseListGenerationService;
+  private detailService: UseCaseDetailGenerationService;
+  // We remove the redundant toastId declaration since it's already in BaseApiService
+
+  constructor(apiKey: string) {
+    super(apiKey);
+    this.folderService = new FolderGenerationService(apiKey);
+    this.listService = new UseCaseListGenerationService(apiKey);
+    this.detailService = new UseCaseDetailGenerationService(apiKey);
   }
 
-  public setConcurrency(concurrency: number): void {
-    this.queue.setConcurrency(concurrency);
+  async generateFolderNameAndDescription(
+    userInput: string, 
+    prompt: string, 
+    model: string,
+    company?: Company
+  ): Promise<{ name: string; description: string }> {
+    return this.folderService.generateFolderNameAndDescription(userInput, prompt, model, company);
   }
 
-  public getQueueLength(): number {
-    return this.queue.getQueueLength();
+  async generateUseCaseList(
+    userInput: string, 
+    prompt: string, 
+    model: string,
+    company?: Company
+  ): Promise<string[]> {
+    return this.listService.generateUseCaseList(userInput, prompt, model, company);
   }
 
-  public getRunningCount(): number {
-    return this.queue.getRunningCount();
+  async generateUseCaseDetail(
+    useCase: string,
+    userInput: string,
+    matrixConfig: MatrixConfig,
+    prompt: string,
+    model: string,
+    company?: Company
+  ): Promise<UseCase> {
+    return this.detailService.generateUseCaseDetail(useCase, userInput, matrixConfig, prompt, model, company);
   }
 
-  public getTotalCount(): number {
-    return this.queue.getTotalCount();
-  }
+  async makeApiRequest(options: {
+    model: string;
+    messages?: { role: string; content: string }[];
+    input?: { role?: string; content: string } | { messages: { role: string; content: string }[] } | string;
+    functions?: any[];
+    function_call?: any;
+    tools?: any[];
+    tool_choice?: any;
+    temperature?: number;
+    max_tokens?: number;
+  }) {
+    // Using responses endpoint for newer API
+    const endpoint = "https://api.openai.com/v1/responses";
+    
+    // Convert messages to input format if needed
+    if (options.messages && !options.input) {
+      // When assigning messages to input, ensure it remains an array or convert to string
+      options.input = Array.isArray(options.messages) ? options.messages : JSON.stringify(options.messages);
+      delete options.messages;
+    }
+    
+    // Convert functions to tools if needed (for compatibility)
+    if (options.functions && !options.tools) {
+      options.tools = options.functions;
+      delete options.functions;
+      
+      if (options.function_call && !options.tool_choice) {
+        options.tool_choice = options.function_call;
+        delete options.function_call;
+      }
+    }
 
-  private async generate(prompt: string, model: string): Promise<string> {
+    // Remove max_tokens parameter as it's not supported in the Responses API
+    if (options.max_tokens) {
+      delete options.max_tokens;
+    }
+
     try {
-      const chatCompletion = await this.openai.chat.completions.create({
-        messages: [{ role: 'user', content: prompt }],
-        model: model,
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify(options),
       });
-      return chatCompletion.choices[0].message.content || '';
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`OpenAI API error (${response.status}): ${errorBody}`);
+      }
+
+      return await response.json();
     } catch (error) {
-      console.error("OpenAI API Error:", error);
+      console.error("OpenAI API request failed:", error);
       throw error;
     }
   }
 
-  async generateUseCaseList(userInput: string, promptTemplate: string, model: string, company?: Company): Promise<string[]> {
-    const prompt = this.populatePrompt(promptTemplate, { user_input: userInput, company: company ? JSON.stringify(company) : 'N/A' });
-
-    return new Promise((resolve, reject) => {
-      this.queue.enqueue({
-        id: `list-${Date.now()}`,
-        execute: () => this.generate(prompt, model),
-        onSuccess: (response: string) => {
-          const useCaseTitles = response.split('\n')
-            .map(line => line.replace(/^\d+\.\s*/, '').trim())
-            .filter(title => title.length > 0);
-          resolve(useCaseTitles);
-        },
-        onError: (error: Error) => {
-          console.error("List generation failed:", error);
-          reject(error);
-        },
-        onStart: () => console.log("Starting list generation...")
-      });
-    });
-  }
-
-  async generateUseCaseDetail(
-    useCaseTitle: string,
-    userInput: string,
-    matrixConfig: MatrixConfig,
-    promptTemplate: string,
-    model: string,
-    company?: Company
-  ): Promise<UseCase> {
-    const matrix = JSON.stringify(matrixConfig);
-    const prompt = this.populatePrompt(promptTemplate, {
-      use_case: useCaseTitle,
-      user_input: userInput,
-      matrix: matrix,
-      company: company ? JSON.stringify(company) : 'N/A'
-    });
-
-    return new Promise((resolve, reject) => {
-      this.queue.enqueue({
-        id: `detail-${Date.now()}`,
-        execute: () => this.generate(prompt, model),
-        onSuccess: (response: string) => {
-          try {
-            const useCaseDetail = JSON.parse(response);
-            resolve({ name: useCaseTitle, ...useCaseDetail });
-          } catch (parseError) {
-            console.error("JSON parsing failed:", parseError);
-            reject(parseError);
-          }
-        },
-        onError: (error: Error) => {
-          console.error("Detail generation failed:", error);
-          reject(error);
-        },
-        onStart: () => console.log(`Starting detail generation for ${useCaseTitle}...`)
-      });
-    });
-  }
-
-  async generateFolderNameAndDescription(userInput: string, promptTemplate: string, model: string, company?: Company): Promise<{ name: string, description: string }> {
-    const prompt = this.populatePrompt(promptTemplate, { user_input: userInput, company: company ? JSON.stringify(company) : 'N/A' });
-
-    return new Promise((resolve, reject) => {
-      this.queue.enqueue({
-        id: `folder-${Date.now()}`,
-        execute: () => this.generate(prompt, model),
-        onSuccess: (response: string) => {
-          try {
-            const folderInfo = JSON.parse(response);
-            resolve({ name: folderInfo.name, description: folderInfo.description });
-          } catch (parseError) {
-            console.error("JSON parsing failed:", parseError);
-            reject(parseError);
-          }
-        },
-        onError: (error: Error) => {
-          console.error("Folder generation failed:", error);
-          reject(error);
-        },
-        onStart: () => console.log("Starting folder generation...")
-      });
-    });
-  }
-
-  finalizeGeneration(success: boolean, successCount: number): void {
+  finalizeGeneration(success: boolean, count: number) {
     if (success) {
-      console.log(`Successfully generated ${successCount} use cases.`);
+      toast.success(`Génération terminée`, { 
+        description: `${count} cas d'usage générés avec succès !`,
+        id: this.toastId,
+        duration: 5000 // Close after 5 seconds
+      });
     } else {
-      console.warn("No use cases were successfully generated.");
+      toast.error("Échec de la génération", { 
+        description: "Une erreur est survenue lors de la génération",
+        id: this.toastId,
+        duration: 5000 // Close after 5 seconds
+      });
     }
-  }
-
-  private populatePrompt(template: string, data: { [key: string]: string }): string {
-    let prompt = template;
-    for (const key in data) {
-      if (data.hasOwnProperty(key)) {
-        prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), data[key]);
-      }
-    }
-    return prompt;
+    
+    // Reset the toastId to ensure new toasts can be created
+    this.toastId = undefined;
   }
 }
