@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -20,16 +19,16 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const DataTable: React.FC = () => {
-  const { useCases, deleteUseCase } = useAppContext();
+  const { useCases, deleteUseCase, getCurrentFolder } = useAppContext();
   const navigate = useNavigate();
   
-  // Table state
+  const currentFolder = getCurrentFolder();
+  
   const [sortField, setSortField] = useState<keyof UseCase>('id');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [searchQuery, setSearchQuery] = useState('');
   const [useCaseToDelete, setUseCaseToDelete] = useState<UseCase | null>(null);
   
-  // Handle sort
   const handleSort = (field: keyof UseCase) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -56,7 +55,6 @@ const DataTable: React.FC = () => {
     setUseCaseToDelete(null);
   };
   
-  // Sort & filter data
   const sortedData = [...useCases]
     .filter(useCase => {
       if (!searchQuery) return true;
@@ -85,7 +83,6 @@ const DataTable: React.FC = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
   
-  // Export to CSV
   const exportToCSV = () => {
     const headers = ["ID", "Nom", "Domaine", "Description", "Technologie", "Deadline", "Contact", "Valeur", "Complexité"];
     
@@ -114,7 +111,6 @@ const DataTable: React.FC = () => {
     document.body.removeChild(link);
   };
   
-  // Render value and complexity as stars/X
   const renderValueRating = (rating: number | undefined) => {
     if (!rating) return "N/A";
     const normalizedRating = Math.min(Math.max(Math.round(rating / 8), 1), 5);
@@ -127,7 +123,6 @@ const DataTable: React.FC = () => {
     return "X".repeat(normalizedRating);
   };
   
-  // View use case details
   const viewDetails = (id: string) => {
     navigate(`/cas-usage/${id}`);
   };
@@ -135,7 +130,14 @@ const DataTable: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
-        <h1 className="text-3xl font-bold text-navy">Données des cas d'usage</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-navy">Données des cas d'usage</h1>
+          {currentFolder && (
+            <p className="text-gray-600 mt-1">
+              Dossier: {currentFolder.name}
+            </p>
+          )}
+        </div>
         
         <div className="flex space-x-4">
           <div className="relative w-64">

@@ -5,7 +5,9 @@ import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Leg
 import { Chessboard } from "@/components/Dashboard/Chessboard";
 
 const Dashboard: React.FC = () => {
-  const { useCases, matrixConfig, currentFolderId } = useAppContext();
+  const { useCases, matrixConfig, currentFolderId, getCurrentFolder } = useAppContext();
+  
+  const currentFolder = getCurrentFolder();
   
   // Filter use cases for current folder only
   const currentFolderUseCases = useCases.filter(useCase => useCase.folderId === currentFolderId);
@@ -75,12 +77,19 @@ const Dashboard: React.FC = () => {
   
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
-      <h1 className="text-3xl font-bold mb-6 text-navy">Dashboard Cas d&apos;usage</h1>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-navy">Dashboard Cas d'usage</h1>
+        {currentFolder && (
+          <p className="text-gray-600 mt-1">
+            Dossier: {currentFolder.name}
+          </p>
+        )}
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Nombre total de cas d&apos;usage</CardTitle>
+            <CardTitle>Nombre total de cas d'usage</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-5xl font-bold text-navy">{currentFolderUseCases.length}</p>
@@ -119,7 +128,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 gap-8 mb-8">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Projection Valeur / Facilité d&apos;implémentation</CardTitle>
+            <CardTitle>Projection Valeur / Facilité d'implémentation</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="h-[600px]">

@@ -1,14 +1,11 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, Grid, FileText, BarChart, Table, Settings, FolderOpen, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAppContext } from "@/context/AppContext";
 
 const MainNavigation: React.FC = () => {
   const location = useLocation();
-  const { currentFolderId, getCurrentFolder } = useAppContext();
-  
-  const currentFolder = getCurrentFolder();
   
   const navItems = [
     { name: "Accueil", path: "/", icon: Home },
@@ -26,11 +23,6 @@ const MainNavigation: React.FC = () => {
       <div className="container mx-auto flex flex-col md:flex-row items-center justify-between">
         <div className="flex items-center mb-4 md:mb-0">
           <h1 className="text-2xl font-bold">Top AI Ideas</h1>
-          {currentFolderId && currentFolder && (
-            <span className="ml-4 bg-white/20 px-3 py-1 rounded-md text-sm">
-              Dossier: {currentFolder.name}
-            </span>
-          )}
         </div>
         
         <div className="flex space-x-1 md:space-x-4">
