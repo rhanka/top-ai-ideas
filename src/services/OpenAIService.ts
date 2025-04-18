@@ -64,6 +64,7 @@ export class OpenAIService extends BaseApiService {
     
     // Convert messages to input format if needed
     if (options.messages && !options.input) {
+      // Quand on assigne un tableau à input, on doit s'assurer qu'il reste un tableau
       options.input = options.messages;
       delete options.messages;
     }

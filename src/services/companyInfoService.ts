@@ -42,41 +42,51 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
       }],
       tool_choice: "auto",
       temperature: 0.7
-      // max_tokens parameter removed as it's not supported in the Responses API
     });
 
     // Analyser la réponse
-    if (response && response.choices && response.choices[0]?.message?.content) {
-      const content = response.choices[0].message.content;
+    if (response && response.output && response.output.length > 0) {
+      // Chercher le message généré par l'assistant (type "message")
+      const messageOutput = response.output.find(item => item.type === "message");
       
-      try {
-        // Extraire le JSON de la réponse
-        const jsonMatch = content.match(/({[\s\S]*})/);
-        const jsonStr = jsonMatch ? jsonMatch[0] : content;
-        const companyInfo = JSON.parse(jsonStr);
+      if (messageOutput && messageOutput.content && messageOutput.content.length > 0) {
+        const contentText = messageOutput.content[0].text;
         
-        // Traitement spécial pour le champ "size" s'il est un objet
-        let sizeValue = companyInfo.size;
-        if (typeof sizeValue === 'object' && sizeValue !== null) {
-          // Si size est un objet, le formater en chaîne de caractères
-          const employees = sizeValue.employees || 'Non spécifié';
-          const revenue = sizeValue.revenue || '';
-          sizeValue = employees + (revenue ? ` - ${revenue}` : '');
+        try {
+          // Extraire le JSON de la réponse (entre les backticks ```json et ```)
+          const jsonMatch = contentText.match(/```json\s*([\s\S]*?)\s*```/);
+          const jsonStr = jsonMatch ? jsonMatch[1] : contentText;
+          const companyInfo = JSON.parse(jsonStr);
+          
+          // Traitement spécial pour le champ "size" s'il est un objet
+          let sizeValue = companyInfo.size;
+          if (typeof sizeValue === 'object' && sizeValue !== null) {
+            // Si size est un objet, le formater en chaîne de caractères
+            if (sizeValue.employees) {
+              const employees = sizeValue.employees || 'Non spécifié';
+              const revenue = sizeValue.revenue || '';
+              sizeValue = employees + (revenue ? ` - ${revenue}` : '');
+            } else {
+              sizeValue = JSON.stringify(sizeValue);
+            }
+          }
+          
+          // Valider que tous les champs requis existent
+          return {
+            industry: companyInfo.industry || "",
+            size: typeof sizeValue === 'string' ? sizeValue : String(sizeValue || ""),
+            products: companyInfo.products || "",
+            processes: companyInfo.processes || "",
+            challenges: companyInfo.challenges || "",
+            objectives: companyInfo.objectives || "",
+            technologies: companyInfo.technologies || ""
+          };
+        } catch (error) {
+          console.error("Erreur lors du parsing JSON:", error);
+          throw new Error("Format de réponse invalide");
         }
-        
-        // Valider que tous les champs requis existent
-        return {
-          industry: companyInfo.industry || "",
-          size: typeof sizeValue === 'string' ? sizeValue : String(sizeValue || ""),
-          products: companyInfo.products || "",
-          processes: companyInfo.processes || "",
-          challenges: companyInfo.challenges || "",
-          objectives: companyInfo.objectives || "",
-          technologies: companyInfo.technologies || ""
-        };
-      } catch (error) {
-        console.error("Erreur lors du parsing JSON:", error);
-        throw new Error("Format de réponse invalide");
+      } else {
+        throw new Error("Contenu de la réponse manquant ou format inattendu");
       }
     } else {
       throw new Error("Réponse vide ou format inattendu");
