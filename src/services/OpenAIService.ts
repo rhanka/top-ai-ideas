@@ -1,4 +1,3 @@
-
 import { UseCase, MatrixConfig, Company } from "../types";
 import { FolderGenerationService } from "./generation/FolderGenerationService";
 import { UseCaseListGenerationService } from "./generation/UseCaseListGenerationService";
@@ -50,21 +49,21 @@ export class OpenAIService extends BaseApiService {
   async makeApiRequest(options: {
     model: string;
     messages: { role: string; content: string }[];
-    tools?: any[];
-    tool_choice?: any;
+    functions?: any[];
+    function_call?: any;
     temperature?: number;
     max_tokens?: number;
   }) {
-    const endpoint = "https://api.openai.com/v1/chat/completions";
+    const endpoint = "https://api.openai.com/v1/responses";
 
     try {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.apiKey}`
+          Authorization: `Bearer ${this.apiKey}`,
         },
-        body: JSON.stringify(options)
+        body: JSON.stringify(options),
       });
 
       if (!response.ok) {
