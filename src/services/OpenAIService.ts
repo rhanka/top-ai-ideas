@@ -10,7 +10,7 @@ export class OpenAIService extends BaseApiService {
   private folderService: FolderGenerationService;
   private listService: UseCaseListGenerationService;
   private detailService: UseCaseDetailGenerationService;
-  protected toastId?: string; // Changed from private to protected to match the base class
+  // We remove the redundant toastId declaration since it's already in BaseApiService
 
   constructor(apiKey: string) {
     super(apiKey);
@@ -51,7 +51,7 @@ export class OpenAIService extends BaseApiService {
   async makeApiRequest(options: {
     model: string;
     messages?: { role: string; content: string }[];
-    input?: { role?: string; content: string } | { messages: { role: string; content: string }[] };
+    input?: { role?: string; content: string } | { messages: { role: string; content: string }[] } | string;
     functions?: any[];
     function_call?: any;
     tools?: any[];
@@ -64,7 +64,7 @@ export class OpenAIService extends BaseApiService {
     
     // Convert messages to input format if needed
     if (options.messages && !options.input) {
-      options.input = { messages: options.messages };
+      options.input = options.messages;
       delete options.messages;
     }
     
