@@ -1,3 +1,4 @@
+
 import { UseCase, MatrixConfig, Company } from "../types";
 import { FolderGenerationService } from "./generation/FolderGenerationService";
 import { UseCaseListGenerationService } from "./generation/UseCaseListGenerationService";
@@ -48,13 +49,23 @@ export class OpenAIService extends BaseApiService {
 
   async makeApiRequest(options: {
     model: string;
-    messages: { role: string; content: string }[];
+    messages?: { role: string; content: string }[];
+    input?: { role?: string; content: string } | { messages: { role: string; content: string }[] };
     functions?: any[];
     function_call?: any;
+    tools?: any[];
+    tool_choice?: any;
     temperature?: number;
     max_tokens?: number;
   }) {
+    // Changed endpoint from chat/completions to responses
     const endpoint = "https://api.openai.com/v1/responses";
+    
+    // Convert messages to input format if needed
+    if (options.messages && !options.input) {
+      options.input = { messages: options.messages };
+      delete options.messages;
+    }
 
     try {
       const response = await fetch(endpoint, {
