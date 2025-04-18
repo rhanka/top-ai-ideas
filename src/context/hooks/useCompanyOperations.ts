@@ -44,7 +44,11 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
 
   // Save to localStorage when companies change
   useEffect(() => {
-    localStorage.setItem(COMPANIES_STORAGE_KEY, JSON.stringify(companies));
+    if (companies.length > 0) {
+      localStorage.setItem(COMPANIES_STORAGE_KEY, JSON.stringify(companies));
+    } else {
+      localStorage.removeItem(COMPANIES_STORAGE_KEY);
+    }
   }, [companies]);
 
   // Save active company
