@@ -48,8 +48,8 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
         type: "web_search_preview" 
       }],
       tool_choice: "auto",
-      temperature: 0.7,
-      max_tokens: 2000
+      temperature: 0.7
+      // max_tokens parameter removed as it's not supported in the Responses API
     });
 
     // Analyser la réponse

@@ -10,7 +10,7 @@ export class OpenAIService extends BaseApiService {
   private folderService: FolderGenerationService;
   private listService: UseCaseListGenerationService;
   private detailService: UseCaseDetailGenerationService;
-  private toastId?: string;
+  protected toastId?: string; // Changed from private to protected to match the base class
 
   constructor(apiKey: string) {
     super(apiKey);
@@ -77,6 +77,11 @@ export class OpenAIService extends BaseApiService {
         options.tool_choice = options.function_call;
         delete options.function_call;
       }
+    }
+
+    // Remove max_tokens parameter as it's not supported in the Responses API
+    if (options.max_tokens) {
+      delete options.max_tokens;
     }
 
     try {
