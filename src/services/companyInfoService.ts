@@ -36,7 +36,7 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
     // Appeler l'API OpenAI avec la recherche web activée
     const response = await openai.makeApiRequest({
       model: model,
-      input: formattedPrompt, // Changé de l'objet à une chaîne de caractères simple
+      input: formattedPrompt, // Input as a simple string
       tools: [{ 
         type: "web_search_preview" 
       }],
