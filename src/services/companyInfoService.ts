@@ -42,10 +42,10 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
           content: formattedPrompt
         }
       ],
-      tools: [{ 
-        type: "web_search" 
+      functions: [{ 
+        type: "web_search_preview" 
       }],
-      tool_choice: "auto",
+      function_call: "auto",
       temperature: 0.7,
       max_tokens: 2000
     });
