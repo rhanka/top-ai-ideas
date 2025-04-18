@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import { Company } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, Building2, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, Check, Eye } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -31,6 +30,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import CompanyForm from '@/components/Company/CompanyForm';
+import { useNavigate } from 'react-router-dom';
 
 const Companies: React.FC = () => {
   const { companies, addCompany, updateCompany, deleteCompany, currentCompanyId, setCurrentCompany } = useAppContext();
@@ -38,6 +38,7 @@ const Companies: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
+  const navigate = useNavigate();
   
   // Gestionnaire pour l'ouverture du formulaire de création
   const handleCreateClick = () => {
@@ -170,6 +171,17 @@ const Companies: React.FC = () => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
+              <div className="space-x-2">
+                <Button variant="outline" size="icon" onClick={() => handleEditClick(company)}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="text-red-600" onClick={() => handleDeleteClick(company)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={() => navigate(`/entreprises/${company.id}`)}>
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </div>
               <Button 
                 variant={company.id === currentCompanyId ? "default" : "outline"} 
                 size="sm"
@@ -183,14 +195,6 @@ const Companies: React.FC = () => {
                   "Sélectionner"
                 )}
               </Button>
-              <div className="space-x-2">
-                <Button variant="outline" size="icon" onClick={() => handleEditClick(company)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon" className="text-red-600" onClick={() => handleDeleteClick(company)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
             </CardFooter>
           </Card>
         ))}

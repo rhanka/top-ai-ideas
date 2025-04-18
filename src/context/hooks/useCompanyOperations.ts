@@ -4,21 +4,19 @@ import { Company } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 
-// Clé de stockage local
+// Storage keys
 const COMPANIES_STORAGE_KEY = 'topai-companies';
 const CURRENT_COMPANY_ID_KEY = 'topai-current-company';
 
-// Interface pour les options du hook
 interface CompanyOperationsOptions {
   onCompanyChange?: (companyId: string | null) => void;
 }
 
 export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
-  // État pour les entreprises et l'entreprise active
   const [companies, setCompanies] = useState<Company[]>([]);
   const [currentCompanyId, setCurrentCompanyId] = useState<string | null>(null);
 
-  // Chargement initial depuis le stockage local
+  // Load from localStorage on init
   useEffect(() => {
     const loadedCompanies = localStorage.getItem(COMPANIES_STORAGE_KEY);
     const loadedCurrentCompanyId = localStorage.getItem(CURRENT_COMPANY_ID_KEY);
@@ -26,7 +24,7 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
     if (loadedCompanies) {
       try {
         const parsedCompanies = JSON.parse(loadedCompanies);
-        // Conversion des dates
+        // Convert dates
         const companiesWithDates = parsedCompanies.map((company: any) => ({
           ...company,
           createdAt: new Date(company.createdAt),
@@ -44,12 +42,12 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
     }
   }, []);
 
-  // Sauvegarde dans le stockage local à chaque changement
+  // Save to localStorage when companies change
   useEffect(() => {
     localStorage.setItem(COMPANIES_STORAGE_KEY, JSON.stringify(companies));
   }, [companies]);
 
-  // Sauvegarde de l'entreprise active
+  // Save active company
   useEffect(() => {
     if (currentCompanyId) {
       localStorage.setItem(CURRENT_COMPANY_ID_KEY, currentCompanyId);
@@ -57,13 +55,12 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
       localStorage.removeItem(CURRENT_COMPANY_ID_KEY);
     }
     
-    // Appel du callback si fourni
     if (options?.onCompanyChange) {
       options.onCompanyChange(currentCompanyId);
     }
   }, [currentCompanyId, options]);
 
-  // Ajouter une nouvelle entreprise
+  // Add company
   const addCompany = useCallback((companyData: Omit<Company, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date();
     const newCompany: Company = {
@@ -78,7 +75,7 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
     return newCompany;
   }, []);
 
-  // Mettre à jour une entreprise existante
+  // Update company
   const updateCompany = useCallback((company: Company) => {
     setCompanies(prev => 
       prev.map(c => 
@@ -90,14 +87,13 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
     toast.success(`Entreprise "${company.name}" mise à jour`);
   }, []);
 
-  // Supprimer une entreprise
+  // Delete company
   const deleteCompany = useCallback((id: string) => {
     const companyToDelete = companies.find(c => c.id === id);
     
     if (companyToDelete) {
       setCompanies(prev => prev.filter(c => c.id !== id));
       
-      // Si l'entreprise supprimée était l'entreprise active, réinitialiser
       if (currentCompanyId === id) {
         setCurrentCompanyId(null);
       }
@@ -106,7 +102,7 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
     }
   }, [companies, currentCompanyId]);
 
-  // Définir l'entreprise active
+  // Set active company
   const setCurrentCompany = useCallback((companyId: string | null) => {
     console.log("Setting current company to:", companyId);
     setCurrentCompanyId(companyId);
@@ -121,7 +117,7 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
     }
   }, [companies]);
 
-  // Obtenir l'entreprise active
+  // Get active company
   const getCurrentCompany = useCallback(() => {
     return currentCompanyId ? companies.find(c => c.id === currentCompanyId) : undefined;
   }, [companies, currentCompanyId]);

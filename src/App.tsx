@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,11 +17,10 @@ import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
 import Folders from "@/pages/Folders";
 import Companies from "@/pages/Companies";
+import CompanyView from "@/pages/CompanyView";
 
-// Create the client outside of the component
 const queryClient = new QueryClient();
 
-// Make App a proper React functional component
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -41,6 +39,7 @@ const App = () => {
                   <Route path="/cas-usage/:id" element={<UseCaseDetail />} />
                   <Route path="/dossiers" element={<Folders />} />
                   <Route path="/entreprises" element={<Companies />} />
+                  <Route path="/entreprises/:id" element={<CompanyView />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/donnees" element={<DataTable />} />
                   <Route path="/parametres" element={<Settings />} />
