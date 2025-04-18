@@ -44,7 +44,10 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
 
   // Save to localStorage when companies change
   useEffect(() => {
-    localStorage.setItem(COMPANIES_STORAGE_KEY, JSON.stringify(companies));
+    if (companies) {
+      localStorage.setItem(COMPANIES_STORAGE_KEY, JSON.stringify(companies));
+      console.log('Companies saved to localStorage:', companies);
+    }
   }, [companies]);
 
   // Save active company
@@ -71,6 +74,7 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
     };
     
     setCompanies(prev => [...prev, newCompany]);
+    console.log('Adding company:', newCompany);
     toast.success(`Entreprise "${companyData.name}" ajoutée`);
     return newCompany;
   }, []);
