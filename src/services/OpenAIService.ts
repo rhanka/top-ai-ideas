@@ -5,18 +5,35 @@ import { UseCaseListGenerationService } from "./generation/UseCaseListGeneration
 import { UseCaseDetailGenerationService } from "./generation/UseCaseDetailGenerationService";
 import { BaseApiService } from "./api/BaseApiService";
 import { toast } from "sonner";
+import { RequestQueueService } from "./queue/RequestQueueService";
 
 export class OpenAIService extends BaseApiService {
   private folderService: FolderGenerationService;
   private listService: UseCaseListGenerationService;
   private detailService: UseCaseDetailGenerationService;
-  // We remove the redundant toastId declaration since it's already in BaseApiService
+  private requestQueue: RequestQueueService<any>;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, concurrency: number = 5) {
     super(apiKey);
     this.folderService = new FolderGenerationService(apiKey);
     this.listService = new UseCaseListGenerationService(apiKey);
     this.detailService = new UseCaseDetailGenerationService(apiKey);
+    // Initialize the request queue with the specified concurrency
+    this.requestQueue = new RequestQueueService<any>(concurrency);
+  }
+
+  // Update concurrency setting
+  setConcurrency(concurrency: number): void {
+    this.requestQueue.setConcurrency(concurrency);
+  }
+
+  // Get queue stats
+  getQueueStats() {
+    return {
+      waiting: this.requestQueue.getQueueLength(),
+      running: this.requestQueue.getRunningCount(),
+      total: this.requestQueue.getTotalCount()
+    };
   }
 
   async generateFolderNameAndDescription(
@@ -45,7 +62,45 @@ export class OpenAIService extends BaseApiService {
     model: string,
     company?: Company
   ): Promise<UseCase> {
-    return this.detailService.generateUseCaseDetail(useCase, userInput, matrixConfig, prompt, model, company);
+    return new Promise((resolve, reject) => {
+      // Create task for the queue
+      this.requestQueue.enqueue({
+        id: `use-case-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        execute: () => this.detailService.generateUseCaseDetail(
+          useCase, userInput, matrixConfig, prompt, model, company
+        ),
+        onStart: () => {
+          toast.loading(`Génération de "${useCase}"...`, {
+            id: `toast-${useCase}`,
+            description: "En cours de traitement"
+          });
+        },
+        onSuccess: (result) => {
+          toast.success(`Cas d'usage généré`, {
+            id: `toast-${useCase}`,
+            description: `"${useCase}" complété avec succès`
+          });
+          resolve(result);
+        },
+        onError: (error) => {
+          toast.error(`Échec de génération`, {
+            id: `toast-${useCase}`,
+            description: `Erreur pour "${useCase}": ${error.message}`
+          });
+          reject(error);
+        }
+      });
+      
+      // Display queue status if there are items waiting
+      const stats = this.getQueueStats();
+      if (stats.waiting > 0) {
+        toast.info(`File d'attente`, {
+          description: `${stats.running} en cours, ${stats.waiting} en attente`,
+          id: "queue-status",
+          duration: 3000
+        });
+      }
+    });
   }
 
   async makeApiRequest(options: {

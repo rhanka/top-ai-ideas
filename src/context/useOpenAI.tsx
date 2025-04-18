@@ -8,6 +8,8 @@ import {
   USE_CASE_LIST_PROMPT, 
   USE_CASE_DETAIL_PROMPT, 
   FOLDER_NAME_PROMPT,
+  OPENAI_CONCURRENCY,
+  DEFAULT_CONCURRENCY,
   DEFAULT_USE_CASE_LIST_PROMPT, 
   DEFAULT_USE_CASE_DETAIL_PROMPT,
   DEFAULT_FOLDER_NAME_PROMPT,
@@ -84,6 +86,10 @@ export const useOpenAI = (
       });
       return false;
     }
+    
+    // Get concurrency setting from localStorage or use default
+    const concurrencySetting = localStorage.getItem(OPENAI_CONCURRENCY);
+    const concurrency = concurrencySetting ? parseInt(concurrencySetting, 10) : DEFAULT_CONCURRENCY;
 
     // Get prompts from localStorage or use defaults
     const listPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT) || DEFAULT_USE_CASE_LIST_PROMPT;
@@ -96,7 +102,7 @@ export const useOpenAI = (
     // Récupérer l'entreprise actuelle si elle existe
     const currentCompany = getCurrentCompany();
     
-    const openai = new OpenAIService(apiKey);
+    const openai = new OpenAIService(apiKey, concurrency);
     setIsGenerating(true);
     
     try {
@@ -130,7 +136,8 @@ export const useOpenAI = (
       // Step 2: For each use case title, generate detailed use case
       let successCount = 0;
       
-      for (const title of useCaseTitles) {
+      // Create an array of promises for parallel execution
+      const useCasePromises = useCaseTitles.map(async (title) => {
         try {
           const useCaseDetail = await openai.generateUseCaseDetail(
             title,
@@ -153,12 +160,16 @@ export const useOpenAI = (
           // Calculate scores for the use case
           const scoredUseCase = calcInitialScore(useCaseWithId, matrixConfig);
           addUseCase(scoredUseCase);
-          successCount++;
-          
+          return true;
         } catch (error) {
           console.error(`Error generating details for "${title}":`, error);
+          return false;
         }
-      }
+      });
+      
+      // Wait for all the use case generation to complete
+      const results = await Promise.all(useCasePromises);
+      successCount = results.filter(Boolean).length;
 
       // Finalize the generation process
       if (successCount > 0) {

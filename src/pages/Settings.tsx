@@ -4,12 +4,15 @@ import { useToast } from "@/hooks/use-toast";
 import APIKeyCard from "@/components/Settings/APIKeyCard";
 import PromptCard from "@/components/Settings/PromptCard";
 import ActionButtons from "@/components/Settings/ActionButtons";
+import ConcurrencyCard from "@/components/Settings/ConcurrencyCard";
 import { 
   OPENAI_API_KEY, 
   USE_CASE_LIST_PROMPT, 
   USE_CASE_DETAIL_PROMPT, 
   FOLDER_NAME_PROMPT,
   COMPANY_INFO_PROMPT,
+  OPENAI_CONCURRENCY,
+  DEFAULT_CONCURRENCY,
   USE_CASE_LIST_MODEL,
   USE_CASE_DETAIL_MODEL,
   FOLDER_NAME_MODEL,
@@ -30,6 +33,7 @@ const Settings: React.FC = () => {
   const [useCaseDetailPrompt, setUseCaseDetailPrompt] = useState<string>(DEFAULT_USE_CASE_DETAIL_PROMPT);
   const [folderNamePrompt, setFolderNamePrompt] = useState<string>(DEFAULT_FOLDER_NAME_PROMPT);
   const [companyInfoPrompt, setCompanyInfoPrompt] = useState<string>(DEFAULT_COMPANY_INFO_PROMPT);
+  const [concurrency, setConcurrency] = useState<number>(DEFAULT_CONCURRENCY);
   
   // Model selection states
   const [useCaseListModel, setUseCaseListModel] = useState<string>(DEFAULT_LIST_MODEL);
@@ -47,6 +51,9 @@ const Settings: React.FC = () => {
     const savedDetailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT);
     const savedFolderNamePrompt = localStorage.getItem(FOLDER_NAME_PROMPT);
     const savedCompanyInfoPrompt = localStorage.getItem(COMPANY_INFO_PROMPT);
+    
+    // Load saved concurrency setting
+    const savedConcurrency = localStorage.getItem(OPENAI_CONCURRENCY);
     
     // Load saved model selections
     const savedListModel = localStorage.getItem(USE_CASE_LIST_MODEL);
@@ -73,6 +80,11 @@ const Settings: React.FC = () => {
     
     if (savedCompanyInfoPrompt) {
       setCompanyInfoPrompt(savedCompanyInfoPrompt);
+    }
+    
+    // Set concurrency from localStorage or use default
+    if (savedConcurrency) {
+      setConcurrency(parseInt(savedConcurrency, 10));
     }
     
     // Set model selections from localStorage or use defaults
@@ -119,6 +131,9 @@ const Settings: React.FC = () => {
     localStorage.setItem(FOLDER_NAME_PROMPT, folderNamePrompt);
     localStorage.setItem(COMPANY_INFO_PROMPT, companyInfoPrompt);
     
+    // Save concurrency setting
+    localStorage.setItem(OPENAI_CONCURRENCY, concurrency.toString());
+    
     // Save model selections
     localStorage.setItem(USE_CASE_LIST_MODEL, useCaseListModel);
     localStorage.setItem(USE_CASE_DETAIL_MODEL, useCaseDetailModel);
@@ -139,6 +154,7 @@ const Settings: React.FC = () => {
     setUseCaseDetailPrompt(DEFAULT_USE_CASE_DETAIL_PROMPT);
     setFolderNamePrompt(DEFAULT_FOLDER_NAME_PROMPT);
     setCompanyInfoPrompt(DEFAULT_COMPANY_INFO_PROMPT);
+    setConcurrency(DEFAULT_CONCURRENCY);
     
     // Reset models to defaults
     setUseCaseListModel(DEFAULT_LIST_MODEL);
@@ -163,6 +179,11 @@ const Settings: React.FC = () => {
         saved={saved}
         setSaved={setSaved}
         handleSave={handleSave}
+      />
+      
+      <ConcurrencyCard
+        concurrency={concurrency}
+        setConcurrency={setConcurrency}
       />
       
       <PromptCard
