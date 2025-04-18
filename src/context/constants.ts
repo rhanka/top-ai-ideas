@@ -7,6 +7,7 @@ export const FOLDER_NAME_PROMPT = "folder_name_prompt";
 export const COMPANY_INFO_PROMPT = "company_info_prompt"; // Nouveau prompt pour les infos entreprises
 export const FOLDERS_STORAGE_KEY = "ai_folders";
 export const CURRENT_FOLDER_ID = "current_folder_id";
+export const PARALLEL_REQUESTS_LIMIT = "parallel_requests_limit";
 
 // Model selection localStorage keys
 export const USE_CASE_LIST_MODEL = "use_case_list_model";
@@ -19,6 +20,7 @@ export const DEFAULT_LIST_MODEL = "gpt-4o-mini";
 export const DEFAULT_DETAIL_MODEL = "gpt-4o-mini";
 export const DEFAULT_FOLDER_MODEL = "gpt-4o-mini";
 export const DEFAULT_COMPANY_INFO_MODEL = "gpt-4o"; // Modèle par défaut pour infos entreprises
+export const DEFAULT_PARALLEL_REQUESTS = 5; // Nombre par défaut de requêtes parallèles
 
 // Available models
 export const OPENAI_MODELS = [
@@ -132,3 +134,4 @@ Retournez les informations UNIQUEMENT au format JSON suivant:
   "objectives": "Objectifs stratégiques connus de l'entreprise",
   "technologies": "Technologies ou systèmes d'information déjà utilisés"
 }`;
+

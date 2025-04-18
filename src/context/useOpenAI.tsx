@@ -16,7 +16,9 @@ import {
   FOLDER_NAME_MODEL,
   DEFAULT_LIST_MODEL,
   DEFAULT_DETAIL_MODEL,
-  DEFAULT_FOLDER_MODEL
+  DEFAULT_FOLDER_MODEL,
+  PARALLEL_REQUESTS_LIMIT,
+  DEFAULT_PARALLEL_REQUESTS
 } from './constants';
 import { calcInitialScore } from './useCaseUtils';
 import { v4 as uuidv4 } from 'uuid';
@@ -93,10 +95,13 @@ export const useOpenAI = (
     const listModel = localStorage.getItem(USE_CASE_LIST_MODEL) || DEFAULT_LIST_MODEL;
     const detailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL) || DEFAULT_DETAIL_MODEL;
 
+    // Get concurrency limit from localStorage or use default
+    const concurrencyLimit = parseInt(localStorage.getItem(PARALLEL_REQUESTS_LIMIT) || String(DEFAULT_PARALLEL_REQUESTS));
+
     // Récupérer l'entreprise actuelle si elle existe
     const currentCompany = getCurrentCompany();
     
-    const openai = new OpenAIService(apiKey);
+    const openai = new OpenAIService(apiKey, concurrencyLimit);
     setIsGenerating(true);
     
     try {
@@ -129,8 +134,7 @@ export const useOpenAI = (
 
       // Step 2: For each use case title, generate detailed use case
       let successCount = 0;
-      
-      for (const title of useCaseTitles) {
+      const detailPromises = useCaseTitles.map(async (title) => {
         try {
           const useCaseDetail = await openai.generateUseCaseDetail(
             title,
@@ -155,10 +159,15 @@ export const useOpenAI = (
           addUseCase(scoredUseCase);
           successCount++;
           
+          return true;
         } catch (error) {
           console.error(`Error generating details for "${title}":`, error);
+          return false;
         }
-      }
+      });
+      
+      // Attendre que toutes les générations soient terminées
+      await Promise.all(detailPromises);
 
       // Finalize the generation process
       if (successCount > 0) {
