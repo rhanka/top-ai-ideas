@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -15,7 +16,7 @@ import {
   DialogDescription,
   DialogClose 
 } from "@/components/ui/dialog";
-import { PlusCircle, Edit, Folder, Trash2, Calendar, File, Building2 } from "lucide-react";
+import { PlusCircle, Edit, Folder, Trash2, Calendar, File, Building2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Folder as FolderType } from "@/types";
 import {
@@ -28,8 +29,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Folders: React.FC = () => {
+  const navigate = useNavigate();
   const { 
     folders, 
     addFolder, 
@@ -105,10 +114,19 @@ const Folders: React.FC = () => {
     });
   };
   
-  const getCompanyName = () => {
-    if (!currentCompanyId) return null;
-    const company = companies.find(c => c.id === currentCompanyId);
+  const getCompanyName = (companyId?: string) => {
+    if (!companyId) return null;
+    const company = companies.find(c => c.id === companyId);
     return company ? company.name : null;
+  };
+  
+  const handleCompanyChange = (companyId: string | null) => {
+    if (editingFolder) {
+      setEditingFolder({
+        ...editingFolder,
+        companyId: companyId || undefined
+      });
+    }
   };
   
   return (
@@ -119,7 +137,7 @@ const Folders: React.FC = () => {
           {currentCompanyId && (
             <div className="flex items-center text-gray-600">
               <Building2 className="h-4 w-4 mr-2" />
-              <span>Entreprise active: {getCompanyName()}</span>
+              <span>Entreprise active: {getCompanyName(currentCompanyId)}</span>
             </div>
           )}
         </div>
@@ -198,10 +216,10 @@ const Folders: React.FC = () => {
                       ? formatDate(folder.createdAt)
                       : formatDate(new Date(folder.createdAt))}
                   </div>
-                  {currentCompanyId && (
+                  {folder.companyId && (
                     <div className="flex items-center text-xs">
                       <Building2 className="h-3 w-3 mr-1" />
-                      {getCompanyName()}
+                      {getCompanyName(folder.companyId)}
                     </div>
                   )}
                 </CardDescription>
@@ -269,6 +287,36 @@ const Folders: React.FC = () => {
                   onChange={(e) => setEditingFolder({...editingFolder, description: e.target.value})}
                   rows={4}
                 />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="company" className="text-sm font-medium">Entreprise associée</label>
+                <div className="flex items-center space-x-2">
+                  <Select
+                    value={editingFolder.companyId}
+                    onValueChange={(value) => handleCompanyChange(value || null)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Sélectionner une entreprise" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {companies.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {editingFolder.companyId && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleCompanyChange(null)}
+                      className="text-red-500"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           )}

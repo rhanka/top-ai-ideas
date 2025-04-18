@@ -53,6 +53,7 @@ export const useFolderOperations = ({ onFolderChange, onMatrixConfigChange }: Us
   
   // Add a new folder
   const addFolder = (name: string, description: string): Folder => {
+    // Create new folder WITHOUT inheriting the current company ID
     const newFolder = createFolder(name, description, defaultMatrixConfig);
     setFolders(prev => [...prev, newFolder]);
     return newFolder;
