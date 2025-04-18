@@ -142,7 +142,7 @@ export const useOpenAI = (
           );
           
           // Ajouter un id unique en plus de celui généré par OpenAI
-          const useCaseWithId: UseCase = {
+          const useCaseWithId = {
             ...useCaseDetail,
             id: uuidv4(),
             // Important: Utiliser le nouveau dossier ID si disponible
