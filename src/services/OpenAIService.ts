@@ -10,6 +10,7 @@ export class OpenAIService extends BaseApiService {
   private folderService: FolderGenerationService;
   private listService: UseCaseListGenerationService;
   private detailService: UseCaseDetailGenerationService;
+  private toastId?: string;
 
   constructor(apiKey: string) {
     super(apiKey);
@@ -58,13 +59,24 @@ export class OpenAIService extends BaseApiService {
     temperature?: number;
     max_tokens?: number;
   }) {
-    // Changed endpoint from chat/completions to responses
+    // Using responses endpoint for newer API
     const endpoint = "https://api.openai.com/v1/responses";
     
     // Convert messages to input format if needed
     if (options.messages && !options.input) {
       options.input = { messages: options.messages };
       delete options.messages;
+    }
+    
+    // Convert functions to tools if needed (for compatibility)
+    if (options.functions && !options.tools) {
+      options.tools = options.functions;
+      delete options.functions;
+      
+      if (options.function_call && !options.tool_choice) {
+        options.tool_choice = options.function_call;
+        delete options.function_call;
+      }
     }
 
     try {
