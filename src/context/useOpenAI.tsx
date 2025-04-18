@@ -18,7 +18,9 @@ import {
   DEFAULT_DETAIL_MODEL,
   DEFAULT_FOLDER_MODEL,
   PARALLEL_REQUESTS_LIMIT,
-  DEFAULT_PARALLEL_REQUESTS
+  DEFAULT_PARALLEL_REQUESTS,
+  RETRY_ATTEMPTS_LIMIT,
+  DEFAULT_RETRY_ATTEMPTS
 } from './constants';
 import { calcInitialScore } from './useCaseUtils';
 import { v4 as uuidv4 } from 'uuid';
@@ -97,12 +99,18 @@ export const useOpenAI = (
 
     // Get concurrency limit from localStorage or use default
     const concurrencyLimit = parseInt(localStorage.getItem(PARALLEL_REQUESTS_LIMIT) || String(DEFAULT_PARALLEL_REQUESTS));
+    
+    // Get retry attempts from localStorage or use default
+    const retryAttempts = parseInt(localStorage.getItem(RETRY_ATTEMPTS_LIMIT) || String(DEFAULT_RETRY_ATTEMPTS));
 
     // Récupérer l'entreprise actuelle si elle existe
     const currentCompany = getCurrentCompany();
     
-    const openai = new OpenAIService(apiKey, concurrencyLimit);
+    const openai = new OpenAIService(apiKey, concurrencyLimit, retryAttempts);
     setIsGenerating(true);
+    
+    // Réinitialiser les compteurs de l'OpenAIService
+    openai.resetCounters();
     
     try {
       // Si createNewFolder est true, générer un nouveau dossier d'abord
@@ -169,14 +177,9 @@ export const useOpenAI = (
       // Attendre que toutes les générations soient terminées
       await Promise.all(detailPromises);
 
-      // Finalize the generation process
-      if (successCount > 0) {
-        openai.finalizeGeneration(true, successCount);
-        return true;
-      } else {
-        openai.finalizeGeneration(false, 0);
-        return false;
-      }
+      // On n'a plus besoin d'appeler finalizeGeneration car le service s'en charge
+      // grâce au mécanisme de suivi des tâches complétées et échouées
+      return true;
     } catch (error) {
       console.error("Error in use case generation:", error);
       toast.error("Erreur lors de la génération des cas d'usage", {

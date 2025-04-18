@@ -3,19 +3,23 @@ export interface QueueTask<T> {
   id: string;
   execute: () => Promise<T>;
   name: string;
+  retryCount?: number;
 }
 
 export class ParallelQueueService<T> {
   private queue: QueueTask<T>[] = [];
   private activeCount: number = 0;
   private concurrencyLimit: number;
+  private maxRetryAttempts: number;
   private onStart?: (task: QueueTask<T>) => void;
   private onComplete?: (task: QueueTask<T>, result: T) => void;
   private onError?: (task: QueueTask<T>, error: Error) => void;
   private onQueueUpdate?: (queueLength: number, activeCount: number) => void;
+  private failedTasks: QueueTask<T>[] = [];
 
-  constructor(concurrencyLimit: number = 5) {
+  constructor(concurrencyLimit: number = 5, maxRetryAttempts: number = 3) {
     this.concurrencyLimit = concurrencyLimit;
+    this.maxRetryAttempts = maxRetryAttempts;
   }
 
   setEventHandlers({
@@ -42,8 +46,18 @@ export class ParallelQueueService<T> {
     this.processQueue();
     return this;
   }
+  
+  setMaxRetryAttempts(attempts: number) {
+    this.maxRetryAttempts = attempts;
+    return this;
+  }
 
   enqueue(task: QueueTask<T>): void {
+    // Initialize retry count if not set
+    if (task.retryCount === undefined) {
+      task.retryCount = 0;
+    }
+    
     this.queue.push(task);
     
     if (this.onQueueUpdate) {
@@ -88,9 +102,21 @@ export class ParallelQueueService<T> {
       
       return result;
     } catch (error) {
-      if (this.onError) {
-        this.onError(task, error as Error);
+      // Check if we should retry
+      if (task.retryCount !== undefined && task.retryCount < this.maxRetryAttempts) {
+        console.log(`Retrying task "${task.name}" (Attempt ${task.retryCount + 1}/${this.maxRetryAttempts})`);
+        task.retryCount++;
+        // Re-queue the task
+        this.enqueue(task);
+      } else {
+        // Max retries reached, mark as failed
+        this.failedTasks.push(task);
+        
+        if (this.onError) {
+          this.onError(task, error as Error);
+        }
       }
+      
       throw error;
     } finally {
       this.activeCount--;
@@ -114,5 +140,13 @@ export class ParallelQueueService<T> {
 
   getTotalCount(): number {
     return this.queue.length + this.activeCount;
+  }
+  
+  getFailedTasks(): QueueTask<T>[] {
+    return this.failedTasks;
+  }
+  
+  clearFailedTasks(): void {
+    this.failedTasks = [];
   }
 }

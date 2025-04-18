@@ -14,15 +14,18 @@ export class OpenAIService extends BaseApiService {
   private detailService: UseCaseDetailGenerationService;
   private requestQueue: ParallelQueueService<any>;
   private queueToastId?: string;
+  private successCount: number = 0;
+  private failureCount: number = 0;
+  private totalTasks: number = 0;
 
-  constructor(apiKey: string, concurrencyLimit: number = 5) {
+  constructor(apiKey: string, concurrencyLimit: number = 5, maxRetryAttempts: number = 3) {
     super(apiKey);
     this.folderService = new FolderGenerationService(apiKey);
     this.listService = new UseCaseListGenerationService(apiKey);
     this.detailService = new UseCaseDetailGenerationService(apiKey);
     
     // Initialiser la file d'attente avec le nombre de requêtes parallèles
-    this.requestQueue = new ParallelQueueService(concurrencyLimit);
+    this.requestQueue = new ParallelQueueService(concurrencyLimit, maxRetryAttempts);
     
     // Configurer les gestionnaires d'événements pour la file d'attente
     this.requestQueue.setEventHandlers({
@@ -38,6 +41,18 @@ export class OpenAIService extends BaseApiService {
     this.requestQueue.setConcurrencyLimit(limit);
   }
   
+  // Mettre à jour le nombre maximum de tentatives
+  setMaxRetryAttempts(attempts: number) {
+    this.requestQueue.setMaxRetryAttempts(attempts);
+  }
+  
+  // Réinitialiser les compteurs de succès et d'échec
+  resetCounters() {
+    this.successCount = 0;
+    this.failureCount = 0;
+    this.totalTasks = 0;
+  }
+  
   // Gérer le démarrage d'une tâche
   private handleTaskStart(task: QueueTask<any>) {
     console.log(`Démarrage de la tâche: ${task.name}`);
@@ -46,20 +61,68 @@ export class OpenAIService extends BaseApiService {
   // Gérer la fin d'une tâche
   private handleTaskComplete(task: QueueTask<any>, result: any) {
     console.log(`Tâche terminée: ${task.name}`);
+    this.successCount++;
+    
+    // Vérifier si toutes les tâches sont terminées pour afficher un résumé
+    this.checkForCompletion();
   }
   
   // Gérer une erreur de tâche
   private handleTaskError(task: QueueTask<any>, error: Error) {
     console.error(`Erreur dans la tâche ${task.name}:`, error);
+    this.failureCount++;
+    
     toast.error(`Erreur: ${task.name}`, {
       description: error.message,
       duration: 5000
     });
+    
+    // Vérifier si toutes les tâches sont terminées pour afficher un résumé
+    this.checkForCompletion();
+  }
+  
+  // Vérifier si toutes les tâches sont terminées pour afficher un résumé
+  private checkForCompletion() {
+    const completedTasks = this.successCount + this.failureCount;
+    
+    if (completedTasks === this.totalTasks && this.totalTasks > 0) {
+      // Toutes les tâches sont terminées, afficher un résumé
+      this.showCompletionSummary();
+    }
+  }
+  
+  // Afficher un résumé de la génération
+  private showCompletionSummary() {
+    // Effacer le toast de la file d'attente
+    if (this.queueToastId) {
+      toast.dismiss(this.queueToastId);
+      this.queueToastId = undefined;
+    }
+    
+    if (this.failureCount === 0) {
+      // Tous les cas ont été générés avec succès
+      toast.success(`Génération terminée avec succès`, {
+        description: `${this.successCount} cas d'usage générés.`,
+        duration: 5000
+      });
+    } else if (this.successCount > 0) {
+      // Certains cas ont été générés, mais d'autres ont échoué
+      toast.warning(`Génération partiellement terminée`, {
+        description: `${this.successCount} cas générés, ${this.failureCount} cas ont échoué.`,
+        duration: 7000
+      });
+    } else {
+      // Tous les cas ont échoué
+      toast.error(`Échec de la génération`, {
+        description: `Aucun cas d'usage n'a pu être généré. ${this.failureCount} tentatives échouées.`,
+        duration: 7000
+      });
+    }
   }
   
   // Mettre à jour le statut de la file d'attente
   private updateQueueStatus(queueLength: number, activeCount: number) {
-    const totalTasks = queueLength + activeCount;
+    const totalTasks = queueLength + activeCount + this.successCount + this.failureCount;
     
     if (totalTasks === 0) {
       // Si plus de tâches, supprimer le toast de statut
@@ -70,10 +133,23 @@ export class OpenAIService extends BaseApiService {
       return;
     }
     
+    // Mise à jour du nombre total de tâches si c'est plus grand
+    if (totalTasks > this.totalTasks) {
+      this.totalTasks = totalTasks;
+    }
+    
+    // Calculer la progression
+    const progress = ((this.successCount + this.failureCount) / this.totalTasks) * 100;
+    const progressText = Math.round(progress) + '%';
+    
     // Créer ou mettre à jour le toast de statut
-    const toastMessage = `Génération en cours`;
+    const toastMessage = `Génération en cours (${progressText})`;
     const description = `${activeCount} requête${activeCount > 1 ? 's' : ''} active${activeCount > 1 ? 's' : ''}${
       queueLength > 0 ? `, ${queueLength} en attente` : ''
+    }${
+      this.successCount > 0 ? `, ${this.successCount} réussie${this.successCount > 1 ? 's' : ''}` : ''
+    }${
+      this.failureCount > 0 ? `, ${this.failureCount} échec${this.failureCount > 1 ? 's' : ''}` : ''
     }`;
     
     if (this.queueToastId) {
@@ -86,7 +162,7 @@ export class OpenAIService extends BaseApiService {
       this.queueToastId = toast.loading(toastMessage, {
         description: description,
         duration: Infinity
-      }) as string;
+      });
     }
   }
 
@@ -244,28 +320,11 @@ export class OpenAIService extends BaseApiService {
     });
   }
 
-  finalizeGeneration(success: boolean, count: number) {
-    if (success) {
-      toast.success(`Génération terminée`, { 
-        description: `${count} cas d'usage générés avec succès !`,
-        id: this.toastId,
-        duration: 5000 // Close after 5 seconds
-      });
-    } else {
-      toast.error("Échec de la génération", { 
-        description: "Une erreur est survenue lors de la génération",
-        id: this.toastId,
-        duration: 5000 // Close after 5 seconds
-      });
-    }
+  finalizeGeneration() {
+    // Cette méthode n'est plus nécessaire car nous avons maintenant showCompletionSummary
+    // qui gère l'affichage du résumé de génération
     
-    // Reset the toastId to ensure new toasts can be created
-    this.toastId = undefined;
-    
-    // Effacer également le toast de la file d'attente s'il existe
-    if (this.queueToastId) {
-      toast.dismiss(this.queueToastId);
-      this.queueToastId = undefined;
-    }
+    // Réinitialiser les compteurs pour les prochaines opérations
+    this.resetCounters();
   }
 }
