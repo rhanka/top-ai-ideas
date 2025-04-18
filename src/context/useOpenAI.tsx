@@ -1,93 +1,181 @@
-import { useState } from "react";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
-import { apiKeySettings } from "./constants";
-import OpenAIService from "../services/OpenAIService";
-import { Company } from "@/types";
 
-// On utilise maintenant OpenAIService importé par défaut
-import { MatrixConfig, UseCase, Folder } from "@/types";
-
-interface OpenAIHook {
-  isGenerating: boolean;
-  generateUseCases: (input: string, createNewFolder: boolean) => Promise<boolean>;
-}
+import { useState } from 'react';
+import { UseCase, MatrixConfig, Folder, Company } from '../types';
+import { toast } from 'sonner';
+import { OpenAIService } from '../services/OpenAIService';
+import { 
+  OPENAI_API_KEY, 
+  USE_CASE_LIST_PROMPT, 
+  USE_CASE_DETAIL_PROMPT, 
+  FOLDER_NAME_PROMPT,
+  DEFAULT_USE_CASE_LIST_PROMPT, 
+  DEFAULT_USE_CASE_DETAIL_PROMPT,
+  DEFAULT_FOLDER_NAME_PROMPT,
+  USE_CASE_LIST_MODEL,
+  USE_CASE_DETAIL_MODEL,
+  FOLDER_NAME_MODEL,
+  DEFAULT_LIST_MODEL,
+  DEFAULT_DETAIL_MODEL,
+  DEFAULT_FOLDER_MODEL
+} from './constants';
+import { calcInitialScore } from './useCaseUtils';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useOpenAI = (
-  matrixConfig: MatrixConfig,
-  addUseCase: (useCase: UseCase) => void,
+  matrixConfig: MatrixConfig, 
+  addUseCase: (useCase: UseCase) => void, 
   addFolder: (name: string, description: string) => Folder,
   setCurrentFolder: (folderId: string) => void,
   getCurrentCompany: () => Company | undefined
-): OpenAIHook => {
+) => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [toastId, setToastId] = useState<string | undefined>(undefined);
 
-  const generateUseCases = async (input: string, createNewFolder: boolean = true): Promise<boolean> => {
-    setIsGenerating(true);
-    const newToastId = uuidv4();
-    setToastId(newToastId);
-
+  // Generate folder name and description using OpenAI
+  const generateFolderNameAndDescription = async (
+    currentInput: string, 
+    openai: OpenAIService
+  ): Promise<Folder | null> => {
     try {
-      const apiKey = localStorage.getItem(apiKeySettings.apiKey) || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
-      const model = localStorage.getItem(apiKeySettings.model) || "gpt-3.5-turbo";
-      const useCasePrompt = localStorage.getItem(apiKeySettings.useCasePrompt) || process.env.NEXT_PUBLIC_OPENAI_USE_CASE_PROMPT;
-      const folderPrompt = localStorage.getItem(apiKeySettings.folderPrompt) || process.env.NEXT_PUBLIC_OPENAI_FOLDER_PROMPT;
+      // Get folder generation prompt from localStorage or use default
+      const folderPrompt = localStorage.getItem(FOLDER_NAME_PROMPT) || DEFAULT_FOLDER_NAME_PROMPT;
+      // Get the model from localStorage or use default
+      const model = localStorage.getItem(FOLDER_NAME_MODEL) || DEFAULT_FOLDER_MODEL;
+      
+      // Get current company if available
+      const currentCompany = getCurrentCompany();
+      
+      // Generate folder name and description
+      const { name, description } = await openai.generateFolderNameAndDescription(
+        currentInput, 
+        folderPrompt, 
+        model,
+        currentCompany
+      );
+      
+      // Create the new folder
+      const newFolder = addFolder(name, description);
+      
+      // Set new folder as active
+      setCurrentFolder(newFolder.id);
+      
+      return newFolder;
+    } catch (error) {
+      console.error("Error generating folder name:", error);
+      return null;
+    }
+  };
 
-      if (!apiKey) {
-        throw new Error("Clé API OpenAI non configurée. Veuillez configurer votre clé API dans les paramètres.");
-      }
+  // Generate new use cases based on user input using OpenAI
+  const generateUseCases = async (currentInput: string, createNewFolder: boolean): Promise<boolean> => {
+    if (currentInput.trim().length === 0) {
+      toast.error("Veuillez saisir une description de votre activité");
+      return false;
+    }
 
-      const openAIService = new OpenAIService(apiKey);
+    // Get OpenAI API key from localStorage
+    const apiKey = localStorage.getItem(OPENAI_API_KEY);
+    if (!apiKey) {
+      toast.error("Clé API OpenAI non configurée", {
+        description: "Veuillez configurer votre clé API dans les paramètres",
+        action: {
+          label: "Paramètres",
+          onClick: () => window.location.href = "/parametres",
+        },
+      });
+      return false;
+    }
 
-      // 1. Generate folder name and description
-      let folderName = "";
-      let folderDescription = "";
+    // Get prompts from localStorage or use defaults
+    const listPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT) || DEFAULT_USE_CASE_LIST_PROMPT;
+    const detailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT) || DEFAULT_USE_CASE_DETAIL_PROMPT;
+    
+    // Get models from localStorage or use defaults
+    const listModel = localStorage.getItem(USE_CASE_LIST_MODEL) || DEFAULT_LIST_MODEL;
+    const detailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL) || DEFAULT_DETAIL_MODEL;
 
+    // Récupérer l'entreprise actuelle si elle existe
+    const currentCompany = getCurrentCompany();
+    
+    const openai = new OpenAIService(apiKey);
+    setIsGenerating(true);
+    
+    try {
+      // Si createNewFolder est true, générer un nouveau dossier d'abord
+      let newFolderId: string | null = null;
+      
       if (createNewFolder) {
-        const company = getCurrentCompany();
-        const folderInfo = await openAIService.generateFolderNameAndDescription(input, folderPrompt || "", model, company);
-        folderName = folderInfo.name;
-        folderDescription = folderInfo.description;
-
-        // 2. Create folder
-        const newFolder = addFolder(folderName, folderDescription);
-        setCurrentFolder(newFolder.id);
+        const newFolder = await generateFolderNameAndDescription(currentInput, openai);
+        if (newFolder) {
+          newFolderId = newFolder.id;
+          // Assurons-nous que le dossier est bien défini comme courant
+          setCurrentFolder(newFolder.id);
+        }
+      }
+      
+      // Step 1: Generate list of use case titles
+      toast.info("Génération des cas d'usage en cours...");
+      const useCaseTitles = await openai.generateUseCaseList(
+        currentInput, 
+        listPrompt, 
+        listModel, 
+        currentCompany
+      );
+      
+      if (useCaseTitles.length === 0) {
+        toast.error("Aucun cas d'usage généré. Veuillez reformuler votre demande.");
+        setIsGenerating(false);
+        return false;
       }
 
-      // 3. Generate use case list
-      const company = getCurrentCompany();
-      const useCaseList = await openAIService.generateUseCaseList(input, useCasePrompt || "", model, company);
-
-      if (!useCaseList || useCaseList.length === 0) {
-        throw new Error("Aucun cas d'usage n'a été généré.");
-      }
-
-      // 4. Generate use case details for each use case
-      const generatedUseCases: UseCase[] = [];
-      for (const useCase of useCaseList) {
+      // Step 2: For each use case title, generate detailed use case
+      let successCount = 0;
+      
+      for (const title of useCaseTitles) {
         try {
-          const generatedUseCase = await openAIService.generateUseCaseDetail(useCase, input, matrixConfig, useCasePrompt || "", model, company);
-          generatedUseCases.push(generatedUseCase);
-          addUseCase(generatedUseCase);
-        } catch (error: any) {
-          console.error(`Failed to generate details for use case "${useCase}":`, error);
-          toast.error(`Failed to generate details for use case "${useCase}".`);
+          const useCaseDetail = await openai.generateUseCaseDetail(
+            title,
+            currentInput,
+            matrixConfig,
+            detailPrompt,
+            detailModel,
+            currentCompany
+          );
+          
+          // Ajouter un id unique en plus de celui généré par OpenAI
+          const useCaseWithId: UseCase = {
+            ...useCaseDetail,
+            id: uuidv4(),
+            // Important: Utiliser le nouveau dossier ID si disponible
+            // Si pas de nouveau dossier créé, ce champ sera vide et sera géré par handleAddUseCase
+            folderId: newFolderId || ''
+          };
+          
+          // Calculate scores for the use case
+          const scoredUseCase = calcInitialScore(useCaseWithId, matrixConfig);
+          addUseCase(scoredUseCase);
+          successCount++;
+          
+        } catch (error) {
+          console.error(`Error generating details for "${title}":`, error);
         }
       }
 
-      openAIService.finalizeGeneration(true, generatedUseCases.length);
-      return true;
-
-    } catch (error: any) {
-      console.error("Error generating use cases:", error);
-      openAIService.finalizeGeneration(false, 0);
-      toast.error(error.message || "Une erreur est survenue lors de la génération des cas d'usage.");
+      // Finalize the generation process
+      if (successCount > 0) {
+        openai.finalizeGeneration(true, successCount);
+        return true;
+      } else {
+        openai.finalizeGeneration(false, 0);
+        return false;
+      }
+    } catch (error) {
+      console.error("Error in use case generation:", error);
+      toast.error("Erreur lors de la génération des cas d'usage", {
+        description: (error as Error).message,
+      });
       return false;
-
     } finally {
       setIsGenerating(false);
-      setToastId(undefined);
     }
   };
 

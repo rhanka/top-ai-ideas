@@ -31,7 +31,6 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
           updatedAt: new Date(company.updatedAt),
         }));
         setCompanies(companiesWithDates);
-        console.log('Companies loaded from localStorage:', companiesWithDates);
       } catch (error) {
         console.error('Error parsing companies from localStorage:', error);
         setCompanies([]);
@@ -45,11 +44,10 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
 
   // Save to localStorage when companies change
   useEffect(() => {
-    // Only save to localStorage if companies is not empty and if we're not in the initial render
-    // (to avoid overwriting existing data on component mount)
-    if (companies && companies.length > 0) {
+    if (companies.length > 0) {
       localStorage.setItem(COMPANIES_STORAGE_KEY, JSON.stringify(companies));
-      console.log('Companies saved to localStorage:', companies);
+    } else {
+      localStorage.removeItem(COMPANIES_STORAGE_KEY);
     }
   }, [companies]);
 
@@ -77,7 +75,6 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
     };
     
     setCompanies(prev => [...prev, newCompany]);
-    console.log('Adding company:', newCompany);
     toast.success(`Entreprise "${companyData.name}" ajoutée`);
     return newCompany;
   }, []);

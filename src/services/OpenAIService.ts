@@ -5,8 +5,9 @@ import { UseCaseListGenerationService } from "./generation/UseCaseListGeneration
 import { UseCaseDetailGenerationService } from "./generation/UseCaseDetailGenerationService";
 import { BaseApiService } from "./api/BaseApiService";
 import { toast } from "sonner";
+import axios from 'axios';
 
-export default class OpenAIService extends BaseApiService {
+export class OpenAIService extends BaseApiService {
   private folderService: FolderGenerationService;
   private listService: UseCaseListGenerationService;
   private detailService: UseCaseDetailGenerationService;
@@ -59,50 +60,64 @@ export default class OpenAIService extends BaseApiService {
     temperature?: number;
     max_tokens?: number;
   }) {
-    // Using responses endpoint for newer API
-    const endpoint = "https://api.openai.com/v1/responses";
-    
-    // Convert messages to input format if needed
-    if (options.messages && !options.input) {
-      // When assigning messages to input, ensure it remains an array or convert to string
-      options.input = Array.isArray(options.messages) ? options.messages : JSON.stringify(options.messages);
-      delete options.messages;
-    }
-    
-    // Convert functions to tools if needed (for compatibility)
-    if (options.functions && !options.tools) {
-      options.tools = options.functions;
-      delete options.functions;
-      
-      if (options.function_call && !options.tool_choice) {
-        options.tool_choice = options.function_call;
-        delete options.function_call;
-      }
-    }
-
-    // Remove max_tokens parameter as it's not supported in the Responses API
-    if (options.max_tokens) {
-      delete options.max_tokens;
-    }
-
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
+      // Determine which endpoint to use based on parameters
+      let endpoint = 'https://api.openai.com/v1/chat/completions';
+      let requestData = { ...options };
+
+      // If input is provided directly instead of messages array, convert it
+      if (!options.messages && options.input) {
+        // For the completion endpoint with tools
+        if (options.tools) {
+          endpoint = 'https://api.openai.com/v1/chat/completions';
+          requestData.messages = [
+            {
+              role: "user",
+              content: typeof options.input === 'string' 
+                ? options.input 
+                : 'object' in options.input 
+                  ? JSON.stringify(options.input) 
+                  : options.input.content
+            }
+          ];
+          delete requestData.input;
+        } else {
+          // For the legacy completions endpoint
+          endpoint = 'https://api.openai.com/v1/completions';
+          requestData.prompt = options.input;
+          delete requestData.input;
+        }
+      }
+
+      const response = await axios.post(endpoint, requestData, {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(options),
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`
+        }
       });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`OpenAI API error (${response.status}): ${errorBody}`);
+      if (endpoint.includes('chat/completions')) {
+        if (options.tools) {
+          // Handle structured response with tools
+          return {
+            output: response.data.choices[0].message.tool_calls || 
+                   response.data.choices[0].message.content || 
+                   response.data.choices[0].message
+          };
+        } else {
+          // Handle normal chat completion response
+          return {
+            text: response.data.choices[0].message.content
+          };
+        }
+      } else {
+        // Handle legacy completion response
+        return {
+          text: response.data.choices[0].text
+        };
       }
-
-      return await response.json();
     } catch (error) {
-      console.error("OpenAI API request failed:", error);
+      console.error('Error calling OpenAI API:', error);
       throw error;
     }
   }
