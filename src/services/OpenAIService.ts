@@ -1,128 +1,84 @@
 
-import { UseCase, MatrixConfig, Company } from "../types";
-import { FolderGenerationService } from "./generation/FolderGenerationService";
-import { UseCaseListGenerationService } from "./generation/UseCaseListGenerationService";
-import { UseCaseDetailGenerationService } from "./generation/UseCaseDetailGenerationService";
-import { BaseApiService } from "./api/BaseApiService";
-import { toast } from "sonner";
+import axios from 'axios';
 
-export class OpenAIService extends BaseApiService {
-  private folderService: FolderGenerationService;
-  private listService: UseCaseListGenerationService;
-  private detailService: UseCaseDetailGenerationService;
-  // We remove the redundant toastId declaration since it's already in BaseApiService
+type OpenAIParams = {
+  model: string;
+  messages?: { role: string; content: string }[];
+  input?: string;
+  temperature?: number;
+  max_tokens?: number;
+  tools?: { type: string }[];
+  tool_choice?: string | object;
+};
+
+/**
+ * Service for interacting with the OpenAI API
+ */
+export class OpenAIService {
+  private apiKey: string;
 
   constructor(apiKey: string) {
-    super(apiKey);
-    this.folderService = new FolderGenerationService(apiKey);
-    this.listService = new UseCaseListGenerationService(apiKey);
-    this.detailService = new UseCaseDetailGenerationService(apiKey);
+    this.apiKey = apiKey;
   }
 
-  async generateFolderNameAndDescription(
-    userInput: string, 
-    prompt: string, 
-    model: string,
-    company?: Company
-  ): Promise<{ name: string; description: string }> {
-    return this.folderService.generateFolderNameAndDescription(userInput, prompt, model, company);
-  }
-
-  async generateUseCaseList(
-    userInput: string, 
-    prompt: string, 
-    model: string,
-    company?: Company
-  ): Promise<string[]> {
-    return this.listService.generateUseCaseList(userInput, prompt, model, company);
-  }
-
-  async generateUseCaseDetail(
-    useCase: string,
-    userInput: string,
-    matrixConfig: MatrixConfig,
-    prompt: string,
-    model: string,
-    company?: Company
-  ): Promise<UseCase> {
-    return this.detailService.generateUseCaseDetail(useCase, userInput, matrixConfig, prompt, model, company);
-  }
-
-  async makeApiRequest(options: {
-    model: string;
-    messages?: { role: string; content: string }[];
-    input?: { role?: string; content: string } | { messages: { role: string; content: string }[] } | string;
-    functions?: any[];
-    function_call?: any;
-    tools?: any[];
-    tool_choice?: any;
-    temperature?: number;
-    max_tokens?: number;
-  }) {
-    // Using responses endpoint for newer API
-    const endpoint = "https://api.openai.com/v1/responses";
-    
-    // Convert messages to input format if needed
-    if (options.messages && !options.input) {
-      // When assigning messages to input, ensure it remains an array or convert to string
-      options.input = Array.isArray(options.messages) ? options.messages : JSON.stringify(options.messages);
-      delete options.messages;
-    }
-    
-    // Convert functions to tools if needed (for compatibility)
-    if (options.functions && !options.tools) {
-      options.tools = options.functions;
-      delete options.functions;
-      
-      if (options.function_call && !options.tool_choice) {
-        options.tool_choice = options.function_call;
-        delete options.function_call;
-      }
-    }
-
-    // Remove max_tokens parameter as it's not supported in the Responses API
-    if (options.max_tokens) {
-      delete options.max_tokens;
-    }
-
+  /**
+   * Makes a request to the OpenAI API
+   */
+  async makeApiRequest(params: OpenAIParams) {
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(options),
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`OpenAI API error (${response.status}): ${errorBody}`);
+      // Determine which endpoint to use based on parameters
+      let endpoint = 'https://api.openai.com/v1/chat/completions';
+      let requestData: any = { ...params };
+      
+      // If input is provided directly instead of messages array, convert it
+      if (!params.messages && params.input) {
+        // For the completion endpoint with tools
+        if (params.tools) {
+          endpoint = 'https://api.openai.com/v1/chat/completions';
+          requestData.messages = [{ role: "user", content: params.input }];
+          delete requestData.input;
+        } else {
+          // For the legacy completions endpoint
+          endpoint = 'https://api.openai.com/v1/completions';
+          requestData.prompt = params.input;
+          delete requestData.input;
+        }
       }
+      
+      const response = await axios.post(
+        endpoint,
+        requestData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apiKey}`
+          }
+        }
+      );
 
-      return await response.json();
+      if (endpoint.includes('chat/completions')) {
+        if (params.tools) {
+          // Handle structured response with tools
+          return {
+            output: response.data.choices[0].message.tool_calls || 
+                   response.data.choices[0].message.content || 
+                   response.data.choices[0].message
+          };
+        } else {
+          // Handle normal chat completion response
+          return {
+            text: response.data.choices[0].message.content
+          };
+        }
+      } else {
+        // Handle legacy completion response
+        return {
+          text: response.data.choices[0].text
+        };
+      }
     } catch (error) {
-      console.error("OpenAI API request failed:", error);
+      console.error('Error calling OpenAI API:', error);
       throw error;
     }
-  }
-
-  finalizeGeneration(success: boolean, count: number) {
-    if (success) {
-      toast.success(`Génération terminée`, { 
-        description: `${count} cas d'usage générés avec succès !`,
-        id: this.toastId,
-        duration: 5000 // Close after 5 seconds
-      });
-    } else {
-      toast.error("Échec de la génération", { 
-        description: "Une erreur est survenue lors de la génération",
-        id: this.toastId,
-        duration: 5000 // Close after 5 seconds
-      });
-    }
-    
-    // Reset the toastId to ensure new toasts can be created
-    this.toastId = undefined;
   }
 }
