@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { UseCase, MatrixConfig, Folder, Company } from '../types';
+import { UseCase, MatrixConfig, Folder, Company, BusinessProcess } from '../types';
 import { toast } from 'sonner';
 import { OpenAIService } from '../services/OpenAIService';
 import { 
@@ -29,7 +30,8 @@ export const useOpenAI = (
   addUseCase: (useCase: UseCase) => void, 
   addFolder: (name: string, description: string) => Folder,
   setCurrentFolder: (folderId: string) => void,
-  getCurrentCompany: () => Company | undefined
+  getCurrentCompany: () => Company | undefined,
+  getProcessesByIds?: (ids: string[]) => BusinessProcess[]
 ) => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
@@ -90,6 +92,12 @@ export const useOpenAI = (
 
     const currentCompany = getCurrentCompany();
     
+    // Récupérer les processus liés à l'entreprise si elle est définie
+    let associatedProcesses: BusinessProcess[] = [];
+    if (currentCompany && currentCompany.businessProcesses && getProcessesByIds) {
+      associatedProcesses = getProcessesByIds(currentCompany.businessProcesses);
+    }
+    
     const openai = new OpenAIService(apiKey);
     setIsGenerating(true);
     
@@ -141,7 +149,8 @@ export const useOpenAI = (
             matrixConfig,
             detailPrompt,
             detailModel,
-            currentCompany
+            currentCompany,
+            associatedProcesses
           );
           return { ok: true, useCase: useCaseDetail };
         } catch (error) {
@@ -171,7 +180,11 @@ export const useOpenAI = (
                   const useCaseWithId = {
                     ...detailResult.useCase,
                     id: uuidv4(),
-                    folderId: newFolderId || ''
+                    folderId: newFolderId || '',
+                    companyId: currentCompany?.id,
+                    // Assurer que les processus existants sont conservés
+                    businessProcesses: detailResult.useCase.businessProcesses || 
+                                      (currentCompany?.businessProcesses || [])
                   };
                   const scoredUseCase = calcInitialScore(useCaseWithId, matrixConfig);
                   addUseCase(scoredUseCase);

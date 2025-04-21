@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Company } from '@/types';
+import { Company, IndustrySector, BusinessProcess } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,11 +18,28 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { fetchCompanyInfoByName } from '@/services/companyInfoService';
+import { useBusinessConfig } from '@/context/hooks/useBusinessConfig';
 
 // Schéma de validation pour le formulaire
 const companySchema = z.object({
   name: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères" }),
+  sectorId: z.string().min(1, { message: "Le secteur d'activité est requis" }),
   industry: z.string().min(2, { message: "Le secteur d'activité est requis" }),
   size: z.string().min(2, { message: "La taille de l'entreprise est requise" }),
   products: z.string().min(2, { message: "La description des produits/services est requise" }),
@@ -36,7 +53,7 @@ type CompanyFormValues = z.infer<typeof companySchema>;
 
 interface CompanyFormProps {
   initialData?: Company;
-  onSubmit: (data: CompanyFormValues) => void;
+  onSubmit: (data: CompanyFormValues & { businessProcesses: string[] }) => void;
   onCancel: () => void;
   isSubmitting: boolean;
 }
@@ -48,12 +65,25 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
   isSubmitting
 }) => {
   const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const { sectors, processes } = useBusinessConfig();
+  const [selectedProcesses, setSelectedProcesses] = useState<string[]>(initialData?.businessProcesses || []);
   
   // Initialiser le formulaire avec les données existantes ou des valeurs par défaut
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
-    defaultValues: initialData || {
+    defaultValues: initialData ? {
+      name: initialData.name,
+      sectorId: initialData.sectorId || sectors[0]?.id || '',
+      industry: initialData.industry,
+      size: initialData.size,
+      products: initialData.products,
+      processes: initialData.processes,
+      challenges: initialData.challenges,
+      objectives: initialData.objectives,
+      technologies: initialData.technologies,
+    } : {
       name: '',
+      sectorId: sectors[0]?.id || '',
       industry: '',
       size: '',
       products: '',
@@ -64,19 +94,36 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     },
   });
 
+  const handleFormSubmit = (data: CompanyFormValues) => {
+    onSubmit({ ...data, businessProcesses: selectedProcesses });
+  };
+
   // Fonction pour auto-remplir les détails de l'entreprise
   const handleAutoFill = async () => {
     const companyName = form.getValues("name");
+    const sectorId = form.getValues("sectorId");
     
     if (!companyName || companyName.length < 2) {
       toast.error("Veuillez d'abord saisir un nom d'entreprise valide");
+      return;
+    }
+
+    if (!sectorId) {
+      toast.error("Veuillez sélectionner un secteur d'activité");
+      return;
+    }
+
+    // Récupérer le nom du secteur pour le prompt
+    const sector = sectors.find(s => s.id === sectorId);
+    if (!sector) {
+      toast.error("Secteur d'activité invalide");
       return;
     }
     
     setIsAutoFilling(true);
     
     try {
-      const companyInfo = await fetchCompanyInfoByName(companyName);
+      const companyInfo = await fetchCompanyInfoByName(companyName, sector.name);
       
       // Mettre à jour tous les champs du formulaire avec les données récupérées
       form.setValue("industry", companyInfo.industry);
@@ -98,9 +145,23 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     }
   };
 
+  // Basculer l'état d'un processus
+  const toggleProcess = (processId: string) => {
+    setSelectedProcesses(prev => {
+      if (prev.includes(processId)) {
+        return prev.filter(id => id !== processId);
+      } else {
+        return [...prev, processId];
+      }
+    });
+  };
+
+  // Compter le nombre de processus sélectionnés
+  const selectedCount = selectedProcesses.length;
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-5 py-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Nom de l'entreprise avec bouton auto-remplissage */}
           <div className="relative">
@@ -135,15 +196,39 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
             />
           </div>
 
-          {/* Secteur d'activité */}
+          {/* Secteur d'activité (dropdown) */}
+          <FormField
+            control={form.control}
+            name="sectorId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Secteur d'activité</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un secteur" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {sectors.map(sector => (
+                      <SelectItem key={sector.id} value={sector.id}>{sector.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Industrie plus détaillée */}
           <FormField
             control={form.control}
             name="industry"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Secteur d'activité</FormLabel>
+                <FormLabel>Industrie spécifique</FormLabel>
                 <FormControl>
-                  <Input placeholder="ex: Technologie, Finance, Santé..." {...field} />
+                  <Input placeholder="ex: Édition de logiciels SaaS B2B" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -164,6 +249,41 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
               </FormItem>
             )}
           />
+
+          {/* Processus métier (multi-select) */}
+          <div className="md:col-span-2">
+            <FormItem>
+              <FormLabel>Processus métier associés</FormLabel>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    {selectedCount === 0 
+                      ? "Sélectionner des processus" 
+                      : `${selectedCount} processus sélectionnés`}
+                    <span className="ml-2 rounded-full bg-primary text-primary-foreground h-5 w-5 flex items-center justify-center text-xs">
+                      {selectedCount}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 max-h-[400px] overflow-y-auto" align="start">
+                  <DropdownMenuLabel>Processus métier</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {processes.map(process => (
+                    <DropdownMenuCheckboxItem
+                      key={process.id}
+                      checked={selectedProcesses.includes(process.id)}
+                      onCheckedChange={() => toggleProcess(process.id)}
+                    >
+                      {process.name}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <FormDescription>
+                Sélectionnez les processus métier pertinents pour cette entreprise
+              </FormDescription>
+            </FormItem>
+          </div>
         </div>
 
         {/* Principaux produits/services */}
@@ -185,13 +305,13 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           )}
         />
 
-        {/* Processus clés */}
+        {/* Processus clés (description textuelle) */}
         <FormField
           control={form.control}
           name="processes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Processus clés</FormLabel>
+              <FormLabel>Description des processus clés</FormLabel>
               <FormControl>
                 <Textarea 
                   placeholder="Décrivez les processus métier clés de l'entreprise" 
@@ -199,6 +319,9 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
                   {...field} 
                 />
               </FormControl>
+              <FormDescription>
+                Description textuelle complémentaire à la sélection de processus ci-dessus
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

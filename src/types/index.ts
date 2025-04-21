@@ -1,3 +1,4 @@
+
 // Value rating types (stars)
 export type ValueRating = 1 | 2 | 3 | 4 | 5;
 
@@ -49,15 +50,29 @@ export type ComplexityAxisScore = {
   description: string;
 };
 
+// Secteur d'activité
+export type IndustrySector = {
+  id: string;
+  name: string;
+};
+
+// Processus d'entreprise
+export type BusinessProcess = {
+  id: string;
+  name: string;
+  description: string;
+};
+
 // Company profile type
 export type Company = {
   id: string;
   name: string;
   industry: string;
-  sectorId: string; // Added field
+  sectorId: string;  // ID du secteur d'activité
   size: string;
   products: string;
-  processes: string[];  // Changed to array
+  processes: string;
+  businessProcesses: string[];  // IDs des processus associés
   challenges: string;
   objectives: string;
   technologies: string;
@@ -69,7 +84,7 @@ export type Company = {
 export type UseCase = {
   id: string;
   name: string;
-  process: string; // Changed from domain
+  domain: string;
   description: string;
   technology: string;
   deadline: string;
@@ -79,13 +94,14 @@ export type UseCase = {
   risks: string[];
   nextSteps: string[];
   sources: string[];
-  relatedData: string[];
+  relatedData: string[]; 
   valueScores: ValueAxisScore[];
   complexityScores: ComplexityAxisScore[];
   totalValueScore?: number;
   totalComplexityScore?: number;
-  folderId: string;
-  companyId?: string;
+  folderId: string; // ID du dossier associé
+  companyId?: string; // ID de l'entreprise associée (optionnel)
+  businessProcesses: string[]; // IDs des processus associés au cas d'usage
 };
 
 // Matrix configuration

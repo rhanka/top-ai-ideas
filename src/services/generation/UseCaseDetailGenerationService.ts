@@ -1,7 +1,6 @@
 
 import { BaseApiService } from "../api/BaseApiService";
-import { MatrixConfig, UseCase, Company } from "@/types";
-import { BusinessProcess } from "@/types/business";
+import { MatrixConfig, UseCase, Company, BusinessProcess } from "@/types";
 
 export class UseCaseDetailGenerationService extends BaseApiService {
   async generateUseCaseDetail(
@@ -10,10 +9,11 @@ export class UseCaseDetailGenerationService extends BaseApiService {
     matrixConfig: MatrixConfig,
     prompt: string,
     model: string,
-    processes: BusinessProcess[],
-    company?: Company
+    company?: Company,
+    processes?: BusinessProcess[]
   ): Promise<UseCase> {
     try {
+      // Create a simplified matrix representation for the prompt
       const matrixSummary = {
         valueAxes: matrixConfig.valueAxes.map((axis) => ({
           name: axis.name,
@@ -25,69 +25,49 @@ export class UseCaseDetailGenerationService extends BaseApiService {
         })),
       };
 
-      const processesInfo = JSON.stringify(processes.map(p => ({
-        id: p.id,
-        name: p.name
-      })));
-
+      // Construct company information if available
       let companyInfo = "";
       if (company) {
         companyInfo = `
 Informations sur l'entreprise:
 - Nom: ${company.name}
-- Secteur: ${company.industry}
+- Secteur d'activité: ${company.industry}
 - Taille: ${company.size}
 - Produits/Services: ${company.products}
-- Processus existants: ${company.processes.join(", ")}
-- Défis: ${company.challenges}
-- Objectifs: ${company.objectives}
-- Technologies: ${company.technologies}
+- Processus clés: ${company.processes}
+- Défis majeurs: ${company.challenges}
+- Objectifs stratégiques: ${company.objectives}
+- Technologies utilisées: ${company.technologies}
 `;
       }
 
+      // Construire la liste de processus métiers à prendre en compte
+      let businessProcessesInfo = "";
+      if (processes && processes.length > 0) {
+        businessProcessesInfo = processes.map(p => {
+          return `- ${p.id}: ${p.name} - ${p.description}`;
+        }).join("\n");
+      } else {
+        businessProcessesInfo = "Pas de processus métiers spécifiques définis.";
+      }
+
+      // Combine user input with company info
       const enrichedInput = company 
         ? `${userInput}\n\n${companyInfo}`
         : userInput;
 
+      // Update the loading toast for this specific use case
       this.showToast("loading", "Génération en cours...", `Création des détails pour "${useCase}"`);
 
-      const customPrompt = `Analysez le cas d'usage "${useCase}" dans le contexte suivant: ${enrichedInput}
-
-Générez une description détaillée en prenant en compte la matrice d'évaluation: ${JSON.stringify(matrixSummary, null, 2)}
-
-La réponse doit suivre ce format JSON:
-{
-  "name": "${useCase}",
-  "process": "Identifiez le processus métier principal parmi: ${processesInfo}",
-  "description": "Description détaillée sur 5-10 lignes",
-  "technology": "Technologies d'IA à utiliser",
-  "deadline": "Estimation du délai",
-  "contact": "Responsable suggéré",
-  "benefits": ["5 bénéfices"],
-  "metrics": ["3 KPIs"],
-  "risks": ["3 risques"],
-  "nextSteps": ["4 étapes"],
-  "sources": ["2 sources"],
-  "relatedData": ["3 données"],
-  "valueScores": [
-    {
-      "axisId": "Nom axe valeur",
-      "rating": 4,
-      "description": "Justification"
-    }
-  ],
-  "complexityScores": [
-    {
-      "axisId": "Nom axe complexité",
-      "rating": 3,
-      "description": "Justification"
-    }
-  ]
-}`;
+      const formattedPrompt = prompt
+        .replace("{{use_case}}", useCase)
+        .replace("{{user_input}}", enrichedInput)
+        .replace("{{matrix}}", JSON.stringify(matrixSummary, null, 2))
+        .replace("{{business_processes}}", businessProcessesInfo);
 
       const data = await this.callOpenAI(
         model,
-        [{ role: "user", content: customPrompt }],
+        [{ role: "user", content: formattedPrompt }],
         { 
           max_tokens: 4000,
           responseFormat: { type: "json_object" }
@@ -95,12 +75,15 @@ La réponse doit suivre ce format JSON:
       );
 
       const jsonContent = JSON.parse(data.choices[0].message.content);
+
+      // Generate a unique ID for the use case
       const id = `ID${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`;
 
+      // Ensure all required fields are present and initialize folderId correctly
       const completeUseCase = {
         id,
         name: jsonContent.name || useCase,
-        process: jsonContent.process || "",
+        domain: jsonContent.domain || "",
         description: jsonContent.description || "",
         technology: jsonContent.technology || "",
         deadline: jsonContent.deadline || "",
@@ -113,9 +96,11 @@ La réponse doit suivre ce format JSON:
         relatedData: jsonContent.relatedData || [],
         valueScores: jsonContent.valueScores || [],
         complexityScores: jsonContent.complexityScores || [],
-        folderId: ""
+        folderId: "", // Initialize empty string, will be set correctly in useOpenAI hook
+        businessProcesses: jsonContent.businessProcesses || []
       };
 
+      // Update toast with success for this specific use case
       this.showToast("loading", "Génération en cours...", `Cas d'usage "${useCase}" complété avec succès`);
 
       return completeUseCase;

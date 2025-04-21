@@ -1,5 +1,5 @@
 
-import { UseCase, MatrixConfig, Company } from "../types";
+import { UseCase, MatrixConfig, Company, BusinessProcess } from "../types";
 import { FolderGenerationService } from "./generation/FolderGenerationService";
 import { UseCaseListGenerationService } from "./generation/UseCaseListGenerationService";
 import { UseCaseDetailGenerationService } from "./generation/UseCaseDetailGenerationService";
@@ -43,15 +43,24 @@ export class OpenAIService extends BaseApiService {
     matrixConfig: MatrixConfig,
     prompt: string,
     model: string,
-    company?: Company
+    company?: Company,
+    processes?: BusinessProcess[]
   ): Promise<UseCase> {
-    return this.detailService.generateUseCaseDetail(useCase, userInput, matrixConfig, prompt, model, company);
+    return this.detailService.generateUseCaseDetail(
+      useCase, 
+      userInput, 
+      matrixConfig, 
+      prompt, 
+      model, 
+      company,
+      processes
+    );
   }
 
   async makeApiRequest(options: {
     model: string;
     messages?: { role: string; content: string }[];
-    input?: { role?: string; content: string } | { messages: { role: string; content: string }[] } | string;
+    input?: string | { role?: string; content: string } | { messages: { role: string; content: string }[] };
     functions?: any[];
     function_call?: any;
     tools?: any[];
@@ -65,7 +74,11 @@ export class OpenAIService extends BaseApiService {
     // Convert messages to input format if needed
     if (options.messages && !options.input) {
       // When assigning messages to input, ensure it remains an array or convert to string
-      options.input = Array.isArray(options.messages) ? options.messages : JSON.stringify(options.messages);
+      if (Array.isArray(options.messages)) {
+        options.input = options.messages;
+      } else {
+        options.input = JSON.stringify(options.messages);
+      }
       delete options.messages;
     }
     

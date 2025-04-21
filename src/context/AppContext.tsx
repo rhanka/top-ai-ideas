@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { UseCase, MatrixConfig, LevelThreshold, Folder, Company } from "@/types";
+import { UseCase, MatrixConfig, LevelThreshold, Folder, Company, BusinessProcess } from "@/types";
 import { toast } from "sonner";
 import { useFolderOperations } from "./hooks/useFolderOperations";
 import { useUseCaseOperations } from "./hooks/useUseCaseOperations";
@@ -9,6 +9,7 @@ import { useOpenAI } from "./useOpenAI";
 import { AppContextType } from "./types/AppContextTypes";
 import { getUseCasesForFolder } from "./folderUtils";
 import { useCompanyOperations } from "./hooks/useCompanyOperations";
+import { useBusinessConfig } from "./hooks/useBusinessConfig";
 
 // Create context
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -16,6 +17,23 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 // Provider component
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentInput, setCurrentInput] = useState<string>("");
+  
+  // Initialize business config
+  const {
+    sectors,
+    processes,
+    isLoading: isBusinessConfigLoading,
+    addSector,
+    updateSector,
+    deleteSector,
+    addProcess,
+    updateProcess,
+    deleteProcess,
+    resetToDefaults: resetBusinessConfig,
+    getSectorById,
+    getProcessById,
+    getProcessesByIds
+  } = useBusinessConfig();
   
   // Callback for company changes
   const handleCompanyChange = useCallback((companyId: string | null) => {
@@ -122,7 +140,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     handleAddUseCase, 
     addFolder, 
     setCurrentFolder,
-    getCurrentCompany
+    getCurrentCompany,
+    getProcessesByIds
   );
   
   // Effect to update cases count in thresholds whenever useCases changes
@@ -164,6 +183,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     currentFolderId,
     companies,
     currentCompanyId,
+    sectors,
+    processes,
     addUseCase,
     updateUseCase,
     deleteUseCase,
@@ -183,7 +204,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateCompany,
     deleteCompany,
     setCurrentCompany,
-    getCurrentCompany
+    getCurrentCompany,
+    addSector,
+    updateSector,
+    deleteSector,
+    addProcess,
+    updateProcess,
+    deleteProcess,
+    resetBusinessConfig,
+    getSectorById,
+    getProcessById,
+    getProcessesByIds
   };
   
   return (

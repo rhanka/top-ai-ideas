@@ -1,61 +1,156 @@
 
 [
   {
-    "id": "ID0001",
-    "name": "Assistant virtuel pour le support client",
-    "process": "customer_service",
-    "description": "Un chatbot IA pour répondre aux questions fréquentes des clients",
-    "technology": "NLP, ML",
-    "deadline": "Q3 2024",
-    "contact": "Marie Dubois",
+    "id": "cc001",
+    "name": "Assistant virtuel intelligent",
+    "description": "Assistant virtuel utilisant le NLP et le ML pour répondre aux requêtes des clients de manière personnalisée et résoudre les problèmes courants sans intervention humaine. Il apprend continuellement des interactions pour améliorer ses réponses et peut transférer les demandes complexes aux agents humains.",
+    "businessProcesses": ["customer_service", "sales"],
+    "technology": "NLP, Machine Learning, Dialogue Systems",
+    "deadline": "Q4 2023",
+    "contact": "Camille Dupont",
     "benefits": [
-      "Disponibilité 24/7",
-      "Réduction du temps d'attente",
-      "Coût par interaction réduit",
-      "Uniformité des réponses",
-      "Collecte de données sur les besoins clients"
+      "Réduction de 40% du temps de traitement des requêtes",
+      "Disponibilité 24/7 pour les clients",
+      "Amélioration de la satisfaction client",
+      "Réduction des coûts opérationnels",
+      "Collecte de données précieuses sur les problèmes fréquents"
     ],
     "metrics": [
-      "Temps de résolution moyen",
-      "Taux de satisfaction client",
-      "Nombre de requêtes traitées"
+      "Taux de résolution au premier contact",
+      "Temps moyen de traitement des demandes",
+      "Score NPS et satisfaction client"
     ],
     "risks": [
-      "Frustration si le bot ne comprend pas",
-      "Manque de touche humaine",
-      "Maintenance régulière nécessaire"
+      "Résistance au changement des agents",
+      "Incompréhension de certaines requêtes complexes",
+      "Perception négative par certains clients"
     ],
     "nextSteps": [
-      "Définir les scénarios courants",
-      "Collecter les FAQ",
-      "Former l'IA",
-      "Tester avec un groupe pilote"
+      "Définition précise des cas d'utilisation prioritaires",
+      "Sélection des technologies et partenaires",
+      "Collecte et préparation des données d'entraînement",
+      "Phase de test avec un groupe restreint d'utilisateurs"
     ],
     "sources": [
-      "Base de connaissances support",
-      "Historique des tickets"
+      "Base de données des appels précédents",
+      "FAQ et base de connaissances existante"
     ],
     "relatedData": [
-      "Historique des conversations",
-      "Questions fréquentes",
-      "Feedback clients"
+      "Historique des conversations clients",
+      "Catalogue de produits et services",
+      "Base de connaissances des problèmes récurrents"
     ],
     "valueScores": [
       {
-        "axisId": "ROI",
+        "axisId": "Impact financier",
         "rating": 4,
-        "description": "Réduction significative des coûts de support"
+        "description": "Réduction significative des coûts opérationnels par l'automatisation de 60% des requêtes simples"
+      },
+      {
+        "axisId": "Expérience client",
+        "rating": 5,
+        "description": "Amélioration majeure de la disponibilité et des temps de réponse 24/7"
+      },
+      {
+        "axisId": "Avantage concurrentiel",
+        "rating": 3,
+        "description": "Différenciation par rapport aux concurrents qui utilisent des systèmes moins avancés"
       }
     ],
     "complexityScores": [
       {
-        "axisId": "Technique",
+        "axisId": "Complexité technique",
+        "rating": 4,
+        "description": "Nécessite l'intégration de systèmes avancés de NLP et l'accès à plusieurs sources de données"
+      },
+      {
+        "axisId": "Effort organisationnel",
         "rating": 3,
-        "description": "Technologies NLP matures mais configuration complexe"
+        "description": "Formation des agents nécessaire et changements dans les processus de service client"
+      },
+      {
+        "axisId": "Coût et ressources",
+        "rating": 3,
+        "description": "Investissement initial modéré mais retour sur investissement attendu à moyen terme"
       }
     ],
-    "folderId": "",
-    "totalValueScore": 4,
-    "totalComplexityScore": 3
+    "folderId": ""
+  },
+  {
+    "id": "cc002",
+    "name": "Prédiction des pics d'appels",
+    "description": "Système d'IA prédictif qui analyse les données historiques d'appels pour anticiper les pics de volume et optimiser l'affectation des ressources. Le système prend en compte les facteurs saisonniers, les événements spéciaux et d'autres variables pour fournir des prévisions précises.",
+    "businessProcesses": ["customer_service", "operations"],
+    "technology": "Machine Learning, Analyse prédictive, Séries temporelles",
+    "deadline": "Q2 2023",
+    "contact": "Thomas Martin",
+    "benefits": [
+      "Optimisation des plannings d'agents (15% d'efficacité en plus)",
+      "Réduction du temps d'attente client aux périodes de pointe",
+      "Diminution du stress des agents pendant les pics d'activité",
+      "Économies sur les ressources en période creuse",
+      "Amélioration de la qualité de service"
+    ],
+    "metrics": [
+      "Précision des prévisions vs réalité",
+      "Temps d'attente moyen pendant les périodes de pointe",
+      "Taux d'occupation des agents"
+    ],
+    "risks": [
+      "Facteurs externes imprévisibles affectant les volumes d'appels",
+      "Résistance au changement dans la gestion des plannings",
+      "Dépendance au système pour les décisions d'allocation"
+    ],
+    "nextSteps": [
+      "Identification et collecte des variables pertinentes",
+      "Développement d'un modèle prédictif initial",
+      "Intégration avec l'outil de planification des effectifs",
+      "Phase de test en parallèle du système actuel"
+    ],
+    "sources": [
+      "Historique des volumes d'appels",
+      "Données de planification des agents",
+      "Calendrier des événements marketing et commerciaux"
+    ],
+    "relatedData": [
+      "Données météorologiques",
+      "Données de performances marketing",
+      "Historique des incidents et problèmes techniques"
+    ],
+    "valueScores": [
+      {
+        "axisId": "Impact financier",
+        "rating": 4,
+        "description": "Optimisation significative des ressources humaines et réduction des coûts"
+      },
+      {
+        "axisId": "Expérience client",
+        "rating": 4,
+        "description": "Amélioration notable de la disponibilité des agents aux moments critiques"
+      },
+      {
+        "axisId": "Avantage concurrentiel",
+        "rating": 2,
+        "description": "Apporte des améliorations opérationnelles mais peu visibles pour la clientèle"
+      }
+    ],
+    "complexityScores": [
+      {
+        "axisId": "Complexité technique",
+        "rating": 3,
+        "description": "Utilisation de techniques statistiques avancées mais bien établies"
+      },
+      {
+        "axisId": "Effort organisationnel",
+        "rating": 2,
+        "description": "Changements mineurs dans les processus de planification existants"
+      },
+      {
+        "axisId": "Coût et ressources",
+        "rating": 2,
+        "description": "Investissement modéré avec un retour rapide sur investissement"
+      }
+    ],
+    "folderId": ""
   }
 ]
