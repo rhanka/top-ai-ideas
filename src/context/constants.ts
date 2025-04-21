@@ -1,4 +1,3 @@
-
 // OpenAI API Key
 export const OPENAI_API_KEY = "openai_api_key";
 
@@ -101,14 +100,3 @@ export const DEFAULT_PARALLEL_REQUESTS = 3;
 // Retry Attempts settings
 export const RETRY_ATTEMPTS_LIMIT = "retry_attempts_limit";
 export const DEFAULT_RETRY_ATTEMPTS = 3;
-
-// Folders
-export const FOLDERS_STORAGE_KEY = "folders";
-export const CURRENT_FOLDER_ID = "current_folder_id";
-
-// OpenAI Models
-export const OPENAI_MODELS = [
-  { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
-  { value: "gpt-4-turbo-preview", label: "GPT-4 Turbo" },
-  { value: "gpt-4o", label: "GPT-4o" },
-];

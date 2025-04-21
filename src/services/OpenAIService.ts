@@ -13,7 +13,7 @@ export class OpenAIService extends BaseApiService {
   private listService: UseCaseListGenerationService;
   private detailService: UseCaseDetailGenerationService;
   private requestQueue: ParallelQueueService<any>;
-  private queueToastId: string | undefined;
+  private queueToastId?: string;
   private successCount: number = 0;
   private failureCount: number = 0;
   private totalTasks: number = 0;
@@ -162,7 +162,7 @@ export class OpenAIService extends BaseApiService {
       this.queueToastId = toast.loading(toastMessage, {
         description: description,
         duration: Infinity
-      }) as string; // Cast to string as the toast ID will always be a string
+      });
     }
   }
 
@@ -272,8 +272,8 @@ export class OpenAIService extends BaseApiService {
             
             // Convert messages to input format if needed
             if (options.messages && !options.input) {
-              // When assigning messages to input, ensure it remains compatible with the API
-              options.input = { messages: options.messages };
+              // When assigning messages to input, ensure it remains an array or convert to string
+              options.input = Array.isArray(options.messages) ? options.messages : JSON.stringify(options.messages);
               delete options.messages;
             }
             
