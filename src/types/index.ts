@@ -1,3 +1,4 @@
+
 // Value rating types (stars)
 export type ValueRating = 1 | 2 | 3 | 4 | 5;
 
@@ -68,7 +69,7 @@ export type Company = {
 export type UseCase = {
   id: string;
   name: string;
-  process: string;
+  process: string; // Changed from domain to process
   description: string;
   technology: string;
   deadline: string;

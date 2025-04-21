@@ -1,3 +1,4 @@
+
 // Constants for localStorage keys
 export const OPENAI_API_KEY = "openai_api_key";
 export const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
@@ -26,6 +27,9 @@ export const OPENAI_MODELS = [
   { value: "gpt-4o", label: "GPT-4o" },
   { value: "gpt-4.5-preview", label: "GPT-4.5 Preview" },
 ];
+
+// Import the business config to use in default prompts
+import { defaultBusinessConfig } from '@/data/defaultBusinessConfig';
 
 // Default prompts with placeholders
 export const DEFAULT_USE_CASE_LIST_PROMPT = 

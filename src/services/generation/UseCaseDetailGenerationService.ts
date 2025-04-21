@@ -71,7 +71,7 @@ Informations sur l'entreprise:
       const completeUseCase = {
         id,
         name: jsonContent.name || useCase,
-        domain: jsonContent.domain || "",
+        process: jsonContent.process || "", // Use process field instead of domain
         description: jsonContent.description || "",
         technology: jsonContent.technology || "",
         deadline: jsonContent.deadline || "",

@@ -51,7 +51,7 @@ const Dashboard: React.FC = () => {
       id: useCase.id,
       value: Math.round(normalizedValue),
       ease: Math.round(easeOfImplementation),
-      domain: useCase.domain,
+      process: useCase.process,
       // Keep original scores for tooltip
       originalValue: useCase.totalValueScore,
       originalEase: maxPossibleComplexityScore - (useCase.totalComplexityScore || 0),
@@ -60,20 +60,20 @@ const Dashboard: React.FC = () => {
   
   // Colors for different categories
   const colorMap: {[key: string]: string} = {
-    "Web": "#ef4444", // red
-    "Mobile": "#f97316", // orange
-    "Data": "#3b82f6", // blue
-    "Généré": "#8b5cf6", // purple
+    "Opérations": "#ef4444", // red
+    "Maintenance": "#f97316", // orange
+    "Logistique": "#3b82f6", // blue
+    "Finance": "#8b5cf6", // purple
     "default": "#6b7280", // gray
   };
   
-  // Get color based on domain
-  const getDomainColor = (domain: string) => {
-    return colorMap[domain] || colorMap.default;
+  // Get color based on process
+  const getProcessColor = (process: string) => {
+    return colorMap[process] || colorMap.default;
   };
   
-  // Create domain categories for legend
-  const domains = [...new Set(currentFolderUseCases.map(useCase => useCase.domain))];
+  // Create process categories for legend
+  const processes = [...new Set(currentFolderUseCases.map(useCase => useCase.process))];
   
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
@@ -168,15 +168,15 @@ const Dashboard: React.FC = () => {
                     contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "6px", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}
                   />
                   <Legend
-                    payload={domains.map(domain => ({
-                      value: domain,
+                    payload={processes.map(process => ({
+                      value: process,
                       type: "circle",
-                      color: getDomainColor(domain),
+                      color: getProcessColor(process),
                     }))}
                   />
                   <Scatter name="Cas d'usage" data={scatterData} fill="#8884d8">
                     {scatterData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getDomainColor(entry.domain)} />
+                      <Cell key={`cell-${index}`} fill={getProcessColor(entry.process)} />
                     ))}
                   </Scatter>
                 </ScatterChart>

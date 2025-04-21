@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
@@ -64,7 +65,7 @@ const DataTable: React.FC = () => {
         useCase.id.toLowerCase().includes(query) ||
         useCase.name.toLowerCase().includes(query) ||
         useCase.description.toLowerCase().includes(query) ||
-        useCase.domain.toLowerCase().includes(query)
+        useCase.process.toLowerCase().includes(query)
       );
     })
     .sort((a, b) => {
@@ -84,12 +85,12 @@ const DataTable: React.FC = () => {
     });
   
   const exportToCSV = () => {
-    const headers = ["ID", "Nom", "Domaine", "Description", "Technologie", "Deadline", "Contact", "Valeur", "Complexité"];
+    const headers = ["ID", "Nom", "Processus", "Description", "Technologie", "Deadline", "Contact", "Valeur", "Complexité"];
     
     const csvData = useCases.map(useCase => [
       useCase.id,
       `"${useCase.name.replace(/"/g, '""')}"`,
-      useCase.domain,
+      useCase.process,
       `"${useCase.description.replace(/"/g, '""')}"`,
       useCase.technology,
       useCase.deadline,
@@ -190,10 +191,10 @@ const DataTable: React.FC = () => {
                 </TableHead>
                 <TableHead 
                   className="cursor-pointer"
-                  onClick={() => handleSort('domain')}
+                  onClick={() => handleSort('process')}
                 >
                   <div className="flex items-center">
-                    Domaine
+                    Processus
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </div>
                 </TableHead>
@@ -235,7 +236,7 @@ const DataTable: React.FC = () => {
                   <TableRow key={useCase.id}>
                     <TableCell className="font-mono">{useCase.id}</TableCell>
                     <TableCell className="font-medium">{useCase.name}</TableCell>
-                    <TableCell>{useCase.domain}</TableCell>
+                    <TableCell>{useCase.process}</TableCell>
                     <TableCell className="max-w-[300px] truncate">{useCase.description}</TableCell>
                     <TableCell>{useCase.technology}</TableCell>
                     <TableCell>{useCase.deadline}</TableCell>

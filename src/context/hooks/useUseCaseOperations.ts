@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelThreshold } from "@/types";
 import {
@@ -31,10 +32,14 @@ export const useUseCaseOperations = ({
     
     if (storedUseCases.length === 0 && currentFolderId) {
       // If no stored use cases, use initial data and assign to first folder
-      const initialUseCases = initialUseCasesData.map(useCase => ({
-        ...useCase as UseCase,
-        folderId: currentFolderId
-      }));
+      const initialUseCases = initialUseCasesData.map((initialData: any) => {
+        // Map domain to process if needed
+        return {
+          ...initialData as Omit<UseCase, 'process'> & { domain?: string },
+          process: initialData.process || initialData.domain || "Opérations", // Convert domain to process if needed
+          folderId: currentFolderId
+        } as UseCase;
+      });
       
       const scoredUseCases = initialUseCases.map(useCase => 
         calcInitialScore(useCase as UseCase, matrixConfig)

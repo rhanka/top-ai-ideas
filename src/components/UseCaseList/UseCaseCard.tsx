@@ -34,8 +34,8 @@ const UseCaseCard: React.FC<UseCaseCardProps> = ({
       </CardHeader>
       <CardContent className="pt-6">
         <div className="mb-4">
-          <p className="text-sm text-gray-500 mb-1">Domaine:</p>
-          <p className="font-medium">{useCase.domain}</p>
+          <p className="text-sm text-gray-500 mb-1">Processus:</p>
+          <p className="font-medium">{useCase.process}</p>
         </div>
         
         <div className="mb-4">
