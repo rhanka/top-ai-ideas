@@ -1,4 +1,3 @@
-
 // Constants for localStorage keys
 export const OPENAI_API_KEY = "openai_api_key";
 export const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
