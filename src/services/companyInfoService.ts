@@ -12,7 +12,7 @@ interface CompanyInfo {
   technologies: string;
 }
 
-export async function fetchCompanyInfoByName(companyName: string): Promise<CompanyInfo> {
+export async function fetchCompanyInfoByName(companyName: string, sectorName?: string): Promise<CompanyInfo> {
   // Récupérer la clé API OpenAI
   const apiKey = localStorage.getItem("openai_api_key");
   if (!apiKey) {
@@ -20,7 +20,7 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
   }
 
   // Récupérer le prompt personnalisé ou utiliser un par défaut
-  const prompt = localStorage.getItem(COMPANY_INFO_PROMPT) || 
+  let prompt = localStorage.getItem(COMPANY_INFO_PROMPT) || 
     "Recherchez et fournissez des informations sur l'entreprise {{company_name}}. Retournez les informations au format JSON avec les champs suivants: industry (secteur d'activité), size (taille en employés et CA si disponible), products (produits ou services principaux), processes (processus métier clés), challenges (défis actuels), objectives (objectifs stratégiques), technologies (technologies déjà utilisées).";
   
   // Récupérer le modèle configuré
@@ -30,13 +30,20 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
   const openai = new OpenAIService(apiKey);
 
   try {
-    // Formater le prompt avec le nom de l'entreprise
-    const formattedPrompt = prompt.replace('{{company_name}}', companyName);
+    // Formater le prompt avec le nom de l'entreprise et le secteur si disponible
+    prompt = prompt.replace('{{company_name}}', companyName);
+    
+    if (sectorName) {
+      prompt = prompt.replace('{{sector_name}}', sectorName);
+    } else {
+      // Si pas de secteur, supprimez la référence au secteur dans le prompt
+      prompt = prompt.replace(' dans le secteur {{sector_name}}', '');
+    }
 
     // Appeler l'API OpenAI avec la recherche web activée
     const response = await openai.makeApiRequest({
       model: model,
-      input: formattedPrompt, // Input as a simple string
+      input: prompt, // Input as a simple string
       tools: [{ 
         type: "web_search_preview" 
       }],
