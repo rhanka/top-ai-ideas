@@ -1,4 +1,3 @@
-
 // Constants for localStorage keys
 export const OPENAI_API_KEY = "openai_api_key";
 export const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
@@ -127,19 +126,19 @@ Format de réponse en JSON:
 export const DEFAULT_COMPANY_INFO_PROMPT = 
 `Recherchez et fournissez des informations complètes sur l'entreprise {{company_name}}. 
 Les secteurs d'activité disponibles sont: ${defaultBusinessConfig.sectors.map(s => s.name).join(', ')}.
-Normalisez le nom de l'entreprise selon son usage officiel.
 
 Retournez les informations UNIQUEMENT au format JSON suivant:
 {
-  "normalizedName": "Nom normalisé de l'entreprise",
-  "industry": "Secteur d'activité (DOIT correspondre à un des secteurs listés)",
+  "industry": "Secteur d'activité principal",
   "size": "Taille en nombre d'employés et chiffre d'affaires si disponible",
   "products": "Description détaillée des principaux produits ou services",
   "processes": "Description des processus métier clés",
   "challenges": "Défis principaux auxquels l'entreprise est confrontée actuellement",
   "objectives": "Objectifs stratégiques connus de l'entreprise",
   "technologies": "Technologies ou systèmes d'information déjà utilisés"
-}`;
+}
+
+IMPORTANT: Pour industry, la valeur retournée doit être STRICTEMENT l'un des éléments suivants : ${defaultBusinessConfig.sectors.map(s => s.name).join(', ')}`;
 
 // --- Ajout gestion file et retries ---
 export const USE_CASE_MAX_RETRIES = "use_case_max_retries";
