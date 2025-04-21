@@ -1,172 +1,104 @@
 
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, Building2, Edit, Tag, Users, Package2, Workflow, Lightbulb, Target, Cpu } from 'lucide-react';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Building2, Folder, ArrowLeft } from 'lucide-react';
 
 const CompanyView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { companies, getSectorById, getProcessesByIds } = useAppContext();
+  const { companies, folders } = useAppContext();
   
-  // Trouver l'entreprise correspondante
   const company = companies.find(c => c.id === id);
+  const associatedFolders = folders.filter(f => f.companyId === id);
   
-  // Rediriger si l'entreprise n'existe pas
   if (!company) {
     return (
-      <div className="container mx-auto p-8 text-center">
-        <h1 className="text-2xl font-bold mb-4">Entreprise non trouvée</h1>
-        <p className="mb-6">L'entreprise que vous recherchez n'existe pas ou a été supprimée.</p>
-        <Button onClick={() => navigate('/entreprises')}>
-          <ChevronLeft className="w-4 h-4 mr-2" /> Retour à la liste
-        </Button>
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+          Entreprise non trouvée
+        </div>
       </div>
     );
   }
   
-  // Récupérer le secteur de l'entreprise
-  const sector = getSectorById(company.sectorId);
-  
-  // Récupérer les processus associés à l'entreprise
-  const associatedProcesses = company.businessProcesses?.length 
-    ? getProcessesByIds(company.businessProcesses) 
-    : [];
-  
   return (
-    <div className="container mx-auto px-4 py-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/entreprises')} className="mb-2">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Retour
-          </Button>
-          <h1 className="text-3xl font-bold text-navy flex items-center">
-            <Building2 className="inline-block mr-2 h-8 w-8" />
+    <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-4">
+          <Link to="/entreprises">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold flex items-center">
+            <Building2 className="h-6 w-6 mr-2" />
             {company.name}
           </h1>
-          {sector && (
-            <div className="mt-1">
-              <Badge variant="outline" className="text-sm">
-                {sector.name}
-              </Badge>
-            </div>
-          )}
         </div>
-        <Button onClick={() => navigate(`/entreprises`)} variant="outline" className="self-start sm:self-auto">
-          <Edit className="w-4 h-4 mr-2" /> Modifier
-        </Button>
       </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Tag className="w-4 h-4 mr-2 text-gray-500" />
-              Secteur d'activité
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-2">
-            <p>{company.industry}</p>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Détails de l'entreprise</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div>
+            <h3 className="font-medium">Secteur d'activité</h3>
+            <p className="text-gray-600">{company.industry}</p>
+          </div>
+          <div>
+            <h3 className="font-medium">Taille</h3>
+            <p className="text-gray-600">{company.size}</p>
+          </div>
+          <div>
+            <h3 className="font-medium">Produits/Services</h3>
+            <p className="text-gray-600">{company.products}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Folder className="h-5 w-5 mr-2" />
+            Dossiers associés
+          </CardTitle>
+          <CardDescription>
+            {associatedFolders.length === 0 
+              ? "Aucun dossier associé à cette entreprise" 
+              : `${associatedFolders.length} dossier(s) associé(s)`}
+          </CardDescription>
+        </CardHeader>
+        {associatedFolders.length > 0 && (
+          <CardContent>
+            <div className="grid gap-4">
+              {associatedFolders.map(folder => (
+                <Link 
+                  key={folder.id}
+                  to={`/dossiers?folder=${folder.id}`}
+                  className="block p-4 rounded-lg border hover:border-navy transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Folder className="h-4 w-4 mr-2 text-gray-500" />
+                      <span className="font-medium">{folder.name}</span>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-600">{folder.description}</p>
+                </Link>
+              ))}
+            </div>
           </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Users className="w-4 h-4 mr-2 text-gray-500" />
-              Taille
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-2">
-            <p>{company.size}</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Package2 className="w-4 h-4 mr-2 text-gray-500" />
-              Produits et services
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-2">
-            <p className="whitespace-pre-wrap">{company.products}</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Workflow className="w-4 h-4 mr-2 text-gray-500" />
-              Processus métier
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-2">
-            {associatedProcesses.length > 0 ? (
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  {associatedProcesses.map(process => (
-                    <Badge key={process.id} variant="secondary">
-                      {process.name}
-                    </Badge>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap mt-2">
-                  {company.processes}
-                </p>
-              </div>
-            ) : (
-              <p className="whitespace-pre-wrap">{company.processes || "Aucun processus spécifié"}</p>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Lightbulb className="w-4 h-4 mr-2 text-gray-500" />
-              Défis
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-2">
-            <p className="whitespace-pre-wrap">{company.challenges}</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Target className="w-4 h-4 mr-2 text-gray-500" />
-              Objectifs
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-2">
-            <p className="whitespace-pre-wrap">{company.objectives}</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-lg">
-              <Cpu className="w-4 h-4 mr-2 text-gray-500" />
-              Technologies
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pb-2">
-            <p className="whitespace-pre-wrap">{company.technologies}</p>
-          </CardContent>
-        </Card>
-      </div>
+        )}
+      </Card>
     </div>
   );
 };

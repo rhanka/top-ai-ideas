@@ -50,29 +50,14 @@ export type ComplexityAxisScore = {
   description: string;
 };
 
-// Secteur d'activité
-export type IndustrySector = {
-  id: string;
-  name: string;
-};
-
-// Processus d'entreprise
-export type BusinessProcess = {
-  id: string;
-  name: string;
-  description: string;
-};
-
 // Company profile type
 export type Company = {
   id: string;
   name: string;
   industry: string;
-  sectorId: string;  // ID du secteur d'activité
   size: string;
   products: string;
   processes: string;
-  businessProcesses: string[];  // IDs des processus associés
   challenges: string;
   objectives: string;
   technologies: string;
@@ -101,7 +86,6 @@ export type UseCase = {
   totalComplexityScore?: number;
   folderId: string; // ID du dossier associé
   companyId?: string; // ID de l'entreprise associée (optionnel)
-  businessProcesses: string[]; // IDs des processus associés au cas d'usage
 };
 
 // Matrix configuration
