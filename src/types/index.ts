@@ -1,4 +1,3 @@
-
 // Value rating types (stars)
 export type ValueRating = 1 | 2 | 3 | 4 | 5;
 
@@ -55,9 +54,10 @@ export type Company = {
   id: string;
   name: string;
   industry: string;
+  sectorId: string; // Added field
   size: string;
   products: string;
-  processes: string;
+  processes: string[];  // Changed to array
   challenges: string;
   objectives: string;
   technologies: string;
@@ -69,7 +69,7 @@ export type Company = {
 export type UseCase = {
   id: string;
   name: string;
-  domain: string;
+  process: string; // Changed from domain
   description: string;
   technology: string;
   deadline: string;
@@ -79,13 +79,13 @@ export type UseCase = {
   risks: string[];
   nextSteps: string[];
   sources: string[];
-  relatedData: string[]; 
+  relatedData: string[];
   valueScores: ValueAxisScore[];
   complexityScores: ComplexityAxisScore[];
   totalValueScore?: number;
   totalComplexityScore?: number;
-  folderId: string; // ID du dossier associé
-  companyId?: string; // ID de l'entreprise associée (optionnel)
+  folderId: string;
+  companyId?: string;
 };
 
 // Matrix configuration

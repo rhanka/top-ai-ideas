@@ -1,6 +1,6 @@
-
 import { COMPANY_INFO_PROMPT, COMPANY_INFO_MODEL } from "@/context/constants";
 import { OpenAIService } from "./OpenAIService";
+import { BusinessSector } from "@/types/business";
 
 interface CompanyInfo {
   industry: string;
@@ -12,56 +12,57 @@ interface CompanyInfo {
   technologies: string;
 }
 
-export async function fetchCompanyInfoByName(companyName: string): Promise<CompanyInfo> {
-  // Récupérer la clé API OpenAI
+export async function fetchCompanyInfoByName(
+  companyName: string, 
+  sectors: BusinessSector[]
+): Promise<CompanyInfo> {
   const apiKey = localStorage.getItem("openai_api_key");
   if (!apiKey) {
     throw new Error("Clé API OpenAI non configurée");
   }
 
-  // Récupérer le prompt personnalisé ou utiliser un par défaut
-  const prompt = localStorage.getItem(COMPANY_INFO_PROMPT) || 
-    "Recherchez et fournissez des informations sur l'entreprise {{company_name}}. Retournez les informations au format JSON avec les champs suivants: industry (secteur d'activité), size (taille en employés et CA si disponible), products (produits ou services principaux), processes (processus métier clés), challenges (défis actuels), objectives (objectifs stratégiques), technologies (technologies déjà utilisées).";
-  
-  // Récupérer le modèle configuré
-  const model = localStorage.getItem(COMPANY_INFO_MODEL) || "gpt-4o";
+  const sectorsPrompt = JSON.stringify(sectors.map(s => ({
+    id: s.id,
+    name: s.name
+  })));
 
-  // Créer l'instance du service OpenAI
+  const prompt = `Analysez l'entreprise ${companyName} et fournissez les informations suivantes au format JSON:
+  {
+    "industry": "Description du secteur d'activité",
+    "sectorId": "ID du secteur correspondant parmi cette liste: ${sectorsPrompt}",
+    "size": "Taille (employés et CA)",
+    "products": "Produits/services principaux",
+    "processes": "Liste des processus métier clés",
+    "challenges": "Défis actuels",
+    "objectives": "Objectifs stratégiques",
+    "technologies": "Technologies utilisées"
+  }
+  
+  Assurez-vous que le sectorId correspond à l'un des secteurs fournis.`;
+
+  const model = localStorage.getItem(COMPANY_INFO_MODEL) || "gpt-4o";
   const openai = new OpenAIService(apiKey);
 
   try {
-    // Formater le prompt avec le nom de l'entreprise
-    const formattedPrompt = prompt.replace('{{company_name}}', companyName);
-
-    // Appeler l'API OpenAI avec la recherche web activée
     const response = await openai.makeApiRequest({
       model: model,
-      input: formattedPrompt, // Input as a simple string
-      tools: [{ 
-        type: "web_search_preview" 
-      }],
-      tool_choice: "auto",
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.7
     });
 
-    // Analyser la réponse
     if (response && response.output && response.output.length > 0) {
-      // Chercher le message généré par l'assistant (type "message")
       const messageOutput = response.output.find(item => item.type === "message");
       
       if (messageOutput && messageOutput.content && messageOutput.content.length > 0) {
         const contentText = messageOutput.content[0].text;
         
         try {
-          // Extraire le JSON de la réponse (entre les backticks ```json et ```)
           const jsonMatch = contentText.match(/```json\s*([\s\S]*?)\s*```/);
           const jsonStr = jsonMatch ? jsonMatch[1] : contentText;
           const companyInfo = JSON.parse(jsonStr);
           
-          // Traitement spécial pour le champ "size" s'il est un objet
           let sizeValue = companyInfo.size;
           if (typeof sizeValue === 'object' && sizeValue !== null) {
-            // Si size est un objet, le formater en chaîne de caractères
             if (sizeValue.employees) {
               const employees = sizeValue.employees || 'Non spécifié';
               const revenue = sizeValue.revenue || '';
@@ -71,7 +72,6 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
             }
           }
           
-          // Valider que tous les champs requis existent
           return {
             industry: companyInfo.industry || "",
             size: typeof sizeValue === 'string' ? sizeValue : String(sizeValue || ""),

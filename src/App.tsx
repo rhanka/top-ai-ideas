@@ -18,6 +18,7 @@ import NotFound from "@/pages/NotFound";
 import Folders from "@/pages/Folders";
 import Companies from "@/pages/Companies";
 import CompanyView from "@/pages/CompanyView";
+import BusinessConfiguration from "@/pages/BusinessConfiguration";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/donnees" element={<DataTable />} />
                   <Route path="/parametres" element={<Settings />} />
+                  <Route path="/configuration-metier" element={<BusinessConfiguration />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
