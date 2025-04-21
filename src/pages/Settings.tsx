@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import APIKeyCard from "@/components/Settings/APIKeyCard";
 import PromptCard from "@/components/Settings/PromptCard";
 import ActionButtons from "@/components/Settings/ActionButtons";
-import { 
+import {
   OPENAI_API_KEY, 
   USE_CASE_LIST_PROMPT, 
   USE_CASE_DETAIL_PROMPT, 
@@ -22,6 +21,10 @@ import {
   DEFAULT_USE_CASE_DETAIL_PROMPT,
   DEFAULT_FOLDER_NAME_PROMPT,
   DEFAULT_COMPANY_INFO_PROMPT,
+  USE_CASE_MAX_RETRIES,
+  USE_CASE_PARALLEL_QUEUE,
+  DEFAULT_USE_CASE_MAX_RETRIES,
+  DEFAULT_USE_CASE_PARALLEL_QUEUE,
 } from "@/context/constants";
 
 const Settings: React.FC = () => {
@@ -31,28 +34,31 @@ const Settings: React.FC = () => {
   const [folderNamePrompt, setFolderNamePrompt] = useState<string>(DEFAULT_FOLDER_NAME_PROMPT);
   const [companyInfoPrompt, setCompanyInfoPrompt] = useState<string>(DEFAULT_COMPANY_INFO_PROMPT);
   
-  // Model selection states
   const [useCaseListModel, setUseCaseListModel] = useState<string>(DEFAULT_LIST_MODEL);
   const [useCaseDetailModel, setUseCaseDetailModel] = useState<string>(DEFAULT_DETAIL_MODEL);
   const [folderNameModel, setFolderNameModel] = useState<string>(DEFAULT_FOLDER_MODEL);
   const [companyInfoModel, setCompanyInfoModel] = useState<string>(DEFAULT_COMPANY_INFO_MODEL);
   
+  const [maxRetries, setMaxRetries] = useState<number>(DEFAULT_USE_CASE_MAX_RETRIES);
+  const [parallelQueue, setParallelQueue] = useState<number>(DEFAULT_USE_CASE_PARALLEL_QUEUE);
+  
   const [saved, setSaved] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load saved values from localStorage on component mount
     const savedKey = localStorage.getItem(OPENAI_API_KEY);
     const savedListPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT);
     const savedDetailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT);
     const savedFolderNamePrompt = localStorage.getItem(FOLDER_NAME_PROMPT);
     const savedCompanyInfoPrompt = localStorage.getItem(COMPANY_INFO_PROMPT);
     
-    // Load saved model selections
     const savedListModel = localStorage.getItem(USE_CASE_LIST_MODEL);
     const savedDetailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL);
     const savedFolderModel = localStorage.getItem(FOLDER_NAME_MODEL);
     const savedCompanyInfoModel = localStorage.getItem(COMPANY_INFO_MODEL);
+    
+    const savedMaxRetries = localStorage.getItem(USE_CASE_MAX_RETRIES);
+    const savedParallelQueue = localStorage.getItem(USE_CASE_PARALLEL_QUEUE);
     
     if (savedKey) {
       setApiKey(savedKey);
@@ -75,7 +81,6 @@ const Settings: React.FC = () => {
       setCompanyInfoPrompt(savedCompanyInfoPrompt);
     }
     
-    // Set model selections from localStorage or use defaults
     if (savedListModel) {
       setUseCaseListModel(savedListModel);
     }
@@ -91,6 +96,9 @@ const Settings: React.FC = () => {
     if (savedCompanyInfoModel) {
       setCompanyInfoModel(savedCompanyInfoModel);
     }
+    
+    if (savedMaxRetries) setMaxRetries(Number(savedMaxRetries));
+    if (savedParallelQueue) setParallelQueue(Number(savedParallelQueue));
   }, []);
 
   const handleSave = () => {
@@ -103,7 +111,6 @@ const Settings: React.FC = () => {
       return;
     }
 
-    // Simple format validation (this is basic - OpenAI keys usually start with "sk-")
     if (!apiKey.startsWith("sk-")) {
       toast({
         title: "Attention",
@@ -112,18 +119,19 @@ const Settings: React.FC = () => {
       });
     }
 
-    // Save values to localStorage
     localStorage.setItem(OPENAI_API_KEY, apiKey);
     localStorage.setItem(USE_CASE_LIST_PROMPT, useCaseListPrompt);
     localStorage.setItem(USE_CASE_DETAIL_PROMPT, useCaseDetailPrompt);
     localStorage.setItem(FOLDER_NAME_PROMPT, folderNamePrompt);
     localStorage.setItem(COMPANY_INFO_PROMPT, companyInfoPrompt);
     
-    // Save model selections
     localStorage.setItem(USE_CASE_LIST_MODEL, useCaseListModel);
     localStorage.setItem(USE_CASE_DETAIL_MODEL, useCaseDetailModel);
     localStorage.setItem(FOLDER_NAME_MODEL, folderNameModel);
     localStorage.setItem(COMPANY_INFO_MODEL, companyInfoModel);
+    
+    localStorage.setItem(USE_CASE_MAX_RETRIES, String(maxRetries));
+    localStorage.setItem(USE_CASE_PARALLEL_QUEUE, String(parallelQueue));
     
     setSaved(true);
     
@@ -140,11 +148,13 @@ const Settings: React.FC = () => {
     setFolderNamePrompt(DEFAULT_FOLDER_NAME_PROMPT);
     setCompanyInfoPrompt(DEFAULT_COMPANY_INFO_PROMPT);
     
-    // Reset models to defaults
     setUseCaseListModel(DEFAULT_LIST_MODEL);
     setUseCaseDetailModel(DEFAULT_DETAIL_MODEL);
     setFolderNameModel(DEFAULT_FOLDER_MODEL);
     setCompanyInfoModel(DEFAULT_COMPANY_INFO_MODEL);
+    
+    setMaxRetries(DEFAULT_USE_CASE_MAX_RETRIES);
+    setParallelQueue(DEFAULT_USE_CASE_PARALLEL_QUEUE);
     
     toast({
       title: "Prompts réinitialisés",
@@ -204,6 +214,42 @@ const Settings: React.FC = () => {
         setModelValue={setCompanyInfoModel}
         modelLabel="Modèle pour l'auto-remplissage d'entreprise"
       />
+      
+      <div className="mb-8 border rounded-lg p-4 bg-gray-50">
+        <h2 className="font-semibold text-lg mb-2">Paramètres avancés génération</h2>
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <label htmlFor="maxRetries" className="block text-sm font-medium mb-1">
+              Nombre maximal de tentatives par requête
+            </label>
+            <input
+              id="maxRetries"
+              type="number"
+              min={1}
+              max={10}
+              step={1}
+              className="w-full border rounded px-2 py-1"
+              value={maxRetries}
+              onChange={e => setMaxRetries(Number(e.target.value))}
+            />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="parallelQueue" className="block text-sm font-medium mb-1">
+              Nombre de requêtes parallèles (taille de la file)
+            </label>
+            <input
+              id="parallelQueue"
+              type="number"
+              min={1}
+              max={10}
+              step={1}
+              className="w-full border rounded px-2 py-1"
+              value={parallelQueue}
+              onChange={e => setParallelQueue(Number(e.target.value))}
+            />
+          </div>
+        </div>
+      </div>
       
       <ActionButtons
         onReset={resetPrompts}

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { UseCase, MatrixConfig, Folder, Company } from '../types';
 import { toast } from 'sonner';
@@ -21,6 +20,10 @@ import {
 import { calcInitialScore } from './useCaseUtils';
 import { v4 as uuidv4 } from 'uuid';
 
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export const useOpenAI = (
   matrixConfig: MatrixConfig, 
   addUseCase: (useCase: UseCase) => void, 
@@ -30,21 +33,16 @@ export const useOpenAI = (
 ) => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  // Generate folder name and description using OpenAI
   const generateFolderNameAndDescription = async (
     currentInput: string, 
     openai: OpenAIService
   ): Promise<Folder | null> => {
     try {
-      // Get folder generation prompt from localStorage or use default
       const folderPrompt = localStorage.getItem(FOLDER_NAME_PROMPT) || DEFAULT_FOLDER_NAME_PROMPT;
-      // Get the model from localStorage or use default
       const model = localStorage.getItem(FOLDER_NAME_MODEL) || DEFAULT_FOLDER_MODEL;
       
-      // Get current company if available
       const currentCompany = getCurrentCompany();
       
-      // Generate folder name and description
       const { name, description } = await openai.generateFolderNameAndDescription(
         currentInput, 
         folderPrompt, 
@@ -52,10 +50,8 @@ export const useOpenAI = (
         currentCompany
       );
       
-      // Create the new folder
       const newFolder = addFolder(name, description);
       
-      // Set new folder as active
       setCurrentFolder(newFolder.id);
       
       return newFolder;
@@ -65,14 +61,12 @@ export const useOpenAI = (
     }
   };
 
-  // Generate new use cases based on user input using OpenAI
   const generateUseCases = async (currentInput: string, createNewFolder: boolean): Promise<boolean> => {
     if (currentInput.trim().length === 0) {
       toast.error("Veuillez saisir une description de votre activité");
       return false;
     }
 
-    // Get OpenAI API key from localStorage
     const apiKey = localStorage.getItem(OPENAI_API_KEY);
     if (!apiKey) {
       toast.error("Clé API OpenAI non configurée", {
@@ -85,34 +79,31 @@ export const useOpenAI = (
       return false;
     }
 
-    // Get prompts from localStorage or use defaults
+    const maxRetries = Number(localStorage.getItem("use_case_max_retries")) || 2;
+    const parallelQueue = Number(localStorage.getItem("use_case_parallel_queue")) || 5;
+
     const listPrompt = localStorage.getItem(USE_CASE_LIST_PROMPT) || DEFAULT_USE_CASE_LIST_PROMPT;
     const detailPrompt = localStorage.getItem(USE_CASE_DETAIL_PROMPT) || DEFAULT_USE_CASE_DETAIL_PROMPT;
     
-    // Get models from localStorage or use defaults
     const listModel = localStorage.getItem(USE_CASE_LIST_MODEL) || DEFAULT_LIST_MODEL;
     const detailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL) || DEFAULT_DETAIL_MODEL;
 
-    // Récupérer l'entreprise actuelle si elle existe
     const currentCompany = getCurrentCompany();
     
     const openai = new OpenAIService(apiKey);
     setIsGenerating(true);
     
     try {
-      // Si createNewFolder est true, générer un nouveau dossier d'abord
       let newFolderId: string | null = null;
       
       if (createNewFolder) {
         const newFolder = await generateFolderNameAndDescription(currentInput, openai);
         if (newFolder) {
           newFolderId = newFolder.id;
-          // Assurons-nous que le dossier est bien défini comme courant
           setCurrentFolder(newFolder.id);
         }
       }
       
-      // Step 1: Generate list of use case titles
       toast.info("Génération des cas d'usage en cours...");
       const useCaseTitles = await openai.generateUseCaseList(
         currentInput, 
@@ -127,10 +118,22 @@ export const useOpenAI = (
         return false;
       }
 
-      // Step 2: For each use case title, generate detailed use case
-      let successCount = 0;
-      
-      for (const title of useCaseTitles) {
+      let processed = 0, successCount = 0, failureCount = 0;
+      const total = useCaseTitles.length;
+      const errors: { title: string; error: any }[] = [];
+      let inProgress = 0;
+      let currentIndex = 0;
+
+      const results: { ok: boolean; title: string; error?: any }[] = [];
+
+      function updateToast() {
+        toast.info(
+          `Génération ${processed}/${total} – OK: ${successCount} / ERREURS: ${failureCount}`,
+          { description: "Génération des cas d'usage détaillés en cours...", duration: 500 }
+        );
+      }
+
+      const tryGenerateDetail = async (title: string, retry = 0): Promise<{ ok: boolean; useCase?: UseCase; error?: any }> => {
         try {
           const useCaseDetail = await openai.generateUseCaseDetail(
             title,
@@ -140,32 +143,71 @@ export const useOpenAI = (
             detailModel,
             currentCompany
           );
-          
-          // Ajouter un id unique en plus de celui généré par OpenAI
-          const useCaseWithId = {
-            ...useCaseDetail,
-            id: uuidv4(),
-            // Important: Utiliser le nouveau dossier ID si disponible
-            // Si pas de nouveau dossier créé, ce champ sera vide et sera géré par handleAddUseCase
-            folderId: newFolderId || ''
-          };
-          
-          // Calculate scores for the use case
-          const scoredUseCase = calcInitialScore(useCaseWithId, matrixConfig);
-          addUseCase(scoredUseCase);
-          successCount++;
-          
+          return { ok: true, useCase: useCaseDetail };
         } catch (error) {
-          console.error(`Error generating details for "${title}":`, error);
+          if (retry < maxRetries) {
+            await sleep(500 + 200 * retry);
+            return tryGenerateDetail(title, retry + 1);
+          }
+          return { ok: false, error };
         }
+      };
+
+      async function processQueue() {
+        return new Promise<void>((resolve) => {
+          function next() {
+            if (currentIndex >= total && inProgress === 0) {
+              resolve();
+              return;
+            }
+            while (inProgress < parallelQueue && currentIndex < total) {
+              const title = useCaseTitles[currentIndex];
+              inProgress++;
+              currentIndex++;
+              (async () => {
+                const detailResult = await tryGenerateDetail(title);
+                processed++;
+                if (detailResult.ok && detailResult.useCase) {
+                  const useCaseWithId = {
+                    ...detailResult.useCase,
+                    id: uuidv4(),
+                    folderId: newFolderId || ''
+                  };
+                  const scoredUseCase = calcInitialScore(useCaseWithId, matrixConfig);
+                  addUseCase(scoredUseCase);
+                  results.push({ ok: true, title });
+                  successCount++;
+                } else {
+                  results.push({ ok: false, title, error: detailResult.error });
+                  errors.push({ title, error: detailResult.error });
+                  failureCount++;
+                }
+                inProgress--;
+                updateToast();
+                next();
+              })();
+            }
+          }
+          next();
+        });
       }
 
-      // Finalize the generation process
+      updateToast();
+      await processQueue();
+
       if (successCount > 0) {
-        openai.finalizeGeneration(true, successCount);
+        let description = `${successCount} cas d'usage générés avec succès.`;
+        if (failureCount > 0) {
+          description += `\n${failureCount} cas en échec.`;
+          const errTitles = errors.map(e => `- ${e.title}`).join("\n");
+          if (errTitles) description += `\nÉchecs: \n${errTitles}`;
+        }
+        openai.finalizeGeneration(failureCount === 0, successCount);
+        toast.success("Génération terminée", { description, duration: 6000 });
         return true;
       } else {
         openai.finalizeGeneration(false, 0);
+        toast.error("Tous les cas ont échoué à générer.", { description: "Veuillez réessayer ou vérifier votre configuration.", duration: 6000 });
         return false;
       }
     } catch (error) {

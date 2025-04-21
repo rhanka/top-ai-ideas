@@ -1,4 +1,3 @@
-
 // Constants for localStorage keys
 export const OPENAI_API_KEY = "openai_api_key";
 export const USE_CASE_LIST_PROMPT = "use_case_list_prompt";
@@ -132,3 +131,9 @@ Retournez les informations UNIQUEMENT au format JSON suivant:
   "objectives": "Objectifs stratégiques connus de l'entreprise",
   "technologies": "Technologies ou systèmes d'information déjà utilisés"
 }`;
+
+// --- Ajout gestion file et retries ---
+export const USE_CASE_MAX_RETRIES = "use_case_max_retries";
+export const USE_CASE_PARALLEL_QUEUE = "use_case_parallel_queue";
+export const DEFAULT_USE_CASE_MAX_RETRIES = 2;
+export const DEFAULT_USE_CASE_PARALLEL_QUEUE = 5;
