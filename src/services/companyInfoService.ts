@@ -1,4 +1,3 @@
-
 import { COMPANY_INFO_PROMPT, COMPANY_INFO_MODEL } from "@/context/constants";
 import { OpenAIService } from "./OpenAIService";
 import { defaultBusinessConfig } from "@/data/defaultBusinessConfig";
@@ -45,7 +44,7 @@ function getSectorIdFromName(sectorName: string): string {
   return defaultBusinessConfig.sectors.length > 0 ? defaultBusinessConfig.sectors[0].id : '';
 }
 
-export async function fetchCompanyInfoByName(companyName: string): Promise<CompanyInfo> {
+export async function fetchCompanyInfoByName(companyName: string, maxRetries: number = 1): Promise<CompanyInfo> {
   // Récupérer la clé API OpenAI
   const apiKey = localStorage.getItem("openai_api_key");
   if (!apiKey) {
@@ -65,78 +64,103 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
   // Créer l'instance du service OpenAI
   const openai = new OpenAIService(apiKey);
 
-  try {
-    // Formater le prompt avec le nom de l'entreprise et la liste des secteurs
-    let formattedPrompt = prompt.replace('{{company_name}}', companyName);
-    formattedPrompt = formattedPrompt.replace('{{secteurs}}', sectorsList);
+  async function attemptFetch(retriesLeft: number): Promise<CompanyInfo> {
+    try {
+      // Formater le prompt avec le nom de l'entreprise et la liste des secteurs
+      let formattedPrompt = prompt.replace('{{company_name}}', companyName);
+      formattedPrompt = formattedPrompt.replace('{{secteurs}}', sectorsList);
 
-    // Appeler l'API OpenAI avec la recherche web activée
-    const response = await openai.makeApiRequest({
-      model: model,
-      input: formattedPrompt, // Input as a simple string
-      tools: [{ 
-        type: "web_search_preview" 
-      }],
-      tool_choice: "auto",
-      temperature: 0.7
-    });
+      // Appeler l'API OpenAI avec la recherche web activée
+      const response = await openai.makeApiRequest({
+        model: model,
+        input: formattedPrompt, 
+        tools: [{ 
+          type: "web_search_preview" 
+        }],
+        tool_choice: "auto",
+        temperature: 0.7
+      });
 
-    // Analyser la réponse
-    if (response && response.output && response.output.length > 0) {
-      // Chercher le message généré par l'assistant (type "message")
-      const messageOutput = response.output.find(item => item.type === "message");
-      
-      if (messageOutput && messageOutput.content && messageOutput.content.length > 0) {
-        const contentText = messageOutput.content[0].text;
+      // Analyser la réponse
+      if (response && response.output && response.output.length > 0) {
+        // Chercher le message généré par l'assistant (type "message")
+        const messageOutput = response.output.find(item => item.type === "message");
         
-        try {
-          // Extraire le JSON de la réponse (entre les backticks ```json et ```)
-          const jsonMatch = contentText.match(/```json\s*([\s\S]*?)\s*```/);
-          const jsonStr = jsonMatch ? jsonMatch[1] : contentText;
+        if (messageOutput && messageOutput.content && messageOutput.content.length > 0) {
+          const contentText = messageOutput.content[0].text;
           
-          // Nettoyer le JSON avant de le parser (enlever les caractères non-imprimables)
-          const cleanJsonStr = jsonStr.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
-          const companyInfo = JSON.parse(cleanJsonStr);
-          
-          // Traitement spécial pour le champ "size" s'il est un objet
-          let sizeValue = companyInfo.size;
-          if (typeof sizeValue === 'object' && sizeValue !== null) {
-            // Si size est un objet, le formater en chaîne de caractères
-            if (sizeValue.employees) {
-              const employees = sizeValue.employees || 'Non spécifié';
-              const revenue = sizeValue.revenue || '';
-              sizeValue = employees + (revenue ? ` - ${revenue}` : '');
-            } else {
-              sizeValue = JSON.stringify(sizeValue);
+          try {
+            // Extraire le JSON de la réponse (entre les backticks ```json et ```)
+            const jsonMatch = contentText.match(/```json\s*([\s\S]*?)\s*```/);
+            const jsonStr = jsonMatch ? jsonMatch[1] : contentText;
+            
+            // Nettoyer le JSON avant de le parser (enlever les caractères non-imprimables)
+            const cleanJsonStr = jsonStr.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+            const companyInfo = JSON.parse(cleanJsonStr);
+            
+            // Traitement spécial pour le champ "size" s'il est un objet
+            let sizeValue = companyInfo.size;
+            if (typeof sizeValue === 'object' && sizeValue !== null) {
+              // Si size est un objet, le formater en chaîne de caractères
+              if (sizeValue.employees) {
+                const employees = sizeValue.employees || 'Non spécifié';
+                const revenue = sizeValue.revenue || '';
+                sizeValue = employees + (revenue ? ` - ${revenue}` : '');
+              } else {
+                sizeValue = JSON.stringify(sizeValue);
+              }
             }
+            
+            // Convertir le nom du secteur en ID de secteur
+            const industryId = getSectorIdFromName(companyInfo.industry);
+            
+            // Valider que tous les champs requis existent
+            return {
+              normalizedName: companyInfo.normalizedName || companyName,
+              industry: industryId,
+              size: typeof sizeValue === 'string' ? sizeValue : String(sizeValue || ""),
+              products: companyInfo.products || "",
+              processes: companyInfo.processes || "",
+              challenges: companyInfo.challenges || "",
+              objectives: companyInfo.objectives || "",
+              technologies: companyInfo.technologies || ""
+            };
+          } catch (error) {
+            // Si parsing échoue et qu'il reste des tentatives, réessayer
+            if (retriesLeft > 0) {
+              console.warn("Erreur de parsing JSON, nouvelle tentative...");
+              return attemptFetch(retriesLeft - 1);
+            }
+            console.error("Erreur lors du parsing JSON:", error);
+            throw new Error("Format de réponse invalide");
           }
-          
-          // Convertir le nom du secteur en ID de secteur
-          const industryId = getSectorIdFromName(companyInfo.industry);
-          
-          // Valider que tous les champs requis existent
-          return {
-            normalizedName: companyInfo.normalizedName || companyName,
-            industry: industryId,
-            size: typeof sizeValue === 'string' ? sizeValue : String(sizeValue || ""),
-            products: companyInfo.products || "",
-            processes: companyInfo.processes || "",
-            challenges: companyInfo.challenges || "",
-            objectives: companyInfo.objectives || "",
-            technologies: companyInfo.technologies || ""
-          };
-        } catch (error) {
-          console.error("Erreur lors du parsing JSON:", error);
-          throw new Error("Format de réponse invalide");
+        } else {
+          // Si pas de contenu et qu'il reste des tentatives, réessayer
+          if (retriesLeft > 0) {
+            console.warn("Contenu de la réponse manquant, nouvelle tentative...");
+            return attemptFetch(retriesLeft - 1);
+          }
+          throw new Error("Contenu de la réponse manquant ou format inattendu");
         }
       } else {
-        throw new Error("Contenu de la réponse manquant ou format inattendu");
+        // Si pas de réponse et qu'il reste des tentatives, réessayer
+        if (retriesLeft > 0) {
+          console.warn("Réponse vide, nouvelle tentative...");
+          return attemptFetch(retriesLeft - 1);
+        }
+        throw new Error("Réponse vide ou format inattendu");
       }
-    } else {
-      throw new Error("Réponse vide ou format inattendu");
+    } catch (error) {
+      // Si une erreur survient et qu'il reste des tentatives, réessayer
+      if (retriesLeft > 0) {
+        console.warn("Erreur lors de l'appel, nouvelle tentative...");
+        return attemptFetch(retriesLeft - 1);
+      }
+      console.error("Erreur lors de l'appel à l'API OpenAI:", error);
+      throw new Error(`Erreur lors de la récupération des informations: ${(error as Error).message}`);
     }
-  } catch (error) {
-    console.error("Erreur lors de l'appel à l'API OpenAI:", error);
-    throw new Error(`Erreur lors de la récupération des informations: ${(error as Error).message}`);
   }
+
+  // Commencer avec le nombre maximal de réessais
+  return attemptFetch(maxRetries);
 }
