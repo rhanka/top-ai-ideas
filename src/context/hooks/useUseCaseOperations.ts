@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UseCase, MatrixConfig, LevelThreshold } from "@/types";
 import {
@@ -9,7 +10,7 @@ import {
   getUseCasesForFolder
 } from "../folderUtils";
 import { calcInitialScore, getValueLevel, getComplexityLevel, countUseCasesInLevel } from "../useCaseUtils";
-import initialUseCasesData from "@/data/useCases";
+import initialUseCasesData from "@/data/useCasesData.json";
 
 export interface UseUseCaseOperationsProps {
   currentFolderId: string | null;
@@ -25,14 +26,17 @@ export const useUseCaseOperations = ({
   const [useCases, setUseCases] = useState<UseCase[]>([]);
   const [activeUseCase, setActiveUseCase] = useState<UseCase | null>(null);
   
+  // Load use cases from localStorage or initialize with default data
   useEffect(() => {
     const storedUseCases = getUseCases();
     
     if (storedUseCases.length === 0 && currentFolderId) {
+      // If no stored use cases, use initial data and assign to first folder
       const initialUseCases = initialUseCasesData.map((initialData: any) => {
+        // Map domain to process if needed
         return {
           ...initialData as Omit<UseCase, 'process'> & { domain?: string },
-          process: initialData.process || initialData.domain || "Opérations",
+          process: initialData.process || initialData.domain || "Opérations", // Convert domain to process if needed
           folderId: currentFolderId
         } as UseCase;
       });
@@ -48,11 +52,15 @@ export const useUseCaseOperations = ({
     }
   }, [currentFolderId, matrixConfig]);
   
+  // Update case counts when use cases or folder changes
   useEffect(() => {
     updateCasesCounts();
   }, [useCases, currentFolderId, matrixConfig]);
   
+  // Add a new use case
   const addUseCase = (useCase: UseCase) => {
+    // IMPORTANT: Ne pas modifier le folderId si déjà présent
+    // Seulement assigner au dossier courant si aucun dossier n'est spécifié
     const updatedUseCase = {
       ...useCase,
       folderId: useCase.folderId || (currentFolderId || '')
@@ -65,6 +73,7 @@ export const useUseCaseOperations = ({
     addUseCaseUtil(newUseCase);
   };
   
+  // Update an existing use case
   const updateUseCase = (updatedUseCase: UseCase) => {
     const updated = calcInitialScore(updatedUseCase, matrixConfig);
     
@@ -79,6 +88,7 @@ export const useUseCaseOperations = ({
     }
   };
   
+  // Delete a use case
   const deleteUseCase = (id: string) => {
     setUseCases(useCases.filter(useCase => useCase.id !== id));
     deleteUseCaseUtil(id);
@@ -88,7 +98,9 @@ export const useUseCaseOperations = ({
     }
   };
   
+  // Count use cases in a specific level
   const countUseCasesInLevelWrapper = (isValue: boolean, level: number): number => {
+    // Filter use cases to only count those in the current folder
     const currentFolderUseCases = currentFolderId 
       ? useCases.filter(useCase => useCase.folderId === currentFolderId)
       : [];
@@ -102,13 +114,16 @@ export const useUseCaseOperations = ({
     );
   };
   
+  // Update cases counts in thresholds
   const updateCasesCounts = () => {
     if (!matrixConfig.valueThresholds || !matrixConfig.complexityThresholds) return;
     
+    // Filter use cases for current folder
     const currentFolderUseCases = currentFolderId 
       ? useCases.filter(useCase => useCase.folderId === currentFolderId)
       : [];
     
+    // Create new arrays to avoid mutating state
     const updatedValueThresholds = [...matrixConfig.valueThresholds].map(threshold => ({
       ...threshold,
       cases: 0
@@ -119,6 +134,7 @@ export const useUseCaseOperations = ({
       cases: 0
     }));
     
+    // Count use cases for each level
     currentFolderUseCases.forEach(useCase => {
       const valueLevel = getValueLevel(useCase.totalValueScore, updatedValueThresholds);
       const complexityLevel = getComplexityLevel(useCase.totalComplexityScore, updatedComplexityThresholds);
@@ -134,13 +150,16 @@ export const useUseCaseOperations = ({
       }
     });
     
+    // Update thresholds if changed
     if (JSON.stringify(updatedValueThresholds) !== JSON.stringify(matrixConfig.valueThresholds) || 
         JSON.stringify(updatedComplexityThresholds) !== JSON.stringify(matrixConfig.complexityThresholds)) {
       onThresholdsUpdated(updatedValueThresholds, updatedComplexityThresholds);
     }
   };
   
+  // Function to recalculate use case scores with new matrix config
   const recalculateScores = (config: MatrixConfig) => {
+    // Only recalculate scores for current folder
     const currentFolderUseCases = useCases.filter(
       useCase => useCase.folderId === currentFolderId
     );
@@ -155,6 +174,7 @@ export const useUseCaseOperations = ({
     setUseCases(allUpdatedUseCases);
     saveUseCases(allUpdatedUseCases);
     
+    // Update active use case if any
     if (activeUseCase && activeUseCase.folderId === currentFolderId) {
       const updatedActive = updatedUseCases.find(u => u.id === activeUseCase.id);
       if (updatedActive) {
