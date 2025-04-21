@@ -132,7 +132,7 @@ Normalisez le nom de l'entreprise selon son usage officiel.
 Retournez les informations UNIQUEMENT au format JSON suivant:
 {
   "normalizedName": "Nom normalisé de l'entreprise",
-  "industry": "Secteur d'activité (DOIT correspondre EXACTEMENT à l'un des secteurs listés)",
+  "industry": "Secteur d'activité (DOIT correspondre à un des secteurs listés)",
   "size": "Taille en nombre d'employés et chiffre d'affaires si disponible",
   "products": "Description détaillée des principaux produits ou services",
   "processes": "Description des processus métier clés",
