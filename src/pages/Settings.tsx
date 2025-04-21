@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import APIKeyCard from "@/components/Settings/APIKeyCard";
 import PromptCard from "@/components/Settings/PromptCard";
 import ActionButtons from "@/components/Settings/ActionButtons";
-import ConcurrencyCard from "@/components/Settings/ConcurrencyCard";
 import { 
   OPENAI_API_KEY, 
   USE_CASE_LIST_PROMPT, 
@@ -22,10 +22,6 @@ import {
   DEFAULT_USE_CASE_DETAIL_PROMPT,
   DEFAULT_FOLDER_NAME_PROMPT,
   DEFAULT_COMPANY_INFO_PROMPT,
-  PARALLEL_REQUESTS_LIMIT,
-  DEFAULT_PARALLEL_REQUESTS,
-  RETRY_ATTEMPTS_LIMIT,
-  DEFAULT_RETRY_ATTEMPTS
 } from "@/context/constants";
 
 const Settings: React.FC = () => {
@@ -40,10 +36,6 @@ const Settings: React.FC = () => {
   const [useCaseDetailModel, setUseCaseDetailModel] = useState<string>(DEFAULT_DETAIL_MODEL);
   const [folderNameModel, setFolderNameModel] = useState<string>(DEFAULT_FOLDER_MODEL);
   const [companyInfoModel, setCompanyInfoModel] = useState<string>(DEFAULT_COMPANY_INFO_MODEL);
-  
-  // Concurrency and retry settings
-  const [concurrencyLimit, setConcurrencyLimit] = useState<number>(DEFAULT_PARALLEL_REQUESTS);
-  const [retryAttempts, setRetryAttempts] = useState<number>(DEFAULT_RETRY_ATTEMPTS);
   
   const [saved, setSaved] = useState<boolean>(false);
   const { toast } = useToast();
@@ -61,10 +53,6 @@ const Settings: React.FC = () => {
     const savedDetailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL);
     const savedFolderModel = localStorage.getItem(FOLDER_NAME_MODEL);
     const savedCompanyInfoModel = localStorage.getItem(COMPANY_INFO_MODEL);
-    
-    // Load concurrency and retry settings
-    const savedConcurrencyLimit = localStorage.getItem(PARALLEL_REQUESTS_LIMIT);
-    const savedRetryAttempts = localStorage.getItem(RETRY_ATTEMPTS_LIMIT);
     
     if (savedKey) {
       setApiKey(savedKey);
@@ -103,16 +91,6 @@ const Settings: React.FC = () => {
     if (savedCompanyInfoModel) {
       setCompanyInfoModel(savedCompanyInfoModel);
     }
-    
-    // Set concurrency limit from localStorage or use default
-    if (savedConcurrencyLimit) {
-      setConcurrencyLimit(parseInt(savedConcurrencyLimit));
-    }
-    
-    // Set retry attempts from localStorage or use default
-    if (savedRetryAttempts) {
-      setRetryAttempts(parseInt(savedRetryAttempts));
-    }
   }, []);
 
   const handleSave = () => {
@@ -147,10 +125,6 @@ const Settings: React.FC = () => {
     localStorage.setItem(FOLDER_NAME_MODEL, folderNameModel);
     localStorage.setItem(COMPANY_INFO_MODEL, companyInfoModel);
     
-    // Save concurrency and retry settings
-    localStorage.setItem(PARALLEL_REQUESTS_LIMIT, concurrencyLimit.toString());
-    localStorage.setItem(RETRY_ATTEMPTS_LIMIT, retryAttempts.toString());
-    
     setSaved(true);
     
     toast({
@@ -172,13 +146,9 @@ const Settings: React.FC = () => {
     setFolderNameModel(DEFAULT_FOLDER_MODEL);
     setCompanyInfoModel(DEFAULT_COMPANY_INFO_MODEL);
     
-    // Reset concurrency and retry settings to defaults
-    setConcurrencyLimit(DEFAULT_PARALLEL_REQUESTS);
-    setRetryAttempts(DEFAULT_RETRY_ATTEMPTS);
-    
     toast({
       title: "Prompts réinitialisés",
-      description: "Les prompts, modèles et paramètres ont été réinitialisés aux valeurs par défaut",
+      description: "Les prompts et modèles ont été réinitialisés aux valeurs par défaut",
       variant: "default",
     });
   };
@@ -193,13 +163,6 @@ const Settings: React.FC = () => {
         saved={saved}
         setSaved={setSaved}
         handleSave={handleSave}
-      />
-      
-      <ConcurrencyCard
-        concurrencyValue={concurrencyLimit}
-        setConcurrencyValue={setConcurrencyLimit}
-        retryAttemptsValue={retryAttempts}
-        setRetryAttemptsValue={setRetryAttempts}
       />
       
       <PromptCard

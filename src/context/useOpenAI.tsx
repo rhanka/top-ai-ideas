@@ -16,11 +16,7 @@ import {
   FOLDER_NAME_MODEL,
   DEFAULT_LIST_MODEL,
   DEFAULT_DETAIL_MODEL,
-  DEFAULT_FOLDER_MODEL,
-  PARALLEL_REQUESTS_LIMIT,
-  DEFAULT_PARALLEL_REQUESTS,
-  RETRY_ATTEMPTS_LIMIT,
-  DEFAULT_RETRY_ATTEMPTS
+  DEFAULT_FOLDER_MODEL
 } from './constants';
 import { calcInitialScore } from './useCaseUtils';
 import { v4 as uuidv4 } from 'uuid';
@@ -97,20 +93,11 @@ export const useOpenAI = (
     const listModel = localStorage.getItem(USE_CASE_LIST_MODEL) || DEFAULT_LIST_MODEL;
     const detailModel = localStorage.getItem(USE_CASE_DETAIL_MODEL) || DEFAULT_DETAIL_MODEL;
 
-    // Get concurrency limit from localStorage or use default
-    const concurrencyLimit = parseInt(localStorage.getItem(PARALLEL_REQUESTS_LIMIT) || String(DEFAULT_PARALLEL_REQUESTS));
-    
-    // Get retry attempts from localStorage or use default
-    const retryAttempts = parseInt(localStorage.getItem(RETRY_ATTEMPTS_LIMIT) || String(DEFAULT_RETRY_ATTEMPTS));
-
     // Récupérer l'entreprise actuelle si elle existe
     const currentCompany = getCurrentCompany();
     
-    const openai = new OpenAIService(apiKey, concurrencyLimit, retryAttempts);
+    const openai = new OpenAIService(apiKey);
     setIsGenerating(true);
-    
-    // Réinitialiser les compteurs de l'OpenAIService
-    openai.resetCounters();
     
     try {
       // Si createNewFolder est true, générer un nouveau dossier d'abord
@@ -142,7 +129,8 @@ export const useOpenAI = (
 
       // Step 2: For each use case title, generate detailed use case
       let successCount = 0;
-      const detailPromises = useCaseTitles.map(async (title) => {
+      
+      for (const title of useCaseTitles) {
         try {
           const useCaseDetail = await openai.generateUseCaseDetail(
             title,
@@ -167,19 +155,19 @@ export const useOpenAI = (
           addUseCase(scoredUseCase);
           successCount++;
           
-          return true;
         } catch (error) {
           console.error(`Error generating details for "${title}":`, error);
-          return false;
         }
-      });
-      
-      // Attendre que toutes les générations soient terminées
-      await Promise.all(detailPromises);
+      }
 
-      // On n'a plus besoin d'appeler finalizeGeneration car le service s'en charge
-      // grâce au mécanisme de suivi des tâches complétées et échouées
-      return true;
+      // Finalize the generation process
+      if (successCount > 0) {
+        openai.finalizeGeneration(true, successCount);
+        return true;
+      } else {
+        openai.finalizeGeneration(false, 0);
+        return false;
+      }
     } catch (error) {
       console.error("Error in use case generation:", error);
       toast.error("Erreur lors de la génération des cas d'usage", {
