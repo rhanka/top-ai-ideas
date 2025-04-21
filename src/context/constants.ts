@@ -34,14 +34,15 @@ Pour chaque cas d'usage, propose un titre court et explicite.
 Format: liste numérotée sans description.`;
 
 export const DEFAULT_USE_CASE_DETAIL_PROMPT = 
-`Génère un cas d'usage détaillé pour "{{use_case}}" dans le contexte suivant: {{user_input}}. Utilise la matrice valeur/complexité fournie: {{matrix}} pour évaluer chaque axe de valeur et complexité.
+`Génère un cas d'usage détaillé pour "{{use_case}}" dans le contexte suivant: {{user_input}}. 
+Les processus disponibles sont: ${defaultBusinessConfig.processes.map(p => p.name).join(', ')}.
+Utilise la matrice valeur/complexité fournie: {{matrix}} pour évaluer chaque axe de valeur et complexité.
 
 La réponse doit impérativement contenir tous les éléments suivants au format JSON:
-
 {
   "name": "{{use_case}}",
   "description": "Description détaillée du cas d'usage sur 5-10 lignes",
-  "domain": "Le domaine d'application principal",
+  "process": "Le processus d'entreprise concerné (DOIT correspondre à un des processus listés)",
   "technology": "Technologies d'IA à utiliser (NLP, Computer Vision, etc.)",
   "deadline": "Estimation du délai de mise en œuvre (ex: Q3 2025)",
   "contact": "Nom du responsable suggéré",
@@ -121,9 +122,13 @@ Format de réponse en JSON:
 // Default prompt for company info generation
 export const DEFAULT_COMPANY_INFO_PROMPT = 
 `Recherchez et fournissez des informations complètes sur l'entreprise {{company_name}}. 
+Les secteurs d'activité disponibles sont: ${defaultBusinessConfig.sectors.map(s => s.name).join(', ')}.
+Normalisez le nom de l'entreprise selon son usage officiel.
+
 Retournez les informations UNIQUEMENT au format JSON suivant:
 {
-  "industry": "Secteur d'activité principal",
+  "normalizedName": "Nom normalisé de l'entreprise",
+  "industry": "Secteur d'activité (DOIT correspondre à un des secteurs listés)",
   "size": "Taille en nombre d'employés et chiffre d'affaires si disponible",
   "products": "Description détaillée des principaux produits ou services",
   "processes": "Description des processus métier clés",

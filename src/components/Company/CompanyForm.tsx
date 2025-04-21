@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -19,8 +18,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { fetchCompanyInfoByName } from '@/services/companyInfoService';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { defaultBusinessConfig } from '@/data/defaultBusinessConfig';
 
-// Schéma de validation pour le formulaire
 const companySchema = z.object({
   name: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères" }),
   industry: z.string().min(2, { message: "Le secteur d'activité est requis" }),
@@ -49,7 +49,6 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
 }) => {
   const [isAutoFilling, setIsAutoFilling] = useState(false);
   
-  // Initialiser le formulaire avec les données existantes ou des valeurs par défaut
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
     defaultValues: initialData || {
@@ -64,7 +63,6 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     },
   });
 
-  // Fonction pour auto-remplir les détails de l'entreprise
   const handleAutoFill = async () => {
     const companyName = form.getValues("name");
     
@@ -78,7 +76,6 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     try {
       const companyInfo = await fetchCompanyInfoByName(companyName);
       
-      // Mettre à jour tous les champs du formulaire avec les données récupérées
       form.setValue("industry", companyInfo.industry);
       form.setValue("size", companyInfo.size);
       form.setValue("products", companyInfo.products);
@@ -102,7 +99,6 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Nom de l'entreprise avec bouton auto-remplissage */}
           <div className="relative">
             <FormField
               control={form.control}
@@ -135,22 +131,31 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
             />
           </div>
 
-          {/* Secteur d'activité */}
           <FormField
             control={form.control}
             name="industry"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Secteur d'activité</FormLabel>
-                <FormControl>
-                  <Input placeholder="ex: Technologie, Finance, Santé..." {...field} />
-                </FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionnez un secteur" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {defaultBusinessConfig.sectors.map((sector) => (
+                      <SelectItem key={sector.id} value={sector.id}>
+                        {sector.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Taille (employés / CA) */}
           <FormField
             control={form.control}
             name="size"
@@ -166,7 +171,6 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           />
         </div>
 
-        {/* Principaux produits/services */}
         <FormField
           control={form.control}
           name="products"
@@ -185,7 +189,6 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           )}
         />
 
-        {/* Processus clés */}
         <FormField
           control={form.control}
           name="processes"
@@ -204,7 +207,6 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           )}
         />
 
-        {/* Défis majeurs */}
         <FormField
           control={form.control}
           name="challenges"
@@ -223,7 +225,6 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           )}
         />
 
-        {/* Objectifs stratégiques */}
         <FormField
           control={form.control}
           name="objectives"
@@ -242,7 +243,6 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           )}
         />
 
-        {/* Technologies déjà utilisées */}
         <FormField
           control={form.control}
           name="technologies"
@@ -261,7 +261,6 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           )}
         />
 
-        {/* Boutons d'action */}
         <div className="flex justify-end space-x-4 pt-4 sticky bottom-0 bg-white pb-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting || isAutoFilling}>
             Annuler
