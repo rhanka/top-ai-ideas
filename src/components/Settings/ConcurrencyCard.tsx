@@ -18,6 +18,15 @@ const ConcurrencyCard: React.FC<ConcurrencyCardProps> = ({
   retryAttemptsValue,
   setRetryAttemptsValue
 }) => {
+  // Handlers pour les sliders
+  const handleConcurrencyChange = (values: number[]) => {
+    setConcurrencyValue(values[0]);
+  };
+  
+  const handleRetryAttemptsChange = (values: number[]) => {
+    setRetryAttemptsValue(values[0]);
+  };
+  
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -38,7 +47,7 @@ const ConcurrencyCard: React.FC<ConcurrencyCardProps> = ({
               min={1}
               max={10}
               step={1}
-              onValueChange={(values) => setConcurrencyValue(values[0])}
+              onValueChange={handleConcurrencyChange}
               aria-label="Nombre de requêtes parallèles"
             />
             <p className="text-xs text-gray-500">
@@ -58,7 +67,7 @@ const ConcurrencyCard: React.FC<ConcurrencyCardProps> = ({
               min={1}
               max={5}
               step={1}
-              onValueChange={(values) => setRetryAttemptsValue(values[0])}
+              onValueChange={handleRetryAttemptsChange}
               aria-label="Nombre de tentatives en cas d'échec"
             />
             <p className="text-xs text-gray-500">
