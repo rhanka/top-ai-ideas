@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -76,6 +77,12 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     try {
       const companyInfo = await fetchCompanyInfoByName(companyName);
       
+      // Si un nom normalisé est disponible, l'utiliser
+      if (companyInfo.normalizedName && companyInfo.normalizedName !== companyName) {
+        form.setValue("name", companyInfo.normalizedName);
+      }
+
+      // Mettre à jour les champs du formulaire avec les valeurs récupérées
       form.setValue("industry", companyInfo.industry);
       form.setValue("size", companyInfo.size);
       form.setValue("products", companyInfo.products);
@@ -83,6 +90,9 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       form.setValue("challenges", companyInfo.challenges);
       form.setValue("objectives", companyInfo.objectives);
       form.setValue("technologies", companyInfo.technologies);
+      
+      // Forcer la mise à jour du formulaire pour que le sélecteur de secteur soit correctement affiché
+      form.trigger();
       
       toast.success("Informations sur l'entreprise récupérées avec succès");
     } catch (error) {
@@ -137,7 +147,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Secteur d'activité</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionnez un secteur" />

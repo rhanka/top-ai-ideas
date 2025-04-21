@@ -4,6 +4,7 @@ import { OpenAIService } from "./OpenAIService";
 import { defaultBusinessConfig } from "@/data/defaultBusinessConfig";
 
 interface CompanyInfo {
+  normalizedName?: string;
   industry: string;
   size: string;
   products: string;
@@ -92,7 +93,10 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
           // Extraire le JSON de la réponse (entre les backticks ```json et ```)
           const jsonMatch = contentText.match(/```json\s*([\s\S]*?)\s*```/);
           const jsonStr = jsonMatch ? jsonMatch[1] : contentText;
-          const companyInfo = JSON.parse(jsonStr);
+          
+          // Nettoyer le JSON avant de le parser (enlever les caractères non-imprimables)
+          const cleanJsonStr = jsonStr.replace(/[\u0000-\u001F\u007F-\u009F]/g, "");
+          const companyInfo = JSON.parse(cleanJsonStr);
           
           // Traitement spécial pour le champ "size" s'il est un objet
           let sizeValue = companyInfo.size;
@@ -112,6 +116,7 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
           
           // Valider que tous les champs requis existent
           return {
+            normalizedName: companyInfo.normalizedName || companyName,
             industry: industryId,
             size: typeof sizeValue === 'string' ? sizeValue : String(sizeValue || ""),
             products: companyInfo.products || "",
