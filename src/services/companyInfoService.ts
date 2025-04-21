@@ -21,9 +21,28 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
     throw new Error("Clé API OpenAI non configurée");
   }
 
-  // Get custom prompt or use default
-  const prompt = localStorage.getItem(COMPANY_INFO_PROMPT) || 
-    "Recherchez et fournissez des informations sur l'entreprise {{company_name}}. Retournez les informations au format JSON avec les champs suivants: industry (secteur d'activité), size (taille en employés et CA si disponible), products (produits ou services principaux), processes (processus métier clés), challenges (défis actuels), objectives (objectifs stratégiques), technologies (technologies déjà utilisées).";
+  // Get available sectors for the prompt
+  const availableSectors = defaultBusinessConfig.sectors.map(s => s.name).join(', ');
+
+  // Get custom prompt or use default with explicit sector instruction
+  let prompt = localStorage.getItem(COMPANY_INFO_PROMPT);
+  if (!prompt) {
+    prompt = `Recherchez et fournissez des informations sur l'entreprise {{company_name}}. 
+Les secteurs d'activité disponibles sont: ${availableSectors}.
+Normalisez le nom de l'entreprise selon son usage officiel.
+
+Retournez les informations UNIQUEMENT au format JSON suivant:
+{
+  "normalizedName": "Nom normalisé de l'entreprise",
+  "industry": "Secteur d'activité (DOIT correspondre EXACTEMENT à l'un des secteurs listés ci-dessus)",
+  "size": "Taille en nombre d'employés et chiffre d'affaires si disponible",
+  "products": "Description détaillée des principaux produits ou services",
+  "processes": "Description des processus métier clés",
+  "challenges": "Défis principaux auxquels l'entreprise est confrontée actuellement",
+  "objectives": "Objectifs stratégiques connus de l'entreprise",
+  "technologies": "Technologies ou systèmes d'information déjà utilisés"
+}`;
+  }
   
   // Get configured model
   const model = localStorage.getItem(COMPANY_INFO_MODEL) || "gpt-4o";
@@ -72,35 +91,20 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
             }
           }
           
-          // Match industry with available sectors
-          let matchedIndustry = companyInfo.industry;
-          
-          // Try to find an exact match first
-          const exactMatch = defaultBusinessConfig.sectors.find(
-            s => s.name.toLowerCase() === companyInfo.industry.toLowerCase()
+          // Find the sector ID that corresponds to the industry name
+          const matchingSector = defaultBusinessConfig.sectors.find(
+            sector => sector.name.toLowerCase() === companyInfo.industry.toLowerCase()
           );
           
-          if (exactMatch) {
-            matchedIndustry = exactMatch.id;
-          } else {
-            // If no exact match, try to find a sector that includes the industry string
-            const partialMatch = defaultBusinessConfig.sectors.find(
-              s => companyInfo.industry.toLowerCase().includes(s.name.toLowerCase()) || 
-                  s.name.toLowerCase().includes(companyInfo.industry.toLowerCase())
-            );
-            
-            if (partialMatch) {
-              matchedIndustry = partialMatch.id;
-            } else {
-              // Default to first sector if no match
-              matchedIndustry = defaultBusinessConfig.sectors[0]?.id || companyInfo.industry;
-            }
-          }
+          // If no exact match is found, try to find a case-insensitive partial match
+          const industryId = matchingSector ? 
+            matchingSector.id : 
+            findBestMatchingSector(companyInfo.industry);
           
           // Return validated company info
           return {
             normalizedName: companyInfo.normalizedName || companyName,
-            industry: matchedIndustry,
+            industry: industryId, // Use the sector ID instead of the name
             size: typeof sizeValue === 'string' ? sizeValue : String(sizeValue || ""),
             products: companyInfo.products || "",
             processes: companyInfo.processes || "",
@@ -122,4 +126,27 @@ export async function fetchCompanyInfoByName(companyName: string): Promise<Compa
     console.error("Erreur lors de l'appel à l'API OpenAI:", error);
     throw new Error(`Erreur lors de la récupération des informations: ${(error as Error).message}`);
   }
+}
+
+// Helper function to find the best matching sector when an exact match isn't found
+function findBestMatchingSector(industry: string): string {
+  // Convert input to lowercase for case-insensitive comparison
+  const industryLower = industry.toLowerCase();
+  
+  // First try to find a sector whose name is contained in the industry string
+  for (const sector of defaultBusinessConfig.sectors) {
+    if (industryLower.includes(sector.name.toLowerCase())) {
+      return sector.id;
+    }
+  }
+  
+  // Then try to find a sector whose name contains the industry string
+  for (const sector of defaultBusinessConfig.sectors) {
+    if (sector.name.toLowerCase().includes(industryLower)) {
+      return sector.id;
+    }
+  }
+  
+  // If no match is found, return the first sector as default
+  return defaultBusinessConfig.sectors[0]?.id || "other";
 }
