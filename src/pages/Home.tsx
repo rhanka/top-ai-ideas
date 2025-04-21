@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Sparkles, Loader2, Building2, Plus, Settings } from "lucide-react";
+import { Send, Sparkles, Loader2, Building2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 
 const Home: React.FC = () => {
   const { 
@@ -28,8 +27,7 @@ const Home: React.FC = () => {
     folders,
     companies,
     currentCompanyId,
-    setCurrentCompany,
-    getProcessesByIds
+    setCurrentCompany
   } = useAppContext();
   const navigate = useNavigate();
   
@@ -64,11 +62,6 @@ const Home: React.FC = () => {
     navigate('/entreprises');
   };
   
-  // Gestionnaire pour la configuration métier
-  const handleBusinessConfig = () => {
-    navigate('/configuration-metier');
-  };
-  
   // Gestionnaire pour la sélection d'une entreprise
   const handleCompanyChange = (companyId: string) => {
     if (companyId === "none") {
@@ -78,12 +71,6 @@ const Home: React.FC = () => {
     }
   };
   
-  // Récupérer les processus de l'entreprise actuelle
-  const currentCompany = companies.find(c => c.id === currentCompanyId);
-  const currentProcesses = currentCompany && currentCompany.businessProcesses?.length && getProcessesByIds
-    ? getProcessesByIds(currentCompany.businessProcesses)
-    : [];
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl animate-fade-in">
       <div className="text-center mb-12">
@@ -97,62 +84,42 @@ const Home: React.FC = () => {
       
       <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Sélection d'entreprise et config métier */}
-          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
-            <div className="space-y-2 w-full">
-              <label htmlFor="company" className="block text-lg font-medium text-gray-700 flex items-center justify-between">
-                <span>Entreprise</span>
-                <Button type="button" variant="outline" size="sm" onClick={handleNewCompany} className="text-xs">
-                  <Plus className="w-3 h-3 mr-1" />
-                  Nouvelle entreprise
-                </Button>
-              </label>
-              <Select 
-                onValueChange={handleCompanyChange} 
-                value={currentCompanyId || "none"}
-                disabled={isGenerating}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sélectionner une entreprise (optionnel)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Aucune entreprise sélectionnée</SelectItem>
-                  <SelectGroup>
-                    <SelectLabel>Entreprises</SelectLabel>
-                    {companies.map((company) => (
-                      <SelectItem key={company.id} value={company.id}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Button type="button" variant="outline" size="sm" onClick={handleBusinessConfig}>
-                <Settings className="w-3 h-3 mr-1" />
-                Configuration secteurs/processus
+          {/* Sélection d'entreprise */}
+          <div className="space-y-2 mb-4">
+            <label htmlFor="company" className="block text-lg font-medium text-gray-700 flex items-center justify-between">
+              <span>Entreprise</span>
+              <Button type="button" variant="outline" size="sm" onClick={handleNewCompany} className="text-xs">
+                <Plus className="w-3 h-3 mr-1" />
+                Nouvelle entreprise
               </Button>
-            </div>
+            </label>
+            <Select 
+              onValueChange={handleCompanyChange} 
+              value={currentCompanyId || "none"}
+              disabled={isGenerating}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sélectionner une entreprise (optionnel)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Aucune entreprise sélectionnée</SelectItem>
+                <SelectGroup>
+                  <SelectLabel>Entreprises</SelectLabel>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {currentCompanyId && (
+              <div className="text-sm text-gray-500 flex items-center mt-1">
+                <Building2 className="w-4 h-4 mr-1" />
+                Les informations de l'entreprise seront utilisées pour la génération
+              </div>
+            )}
           </div>
-          
-          {/* Affichage des processus de l'entreprise sélectionnée */}
-          {currentCompany && currentProcesses.length > 0 && (
-            <div className="p-3 bg-gray-50 rounded-md">
-              <div className="text-sm text-gray-700 mb-2 flex items-center gap-2">
-                <Building2 className="w-4 h-4" />
-                <span>Processus associés à {currentCompany.name}:</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {currentProcesses.map(process => (
-                  <Badge key={process.id} variant="outline">
-                    {process.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
           
           <div className="space-y-2">
             <label htmlFor="activity" className="block text-lg font-medium text-gray-700">

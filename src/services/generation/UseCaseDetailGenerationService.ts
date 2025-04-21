@@ -1,6 +1,6 @@
 
 import { BaseApiService } from "../api/BaseApiService";
-import { MatrixConfig, UseCase, Company, BusinessProcess } from "@/types";
+import { MatrixConfig, UseCase, Company } from "@/types";
 
 export class UseCaseDetailGenerationService extends BaseApiService {
   async generateUseCaseDetail(
@@ -9,8 +9,7 @@ export class UseCaseDetailGenerationService extends BaseApiService {
     matrixConfig: MatrixConfig,
     prompt: string,
     model: string,
-    company?: Company,
-    processes?: BusinessProcess[]
+    company?: Company
   ): Promise<UseCase> {
     try {
       // Create a simplified matrix representation for the prompt
@@ -41,16 +40,6 @@ Informations sur l'entreprise:
 `;
       }
 
-      // Construire la liste de processus métiers à prendre en compte
-      let businessProcessesInfo = "";
-      if (processes && processes.length > 0) {
-        businessProcessesInfo = processes.map(p => {
-          return `- ${p.id}: ${p.name} - ${p.description}`;
-        }).join("\n");
-      } else {
-        businessProcessesInfo = "Pas de processus métiers spécifiques définis.";
-      }
-
       // Combine user input with company info
       const enrichedInput = company 
         ? `${userInput}\n\n${companyInfo}`
@@ -62,8 +51,7 @@ Informations sur l'entreprise:
       const formattedPrompt = prompt
         .replace("{{use_case}}", useCase)
         .replace("{{user_input}}", enrichedInput)
-        .replace("{{matrix}}", JSON.stringify(matrixSummary, null, 2))
-        .replace("{{business_processes}}", businessProcessesInfo);
+        .replace("{{matrix}}", JSON.stringify(matrixSummary, null, 2));
 
       const data = await this.callOpenAI(
         model,
@@ -83,6 +71,7 @@ Informations sur l'entreprise:
       const completeUseCase = {
         id,
         name: jsonContent.name || useCase,
+        domain: jsonContent.domain || "",
         description: jsonContent.description || "",
         technology: jsonContent.technology || "",
         deadline: jsonContent.deadline || "",
@@ -95,8 +84,7 @@ Informations sur l'entreprise:
         relatedData: jsonContent.relatedData || [],
         valueScores: jsonContent.valueScores || [],
         complexityScores: jsonContent.complexityScores || [],
-        folderId: "", // Initialize empty string, will be set correctly in useOpenAI hook
-        businessProcesses: jsonContent.businessProcesses || []
+        folderId: "" // Initialize empty string, will be set correctly in useOpenAI hook
       };
 
       // Update toast with success for this specific use case

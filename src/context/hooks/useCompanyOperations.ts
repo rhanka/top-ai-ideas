@@ -29,8 +29,6 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
           ...company,
           createdAt: new Date(company.createdAt),
           updatedAt: new Date(company.updatedAt),
-          // Assurer que businessProcesses existe toujours
-          businessProcesses: company.businessProcesses || []
         }));
         setCompanies(companiesWithDates);
       } catch (error) {
@@ -70,10 +68,6 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
       id: uuidv4(),
       createdAt: now,
       updatedAt: now,
-      // S'assurer que sectorId existe
-      sectorId: companyData.sectorId || '',
-      // S'assurer que businessProcesses existe
-      businessProcesses: companyData.businessProcesses || []
     };
     
     setCompanies(prev => [...prev, newCompany]);
@@ -86,14 +80,7 @@ export const useCompanyOperations = (options?: CompanyOperationsOptions) => {
     setCompanies(prev => 
       prev.map(c => 
         c.id === company.id 
-          ? { 
-              ...company, 
-              updatedAt: new Date(),
-              // S'assurer que sectorId existe
-              sectorId: company.sectorId || '',
-              // S'assurer que businessProcesses existe
-              businessProcesses: company.businessProcesses || []
-            } 
+          ? { ...company, updatedAt: new Date() } 
           : c
       )
     );
