@@ -470,14 +470,14 @@ const UseCaseDetail: React.FC = () => {
               </div>
               
               <div>
-                <p className="text-sm text-gray-500 mb-1">Domaine:</p>
+                <p className="text-sm text-gray-500 mb-1">Processus:</p>
                 {isEditing ? (
                   <Input
-                    value={useCase.domain}
-                    onChange={(e) => handleInputChange('domain', e.target.value)}
+                    value={useCase.process}
+                    onChange={(e) => handleInputChange('process', e.target.value)}
                   />
                 ) : (
-                  <p className="font-medium">{useCase.domain}</p>
+                  <p className="font-medium">{useCase.process}</p>
                 )}
               </div>
               
