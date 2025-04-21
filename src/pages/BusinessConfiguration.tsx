@@ -46,7 +46,7 @@ const BusinessConfiguration = () => {
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Secteurs et Processus</h1>
+        <h1 className="text-3xl font-bold">Secteurs et processus</h1>
       </div>
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">

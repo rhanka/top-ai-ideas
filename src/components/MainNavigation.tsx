@@ -11,7 +11,7 @@ const MainNavigation: React.FC = () => {
     { name: "Accueil", path: "/", icon: Home },
     { name: "Dossiers", path: "/dossiers", icon: FolderOpen },
     { name: "Entreprises", path: "/entreprises", icon: Building2 },
-    { name: "Configuration", path: "/configuration-metier", icon: List },
+    { name: "Secteurs et processus", path: "/configuration-metier", icon: List },
     { name: "Cas d'usage", path: "/cas-usage", icon: FileText },
     { name: "Matrice", path: "/matrice", icon: Grid },
     { name: "Dashboard", path: "/dashboard", icon: BarChart },
