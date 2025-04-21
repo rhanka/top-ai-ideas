@@ -1,3 +1,4 @@
+
 import { BusinessConfiguration } from '@/types/business';
 
 export const defaultBusinessConfig: BusinessConfiguration = {
@@ -13,15 +14,16 @@ export const defaultBusinessConfig: BusinessConfiguration = {
     { id: 'technology', name: 'Technologies', description: 'Technologies de l\'information et services numériques' },
   ],
   processes: [
-    { id: 'call_handling', name: 'Gestion des appels', description: 'Réception et traitement des appels entrants' },
-    { id: 'quality_monitoring', name: 'Suivi qualité', description: 'Contrôle et amélioration de la qualité des appels' },
-    { id: 'customer_support', name: 'Support client', description: 'Résolution des problèmes et assistance clients' },
-    { id: 'call_routing', name: 'Routage des appels', description: 'Distribution et acheminement des appels' },
-    { id: 'agent_training', name: 'Formation des agents', description: 'Formation et développement des compétences' },
-    { id: 'workforce_management', name: 'Gestion des effectifs', description: 'Planification et gestion des équipes' },
-    { id: 'reporting', name: 'Reporting', description: 'Analyse et rapports de performance' },
-    { id: 'complaint_handling', name: 'Gestion des réclamations', description: 'Traitement des plaintes et litiges' },
-    { id: 'outbound_campaigns', name: 'Campagnes sortantes', description: 'Gestion des campagnes d\'appels sortants' },
-    { id: 'knowledge_management', name: 'Gestion des connaissances', description: 'Base de connaissances et procédures' },
+    { id: 'operations', name: 'Opérations', description: 'Gestion des opérations quotidiennes' },
+    { id: 'maintenance', name: 'Maintenance', description: 'Entretien et maintenance des équipements' },
+    { id: 'logistics', name: 'Logistique', description: 'Gestion de la chaîne d\'approvisionnement' },
+    { id: 'quality', name: 'Qualité', description: 'Contrôle et assurance qualité' },
+    { id: 'hr', name: 'Ressources humaines', description: 'Gestion du personnel' },
+    { id: 'finance', name: 'Finance', description: 'Gestion financière' },
+    { id: 'sales', name: 'Ventes', description: 'Processus de vente' },
+    { id: 'marketing', name: 'Marketing', description: 'Stratégie marketing et communication' },
+    { id: 'rd', name: 'R&D', description: 'Recherche et développement' },
+    { id: 'it', name: 'IT', description: 'Technologies de l\'information' },
+    { id: 'customer_service', name: 'Service client', description: 'Support et service client' },
   ]
 };
