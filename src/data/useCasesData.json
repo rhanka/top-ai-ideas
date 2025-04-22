@@ -1,3 +1,4 @@
+
 [
   {
     "id": "UC01",
@@ -682,3 +683,45 @@
         "rating": 4,
         "description": "Réduction significative du temps de recherche d'information et d'identification des solutions, estimée à 30-45 secondes par interaction."
       },
+      {
+        "axisId": "Amélioration Expérience Agent & Rétention",
+        "rating": 5,
+        "description": "Impact majeur sur la satisfaction agent en éliminant une source importante de stress et en augmentant leur confiance dans les réponses fournies."
+      },
+      {
+        "axisId": "Conformité & Image Publique",
+        "rating": 3,
+        "description": "Amélioration de la conformité via la standardisation des réponses et l'accès facilité aux procédures recommandées."
+      }
+    ],
+    "complexityScores": [
+      {
+        "axisId": "Maturité & Fiabilité Solution IA",
+        "rating": 4,
+        "description": "Technologies d'analyse conversationnelle et de récupération contextuelle avancées nécessitant un entraînement poussé et une validation rigoureuse."
+      },
+      {
+        "axisId": "Effort d'Implémentation & Intégration",
+        "rating": 4,
+        "description": "Intégration complexe avec multiples sources de données (KB, CRM, outils agents) et développement d'un système de suggestions en temps réel."
+      },
+      {
+        "axisId": "IA Responsable & Conformité Données",
+        "rating": 3,
+        "description": "Utilisation de données conversationnelles nécessitant des mesures de protection et de transparence, et une réflexion sur la responsabilité des suggestions."
+      },
+      {
+        "axisId": "Disponibilité, Qualité & Accès Données",
+        "rating": 4,
+        "description": "Nécessité d'accéder en temps réel à diverses sources de données structurées et non-structurées, avec des enjeux de qualité et de mise à jour."
+      },
+      {
+        "axisId": "Gestion du Changement & Impact Métier",
+        "rating": 3,
+        "description": "Modification des habitudes de travail des agents nécessitant une adoption progressive et un programme de formation adapté."
+      }
+    ],
+    "totalValueScore": 2750,
+    "totalComplexityScore": 900
+  }
+]
