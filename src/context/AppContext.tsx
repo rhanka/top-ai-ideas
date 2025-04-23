@@ -17,11 +17,6 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentInput, setCurrentInput] = useState<string>("");
   
-  // Callback for company changes
-  const handleCompanyChange = useCallback((companyId: string | null) => {
-    console.log("Company changed to:", companyId);
-  }, []);
-  
   // Initialize company operations
   const {
     companies,
@@ -31,9 +26,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     deleteCompany,
     setCurrentCompany,
     getCurrentCompany
-  } = useCompanyOperations({
-    onCompanyChange: handleCompanyChange
-  });
+  } = useCompanyOperations();
   
   // Callback for folder changes
   const handleFolderChange = useCallback((folderId: string | null) => {
@@ -57,7 +50,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     getCurrentFolder
   } = useFolderOperations({
     onFolderChange: handleFolderChange,
-    onMatrixConfigChange: handleMatrixConfigChange
+    onMatrixConfigChange: handleMatrixConfigChange,
+    currentCompanyId // Passer l'ID de l'entreprise actuelle pour créer de nouveaux dossiers
   });
   
   // Callback for folders update
@@ -101,20 +95,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     onThresholdsUpdated: handleThresholdsUpdated
   });
   
+  // Obtenir l'entreprise associée au dossier actuel
+  const getCurrentFolderCompany = useCallback(() => {
+    const currentFolder = getCurrentFolder();
+    if (currentFolder?.companyId) {
+      return companies.find(company => company.id === currentFolder.companyId);
+    }
+    return undefined;
+  }, [getCurrentFolder, companies]);
+  
   // Add use case handler for OpenAI service
   const handleAddUseCase = useCallback((useCase: UseCase) => {
     // Respecter le folderId fourni par le cas d'usage généré
     // Si pas de folderId, utiliser le currentFolderId (cas par défaut)
     console.log("Adding use case with folder:", useCase.folderId || currentFolderId);
     
+    // Récupérer l'entreprise associée au dossier actuel
+    const currentFolder = getCurrentFolder();
+    
     const useCaseWithFolder = {
       ...useCase,
       folderId: useCase.folderId || currentFolderId || '',
-      companyId: currentCompanyId || undefined
+      companyId: currentFolder?.companyId // Utiliser l'ID de l'entreprise du dossier courant
     };
     
     addUseCase(useCaseWithFolder);
-  }, [addUseCase, currentFolderId, currentCompanyId]);
+  }, [addUseCase, currentFolderId, getCurrentFolder]);
   
   // Initialize OpenAI hooks
   const { isGenerating, generateUseCases: generateUseCasesService } = useOpenAI(
@@ -122,24 +128,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     handleAddUseCase, 
     addFolder, 
     setCurrentFolder,
-    getCurrentCompany
+    getCurrentFolderCompany // Passer la fonction pour obtenir l'entreprise associée au dossier
   );
-  
-  // Effect to update cases count in thresholds whenever useCases changes
-  React.useEffect(() => {
-    // This is handled in useUseCaseOperations
-  }, [useCases, currentFolderId]);
-  
-  // Effect to update matrix config when current folder changes
-  React.useEffect(() => {
-    // This is handled in useMatrixConfig
-  }, [currentFolderId, folders]);
   
   // Wrapper for generateUseCases to update currentInput
   const generateUseCases = async (input?: string, createNewFolder: boolean = true): Promise<boolean> => {
     console.log("Generating use cases with currentFolderId:", currentFolderId);
     console.log("Create new folder:", createNewFolder);
-    console.log("Current company:", currentCompanyId);
+    console.log("Current folder company:", getCurrentFolderCompany()?.name);
     
     if (!currentFolderId && !createNewFolder) {
       toast.error("Aucun dossier actif");
@@ -179,6 +175,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     deleteFolder,
     setCurrentFolder,
     getCurrentFolder,
+    getCurrentFolderCompany,
     addCompany,
     updateCompany,
     deleteCompany,

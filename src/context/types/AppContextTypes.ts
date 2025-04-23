@@ -27,6 +27,7 @@ export type AppContextType = {
   deleteFolder: (id: string) => void;
   setCurrentFolder: (folderId: string) => void;
   getCurrentFolder: () => Folder | undefined;
+  getCurrentFolderCompany: () => Company | undefined;
   // Fonctions pour gérer les entreprises
   addCompany: (companyData: Omit<Company, 'id' | 'createdAt' | 'updatedAt'>) => Company;
   updateCompany: (company: Company) => void;

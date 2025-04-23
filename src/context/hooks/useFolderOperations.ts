@@ -17,9 +17,14 @@ import { defaultMatrixConfig } from "../defaultMatrixConfig";
 export interface UseFolderOperationsProps {
   onFolderChange: (folderId: string | null) => void;
   onMatrixConfigChange: (config: MatrixConfig) => void;
+  currentCompanyId?: string | null;
 }
 
-export const useFolderOperations = ({ onFolderChange, onMatrixConfigChange }: UseFolderOperationsProps) => {
+export const useFolderOperations = ({ 
+  onFolderChange, 
+  onMatrixConfigChange,
+  currentCompanyId 
+}: UseFolderOperationsProps) => {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   
@@ -53,8 +58,14 @@ export const useFolderOperations = ({ onFolderChange, onMatrixConfigChange }: Us
   
   // Add a new folder
   const addFolder = (name: string, description: string): Folder => {
-    // Create new folder WITHOUT inheriting the current company ID
+    // Créer un nouveau dossier avec l'entreprise actuelle s'il y en a une
     const newFolder = createFolder(name, description, defaultMatrixConfig);
+    
+    // Associer l'entreprise actuelle au dossier si elle existe
+    if (currentCompanyId) {
+      newFolder.companyId = currentCompanyId;
+    }
+    
     setFolders(prev => [...prev, newFolder]);
     return newFolder;
   };

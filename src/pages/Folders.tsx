@@ -47,8 +47,7 @@ const Folders: React.FC = () => {
     setCurrentFolder, 
     currentFolderId, 
     useCases,
-    companies,
-    currentCompanyId
+    companies
   } = useAppContext();
   
   const [newFolderName, setNewFolderName] = useState<string>("");
@@ -134,12 +133,6 @@ const Folders: React.FC = () => {
       <div className="flex justify-between items-center mb-8">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-navy">Dossiers</h1>
-          {currentCompanyId && (
-            <div className="flex items-center text-gray-600">
-              <Building2 className="h-4 w-4 mr-2" />
-              <span>Entreprise active: {getCompanyName(currentCompanyId)}</span>
-            </div>
-          )}
         </div>
         
         <Dialog>
