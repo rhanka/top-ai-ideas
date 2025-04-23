@@ -3,7 +3,7 @@
   {
     "id": "UC01",
     "name": "Chatbot FAQ & Triage (Web & Mobile)",
-    "domain": "Service Client Web",
+    "domain": "Service client"
     "description": "Mise en place d'un agent conversationnel (chatbot) sur le site web et l'application mobile, capable de comprendre le langage naturel pour répondre aux questions les plus fréquentes des clients (ex: horaires, suivi de commande, tarifs de base) et de les guider vers des ressources en libre-service (FAQ détaillée, espace client) ou de les transférer vers le canal de contact approprié (chat avec agent humain, appel téléphonique) si nécessaire.",
     "technology": "NLP / GenAI Texte",
     "deadline": "2025-Q4",
@@ -106,7 +106,7 @@
   {
     "id": "UC02",
     "name": "Authentification Client Automatisée (Voix/IVR)",
-    "domain": "Service Client Téléphonie",
+    "domain": "Service client",
     "description": "Utilisation d'un Système Vocal Interactif (SVI) avancé pour authentifier les clients lors d'un appel. Cela peut se faire soit par biométrie vocale (analyse de l'empreinte vocale unique du client après enrôlement préalable) soit via un dialogue conversationnel sécurisé où le SVI pose des questions de sécurité dynamiques basées sur les informations client connues.",
     "technology": "Biométrie Vocale / NLP",
     "deadline": "2025-Q3",
@@ -209,7 +209,7 @@
   {
     "id": "UC03",
     "name": "Traitement Automatisé Requêtes Simples (Self-Service IVR/Web)",
-    "domain": "Service Client Omnicanal",
+    "domain": "Service client",
     "description": "Développement de parcours entièrement automatisés, accessibles via le SVI téléphonique ou l'espace client web/mobile, permettant aux clients d'effectuer des actions simples sans intervention humaine. Exemples : déclarer un déménagement, signaler une panne simple, négocier une entente de paiement simple selon des règles prédéfinies, soumettre un relevé de compteur.",
     "technology": "NLP / Génération de Langage / IA Décisionnelle",
     "deadline": "2026-Q1",
@@ -312,7 +312,7 @@
   {
     "id": "UC04",
     "name": "Synthèse Contexte Client 360° pour Agent",
-    "domain": "CRM & Support Client",
+    "domain": "Service client",
     "description": "Affichage dynamique sur l'écran de l'agent d'un résumé pertinent et instantané des informations clés du client qui appelle. Ce résumé agrège des données provenant de diverses sources (CRM, facturation, historique des interactions, état des services/pannes) pour donner à l'agent une vue complète et rapide de la situation du client.",
     "technology": "IA Générative / Intégration de données",
     "deadline": "2025-Q3",
@@ -417,7 +417,7 @@
   {
     "id": "UC05",
     "name": "Transcription Temps Réel & Résumé d'Appel Post-Interaction",
-    "domain": "Service Client Téléphonie",
+    "domain": "Qualité",
     "description": "Conversion automatique de la conversation téléphonique en texte pendant l'appel (transcription live). Après la fin de l'appel, génération automatique d'un résumé concis et pertinent de l'interaction, qui est ensuite enregistré dans le CRM, évitant à l'agent une saisie manuelle longue et potentiellement incomplète.",
     "technology": "Speech-to-Text / NLP / Génération de texte",
     "deadline": "2025-Q4",
@@ -520,7 +520,7 @@
   {
     "id": "UC06",
     "name": "Analyse Qualité & Sentiment Appel",
-    "domain": "Qualité & Formation",
+    "domain": "Qualité",
     "description": "Analyse automatisée des enregistrements ou transcriptions d'appels pour évaluer la qualité de l'interaction selon une grille prédéfinie. Détection automatique du sentiment global du client (positif, négatif, neutre), identification de mots-clés spécifiques (irritants, motifs de satisfaction, termes liés à la conformité) et attribution d'un score de qualité.",
     "technology": "NLP / Analyse de sentiment / Speech Analytics",
     "deadline": "2025-Q2",
@@ -623,7 +623,7 @@
   {
     "id": "UC07",
     "name": "Agent Assist - Suggestions Temps Réel",
-    "domain": "Support Agent",
+    "domain": "Opérations",
     "description": "Analyse en temps réel de la conversation entre l'agent et le client pour comprendre le contexte et le besoin. Le système suggère alors de manière proactive à l'agent des informations pertinentes : articles de la base de connaissances, étapes de procédure à suivre, réponses types, informations client spécifiques, etc., affichées directement sur son écran.",
     "technology": "NLP / Machine Learning / RAG",
     "deadline": "2026-Q1",
@@ -727,7 +727,7 @@
   {
     "id": "UC08",
     "name": "Qualification Appels Urgents (Crise/Panne)",
-    "domain": "Gestion des Crises",
+    "domain": "Opérations",
     "description": "Lors d'événements majeurs (panne générale, crise sanitaire, etc.) générant un pic d'appels, mise en place d'un SVI intelligent capable d'identifier rapidement la nature de l'appel. Il priorise les appels réellement urgents (ex: sécurité, situation critique) vers les agents et dévie les autres en leur fournissant des informations contextuelles (statut de la panne, consignes) ou en les orientant vers des canaux alternatifs.",
     "technology": "NLP / IA Décisionnelle / Speech Analytics",
     "deadline": "2025-Q3",
@@ -830,7 +830,7 @@
   {
     "id": "UC09",
     "name": "Analyse Tendances Motifs d'Appel",
-    "domain": "Business Intelligence",
+    "domain": "Qualité",
     "description": "Traitement et analyse (a posteriori) d'un grand volume de données d'appels (transcriptions, métadonnées, catégories CRM) pour identifier automatiquement les motifs d'appel récurrents, détecter des tendances émergentes, repérer les points de friction fréquents dans le parcours client et découvrir des opportunités d'amélioration des processus ou des outils self-service.",
     "technology": "Text Mining / Machine Learning / Business Intelligence",
     "deadline": "2026-Q2",
@@ -934,7 +934,7 @@
   {
     "id": "UC10",
     "name": "Communication Proactive Ciblée (Prévention d'Appels)",
-    "domain": "Marketing & Communication",
+    "domain": "Marketing",
     "description": "Utilisation de modèles d'IA pour analyser les données client (historique, profil, événements récents comme une facture élevée ou une panne signalée) afin d'identifier les clients ayant une forte probabilité d'appeler prochainement. Envoi proactif d'une communication ciblée (SMS, email, notification push) avec des informations pertinentes pour résoudre leur problème potentiel avant même qu'ils ne contactent le service client.",
     "technology": "Machine Learning Prédictif / Marketing Automation",
     "deadline": "2026-Q1",
@@ -1038,7 +1038,7 @@
   {
     "id": "UC11",
     "name": "Simulation & Coaching IA pour Agents",
-    "domain": "Formation & Développement",
+    "domain": "Ressources humaines",
     "description": "Mise à disposition d'une plateforme où les agents peuvent s'entraîner en interagissant avec des clients simulés par une IA dans divers scénarios d'appel (vente, support, réclamation...). L'IA évalue la performance de l'agent en temps réel ou a posteriori, fournit un feedback détaillé et personnalisé sur les points forts et les axes d'amélioration (empathie, respect des procédures, clarté...).",
     "technology": "NLP / Simulation conversationnelle / IA Générative",
     "deadline": "2026-Q3",
@@ -1141,7 +1141,7 @@
   {
     "id": "UC12",
     "name": "Détection Anomalies & Fraude Potentielle",
-    "domain": "Sécurité & Conformité",
+    "domain": "Opérations",
     "description": "Application de techniques d'IA (machine learning) pour analyser en continu les données transactionnelles, les logs d'accès et les comportements utilisateurs (clients ou agents) afin de détecter des schémas inhabituels ou suspects pouvant indiquer une tentative de fraude, une faille de sécurité ou un abus. Génération d'alertes pour investigation.",
     "technology": "Machine Learning / Détection d'anomalies / Analyse comportementale",
     "deadline": "2025-Q3",
@@ -1246,7 +1246,7 @@
   {
     "id": "UC13",
     "name": "Analyse Parcours Client Self-Service (Web/App)",
-    "domain": "Expérience Utilisateur",
+    "domain": "Marketing",
     "description": "Utilisation de l'IA pour analyser les données de navigation et d'interaction des utilisateurs sur les plateformes self-service (site web, application mobile, espace client), afin d'identifier automatiquement les points de friction, les parcours inefficaces, les pages générant des erreurs ou des abandons, afin d'optimiser l'ergonomie et le contenu pour réduire les appels au support.",
     "technology": "Analytics / Machine Learning / UX Research",
     "deadline": "2025-Q4",
