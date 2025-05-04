@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Grid, FileText, BarChart, Table, Settings, FolderOpen, Building2, List } from "lucide-react";
+import { Home, Grid, FileText, BarChart, Table, Settings, FolderOpen, Building2, List, Figma } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MainNavigation: React.FC = () => {
@@ -15,6 +15,7 @@ const MainNavigation: React.FC = () => {
     { name: "Cas d'usage", path: "/cas-usage", icon: FileText },
     { name: "Matrice", path: "/matrice", icon: Grid },
     { name: "Dashboard", path: "/dashboard", icon: BarChart },
+    { name: "Design", path: "/design", icon: Figma },
     { name: "Données", path: "/donnees", icon: Table },
     { name: "Paramètres", path: "/parametres", icon: Settings },
   ];

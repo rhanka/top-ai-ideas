@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +20,7 @@ import Folders from "@/pages/Folders";
 import Companies from "@/pages/Companies";
 import CompanyView from "@/pages/CompanyView";
 import BusinessConfiguration from "@/pages/BusinessConfiguration";
+import Design from "@/pages/Design";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,7 @@ const App = () => {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/donnees" element={<DataTable />} />
                   <Route path="/parametres" element={<Settings />} />
+                  <Route path="/design" element={<Design />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
